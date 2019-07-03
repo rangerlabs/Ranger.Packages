@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package >
+  <metadata minClientVersion="3.3.0">
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>$author$</authors>
+    <owners>$author$</owners>
+    <projectUrl>https://github.com/rangerlabs/Ranger.Monitoring</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Ranger application monitoring and logging package</description>
+    <!-- <releaseNotes>Summary of changes made in this release of the package.</releaseNotes> -->
+    <copyright>Copyright 2019</copyright>
+    <tags>Ranger Monitoring</tags>
+    <packageTypes>
+      <packageType name="Dependency" />
+    </packageTypes>
+    <dependencies>
+      <dependency id="Microsoft.AspNetCore.Hosting.Abstractions" version="2.2.0" />
+      <dependency id="Serilog" version="2.8.0" />
+      <dependency id="Serilog.AspNetCore" version="2.1.1" />
+      <dependency id="Serilog.Extensions.Logging" version="2.0.4" />
+      <dependency id="Serilog.Sinks.ColoredConsole" version="3.0.1" />
+      <dependency id="Serilog.Sinks.Seq" version="4.0.0" />
+    </dependencies>
+  </metadata>
+</package>

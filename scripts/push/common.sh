@@ -1,0 +1,1 @@
+nuget push ./pkgs/*.Common*.nupkg $1 -source https://www.myget.org/F/ranger-labs/api/v3/index.json
