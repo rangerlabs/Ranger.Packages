@@ -116,8 +116,14 @@ namespace Ranger.RabbitMQ {
                         $"with correlation id: '{message.CorrelationContext.Id}'. {retryMessage}";
                     logger.LogInformation (preLogMessage);
 
-                    var messageHandler = serviceProvider.GetService<IMessageHandler<TMessage>> ();
-                    await messageHandler.HandleAsync (message);
+                    try {
+                        var messageHandler = serviceProvider.GetService<IMessageHandler<TMessage>> ();
+                        await messageHandler.HandleAsync (message);
+                    } catch (NullReferenceException ex) {
+                        //TODO: This would be better handled if on startup we could determine a misconfiguration
+                        logger.LogError ($"Unable to locate message handler in service collection for message: '{messageName}'");
+                        throw;
+                    }
                     success = true;
                     logger.LogInformation ($"Handled message: '{messageName}' " +
                         $"with correlation id: '{message.CorrelationContext.Id}'. {retryMessage}");
