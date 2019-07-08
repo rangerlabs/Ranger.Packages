@@ -70,16 +70,16 @@ namespace Ranger.RabbitMQ {
             var eventingConsumer = new AsyncEventingBasicConsumer (channel);
             var nackMessage = false;
 
-            eventingConsumer.ConsumerCancelled += async (ch, ea) => { logger.LogInformation ("Subscriber cancelled."); };
-            eventingConsumer.Registered += async (ch, ea) => { logger.LogInformation ($"Subscriber registered."); };
-            eventingConsumer.Unregistered += async (ch, ea) => { logger.LogInformation ($"Subscriber unregistered."); };
-            eventingConsumer.Shutdown += async (ch, ea) => { logger.LogInformation ($"Subscriber shutdown."); };
+            eventingConsumer.ConsumerCancelled += async (ch, ea) => { await Task.Run (() => logger.LogInformation ("Subscriber cancelled.")); };
+            eventingConsumer.Registered += async (ch, ea) => { await Task.Run (() => logger.LogInformation ($"Subscriber registered.")); };
+            eventingConsumer.Unregistered += async (ch, ea) => { await Task.Run (() => logger.LogInformation ($"Subscriber unregistered.")); };
+            eventingConsumer.Shutdown += async (ch, ea) => { await Task.Run (() => logger.LogInformation ($"Subscriber shutdown.")); };
             eventingConsumer.Received += async (ch, ea) => {
                 logger.LogDebug ($"Received message from queue: '{queueName}'.");
                 TMessage message = default (TMessage);
                 try {
                     message = JsonConvert.DeserializeObject<TMessage> (System.Text.Encoding.Default.GetString (ea.Body), new JsonSerializerSettings { MissingMemberHandling = MissingMemberHandling.Ignore });
-                } catch (Exception ex) {
+                } catch (Exception) {
                     nackMessage = true;
                 }
                 if (nackMessage) {
@@ -93,7 +93,7 @@ namespace Ranger.RabbitMQ {
                         logger.LogWarning ($"Sending message: '{message.GetType().Name}' " +
                             $"with correlation id: '{message.CorrelationContext.Id}', " +
                             "to the error queue.");
-                        publisher.ErrorAsync<TMessage> (message, ea);
+                        publisher.Error<TMessage> (message, ea);
                     }
                     channel.BasicAck (ea.DeliveryTag, false);
                     logger.LogDebug ($"Message from queue '{queueName}' ack'd.");
@@ -119,7 +119,7 @@ namespace Ranger.RabbitMQ {
                     try {
                         var messageHandler = serviceProvider.GetService<IMessageHandler<TMessage>> ();
                         await messageHandler.HandleAsync (message);
-                    } catch (NullReferenceException ex) {
+                    } catch (NullReferenceException) {
                         //TODO: This would be better handled if on startup we could determine a misconfiguration
                         logger.LogError ($"Unable to locate message handler in service collection for message: '{messageName}'");
                         throw;
@@ -131,7 +131,7 @@ namespace Ranger.RabbitMQ {
                     logger.LogError (ex, ex.Message);
                     if (ex is RangerException rangerException && onError != null) {
                         var rejectedEvent = onError (message, rangerException);
-                        publisher.PublishAsync (rejectedEvent);
+                        publisher.Publish (rejectedEvent);
                         logger.LogWarning ($"Published a rejected event: '{rejectedEvent.GetType().Name}' " +
                             $"for the message: '{messageName}' with correlation id: '{message.CorrelationContext.Id}'.");
                     }

@@ -4,13 +4,13 @@ using RabbitMQ.Client.Events;
 
 namespace Ranger.RabbitMQ {
     public interface IBusPublisher : IDisposable {
-        void SendAsync<TCommand> (TCommand command)
+        void Send<TCommand> (TCommand command)
         where TCommand : ICommand;
 
-        void PublishAsync<TEvent> (TEvent @event)
+        void Publish<TEvent> (TEvent @event)
         where TEvent : IEvent;
 
-        void ErrorAsync<TMessage> (TMessage message, BasicDeliverEventArgs ea)
+        void Error<TMessage> (TMessage message, BasicDeliverEventArgs ea)
         where TMessage : IMessage;
     }
 }

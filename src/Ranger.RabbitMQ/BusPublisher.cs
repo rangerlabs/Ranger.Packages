@@ -29,15 +29,15 @@ namespace Ranger.RabbitMQ {
             channel.ConfirmSelect ();
         }
 
-        public void PublishAsync<TEvent> (TEvent @event) where TEvent : IEvent {
+        public void Publish<TEvent> (TEvent @event) where TEvent : IEvent {
             ChannelPublish<TEvent> (@event);
         }
 
-        public void SendAsync<TCommand> (TCommand command) where TCommand : ICommand {
+        public void Send<TCommand> (TCommand command) where TCommand : ICommand {
             ChannelPublish<TCommand> (command);
         }
 
-        public void ErrorAsync<TMessage> (TMessage message, BasicDeliverEventArgs ea) where TMessage : IMessage {
+        public void Error<TMessage> (TMessage message, BasicDeliverEventArgs ea) where TMessage : IMessage {
             ErrorPublish<TMessage> (message, ea);
         }
 
