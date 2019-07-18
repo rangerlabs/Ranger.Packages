@@ -17,7 +17,7 @@ namespace Ranger.Common {
         private static IConfigurationRoot Configuration { get; set; }
         private static string alphalowerChars = "abcdefghijklmnopqrstuvwxyz";
         private static string alphaUpperChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        private static string NumericChars = "1234567890";
+        private static string numericChars = "1234567890";
         private static string specialChars = "!@#$%^&*()|+=";
 
         private static string ValidationKeyFromConfig () {
@@ -146,7 +146,7 @@ namespace Ranger.Common {
         public static string GenerateSudoRandomAlphaNumericString (int length) {
             StringBuilder result = new StringBuilder ();
             Random rand = new Random ();
-            return new string (Enumerable.Repeat (alphalowerChars + alphaUpperChars + NumericChars, length).Select (s => s[rand.Next (s.Length)]).ToArray ());
+            return new string (Enumerable.Repeat (alphalowerChars + alphaUpperChars + numericChars, length).Select (s => s[rand.Next (s.Length)]).ToArray ());
         }
 
         public static string GenerateSudoRandomPasswordString () {
@@ -160,7 +160,7 @@ namespace Ranger.Common {
 
             string password = new string (Enumerable.Repeat (alphalowerChars, 4).Select (s => s[rand.Next (s.Length)]).ToArray ());
             password += new string (Enumerable.Repeat (alphaUpperChars, 4).Select (s => s[rand.Next (s.Length)]).ToArray ());
-            password += new string (Enumerable.Repeat (NumericChars, 3).Select (s => s[rand.Next (s.Length)]).ToArray ());
+            password += new string (Enumerable.Repeat (numericChars, 3).Select (s => s[rand.Next (s.Length)]).ToArray ());
             password += new string (Enumerable.Repeat (specialChars, 2).Select (s => s[rand.Next (s.Length)]).ToArray ());
 
             Random newRand = new Random ();
