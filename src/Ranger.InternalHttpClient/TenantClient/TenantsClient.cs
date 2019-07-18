@@ -30,7 +30,7 @@ namespace Ranger.InternalHttpClient {
                 Address = disco.TokenEndpoint,
 
                     ClientId = "internal",
-                    ClientSecret = "tenantsSecret",
+                    ClientSecret = "cKprgh9wYKWcsm",
                     Scope = "tenantsApi"
             });
 
