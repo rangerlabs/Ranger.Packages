@@ -20,7 +20,7 @@ namespace Ranger.InternalHttpClient {
         public async Task SetClientToken () {
 
             // discover endpoints from metadata
-            var disco = await httpClient.GetDiscoveryDocumentAsync ("http://identity_api:5000");
+            var disco = await httpClient.GetDiscoveryDocumentAsync ("http://identity:5000");
             if (disco.IsError) {
                 Console.WriteLine (disco.Error);
                 return;

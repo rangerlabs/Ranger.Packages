@@ -153,7 +153,7 @@ namespace Ranger.Common {
             Regex hasLowerRegex = new Regex ("[a-z]");
             Regex hasUpperRegex = new Regex ("[A-Z]");
             Regex hasNumberRegex = new Regex ("[0-9]");
-            Regex hasSpecialRegex = new Regex ("[!@#$%%^&*()|+=]");
+            Regex hasSpecialRegex = new Regex ("[~!#$^&()+=]");
 
             StringBuilder result = new StringBuilder ();
             Random rand = new Random ();

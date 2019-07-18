@@ -21,7 +21,7 @@ namespace Ranger.InternalHttpClient {
 
         public async Task SetClientToken () {
             var disco = await httpClient.GetDiscoveryDocumentAsync (new DiscoveryDocumentRequest {
-                Address = "http://identity_api:5000",
+                Address = "http://identity:5000",
                     Policy = {
                         RequireHttps = false,
                         ValidateIssuerName = false
@@ -47,10 +47,15 @@ namespace Ranger.InternalHttpClient {
             httpClient.SetBearerToken (tokenResponse.AccessToken);
         }
 
-        public async Task<InternalApiResponse<T>> GetUserAsync<T> (string username) {
+        public async Task<InternalApiResponse<T>> GetUserAsync<T> (string domain, string username) {
             var apiResponse = new InternalApiResponse<T> ();
-            Uri uri = new Uri (httpClient.BaseAddress, $"user?username={username}");
-            var response = await httpClient.GetAsync (uri);
+            var httpRequestMsg = new HttpRequestMessage () {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri (httpClient.BaseAddress, $"user?username={username}"),
+                Headers = { { "X-Tenant-Domain", domain },
+                }
+            };
+            var response = await httpClient.SendAsync (httpRequestMsg);
 
             var userContent = await response.Content.ReadAsStringAsync ();
             if (response.IsSuccessStatusCode) {
@@ -68,10 +73,15 @@ namespace Ranger.InternalHttpClient {
 
         }
 
-        public async Task<InternalApiResponse<T>> GetAllUsersAsync<T> () {
+        public async Task<InternalApiResponse<T>> GetAllUsersAsync<T> (string domain) {
             var apiResponse = new InternalApiResponse<T> ();
-            Uri uri = new Uri (httpClient.BaseAddress, "user/all");
-            var response = await httpClient.GetAsync (uri);
+            var httpRequestMsg = new HttpRequestMessage () {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri (httpClient.BaseAddress, $"user/all"),
+                Headers = { { "X-Tenant-Domain", domain },
+                }
+            };
+            var response = await httpClient.SendAsync (httpRequestMsg);
 
             var usersContent = await response.Content.ReadAsStringAsync ();
             if (response.IsSuccessStatusCode) {
@@ -79,24 +89,6 @@ namespace Ranger.InternalHttpClient {
                 apiResponse.IsSuccessStatusCode = true;
                 apiResponse.StatusCode = response.StatusCode;
                 apiResponse.ResponseObject = JsonConvert.DeserializeObject<T> (usersContent);
-            } else {
-                var errorContent = await response.Content.ReadAsStringAsync ();
-                apiResponse.IsSuccessStatusCode = false;
-                apiResponse.StatusCode = response.StatusCode;
-                apiResponse.Errors = JsonConvert.DeserializeObject<IEnumerable<string>> (errorContent);
-            }
-            return apiResponse;
-        }
-
-        public async Task<InternalApiResponse> CreateUser (ApplicationUserRequestModel user) {
-            var apiResponse = new InternalApiResponse ();
-            Uri uri = new Uri (httpClient.BaseAddress, "user");
-            var userContent = new StringContent (JsonConvert.SerializeObject (user), Encoding.UTF8, "application/json");
-            var response = await httpClient.PostAsync (uri, userContent);
-            if (response.IsSuccessStatusCode) {
-                var roleContent = await response.Content.ReadAsStringAsync ();
-                apiResponse.IsSuccessStatusCode = true;
-                apiResponse.StatusCode = response.StatusCode;
             } else {
                 var errorContent = await response.Content.ReadAsStringAsync ();
                 apiResponse.IsSuccessStatusCode = false;
@@ -121,9 +113,7 @@ namespace Ranger.InternalHttpClient {
                 apiResponse.StatusCode = response.StatusCode;
                 apiResponse.Errors = JsonConvert.DeserializeObject<IEnumerable<string>> (errorContent);
             }
-
             return apiResponse;
-
         }
     }
 }

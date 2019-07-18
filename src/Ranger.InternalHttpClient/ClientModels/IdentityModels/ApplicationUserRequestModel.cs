@@ -1,5 +1,5 @@
 namespace Ranger.InternalHttpClient {
-    public class ApplicationUserRequestModel {
+    internal class ApplicationUserRequestModel {
 
         public string Email { get; set; }
         public string FirstName { get; set; }

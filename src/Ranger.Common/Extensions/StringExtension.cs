@@ -15,11 +15,10 @@ namespace Ranger.Common {
       return startUnderscores + Regex.Replace (input, @"([a-z0-9])([A-Z])", "$1_$2").ToLower ();
     }
     public static string GetDomainFromHost (this HostString host) {
-      return "test";
-      // List<string> fullAddress = host.ToString ().Split ('.').ToList ();
-      // if (fullAddress.Count < 2)
-      //   throw new DomainNotFoundException ("No domain was found in the request.");
-      // return fullAddress[0];
+      List<string> fullAddress = host.ToString ().Split ('.').ToList ();
+      if (fullAddress.Count < 3)
+        throw new DomainNotFoundException ("No domain was found in the request.");
+      return fullAddress[0];
     }
 
     public static string[] GetCascadedRoles (this RolesEnum role) {
@@ -28,13 +27,6 @@ namespace Ranger.Common {
       for (int i = (int) role; i < roleValues.Length; i++) {
         cascadedRoles.Add (Enum.GetName (typeof (RolesEnum), i));
       }
-
-      // switch (role) {
-      //   case RolesEnum.Owner:
-      //     return new string[] { "Owner", "Admin", "User" };
-      //   case RolesEnum.Admin:
-      //     return new string[] { "Admin", "User" };
-      // }
 
       return cascadedRoles.ToArray ();
     }

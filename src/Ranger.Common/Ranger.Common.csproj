@@ -5,9 +5,6 @@
     <AssemblyName>Ranger.Common</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
-    <Content Remove="./Data/SQL/*.sql" />
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="./Data/SQL/*.sql" />
   </ItemGroup>
   <ItemGroup>
