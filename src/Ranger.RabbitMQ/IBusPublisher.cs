@@ -4,10 +4,10 @@ using RabbitMQ.Client.Events;
 
 namespace Ranger.RabbitMQ {
     public interface IBusPublisher : IDisposable {
-        void Send<TCommand> (TCommand command)
+        void Send<TCommand> (TCommand command, ICorrelationContext context)
         where TCommand : ICommand;
 
-        void Publish<TEvent> (TEvent @event)
+        void Publish<TEvent> (TEvent @event, ICorrelationContext context)
         where TEvent : IEvent;
 
         void Error<TMessage> (TMessage message, BasicDeliverEventArgs ea)

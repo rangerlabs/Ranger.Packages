@@ -3,6 +3,7 @@ using System.Reflection;
 using Autofac;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using Ranger.Common;
 
@@ -10,7 +11,11 @@ namespace Ranger.RabbitMQ {
     public static class Extensions {
         public static IBusSubscriber UseRabbitMQ (this IApplicationBuilder app) => new BusSubscriber (app);
 
-        public static void AddRabbitMq (this ContainerBuilder builder) {
+        public static void AddRabbitMq (this ContainerBuilder builder, ILoggerFactory loggerFactory = null) {
+            if (loggerFactory != null) {
+                LoggerFactoryInstance.Instance = loggerFactory;
+            }
+
             builder.Register (context => {
                 var configuration = context.Resolve<IConfiguration> ();
                 var options = configuration.GetOptions<RabbitMQOptions> ("rabbitMQ");

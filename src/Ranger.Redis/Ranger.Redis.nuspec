@@ -22,4 +22,7 @@
       <dependency id="Microsoft.Extensions.Options.ConfigurationExtensions" version="2.2.0" />
     </dependencies>
   </metadata>
+  <files>
+    <file src="bin\$configuration$\netstandard2.0\$id$.pdb" target="lib\netstandard\" />
+  </files>
 </package>

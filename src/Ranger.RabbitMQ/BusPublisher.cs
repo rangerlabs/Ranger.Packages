@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -12,7 +13,6 @@ namespace Ranger.RabbitMQ {
         private readonly IConnectionFactory connectionFactory;
         private readonly IConnection connection;
         private readonly IModel channel;
-        private readonly IBasicProperties messageProperties;
         private readonly RabbitMQOptions options;
         private readonly Dictionary<Type, TopologyNames> topologyDictionary = new Dictionary<Type, TopologyNames> ();
 
@@ -24,17 +24,15 @@ namespace Ranger.RabbitMQ {
             logger.LogInformation ("Publisher connected.");
             channel = connection.CreateModel ();
 
-            this.messageProperties = channel.CreateBasicProperties ();
-            messageProperties.Persistent = true;
             channel.ConfirmSelect ();
         }
 
-        public void Publish<TEvent> (TEvent @event) where TEvent : IEvent {
-            ChannelPublish<TEvent> (@event);
+        public void Publish<TEvent> (TEvent @event, ICorrelationContext context = null) where TEvent : IEvent {
+            ChannelPublish<TEvent> (@event, context);
         }
 
-        public void Send<TCommand> (TCommand command) where TCommand : ICommand {
-            ChannelPublish<TCommand> (command);
+        public void Send<TCommand> (TCommand command, ICorrelationContext context = null) where TCommand : ICommand {
+            ChannelPublish<TCommand> (command, context);
         }
 
         public void Error<TMessage> (TMessage message, BasicDeliverEventArgs ea) where TMessage : IMessage {
@@ -49,16 +47,16 @@ namespace Ranger.RabbitMQ {
                 this.channel.BasicPublish (topologyNames.ErrorExchange, topologyNames.ErrorRoutingKey.Replace ("#.", ""), true, ea.BasicProperties, ea.Body);
                 this.channel.WaitForConfirmsOrDie ();
             } catch (Exception ex) {
-                logger.LogError ($"Failed to publish message: '{typeof(TMessage)}'" +
-                    $"with correlation id: '{message.CorrelationContext.Id}'", ex);
+                logger.LogError (ex, $"Failed to publish message: '{typeof(TMessage)}'" +
+                    $"with correlation id: '{CorrelationContext.IdFromBasicDeliverEventArgsHeader(ea).ToString()}'");
                 throw;
             }
         }
 
-        private void ChannelPublish<TMessage> (TMessage message) where TMessage : IMessage {
+        private void ChannelPublish<TMessage> (TMessage message, ICorrelationContext context = null) where TMessage : IMessage {
             TopologyNames topologyNames = TopologyForMessageType<TMessage> ();
 
-            channel.ExchangeDeclare (
+            this.channel.ExchangeDeclare (
                 topologyNames.Exchange,
                 ExchangeType.Topic,
                 true);
@@ -67,17 +65,33 @@ namespace Ranger.RabbitMQ {
             try {
                 messageContent = JsonConvert.SerializeObject (message);
             } catch (Exception ex) {
-                logger.LogError ($"Failed to serialize object of type: '{typeof(TMessage)}'.", ex);
+                logger.LogError (ex, $"Failed to serialize object of type: '{typeof(TMessage)}'.");
                 throw;
             }
             try {
-                this.channel.BasicPublish (topologyNames.Exchange, topologyNames.RoutingKey.Replace ("#.", ""), basicProperties : this.messageProperties, body : System.Text.Encoding.Default.GetBytes (messageContent));
+                IBasicProperties messageProperties = CreateMessageHeaders (this.channel, context);
+                this.channel.BasicPublish (topologyNames.Exchange, topologyNames.RoutingKey.Replace ("#.", ""), basicProperties : messageProperties, body : System.Text.Encoding.Default.GetBytes (messageContent));
                 this.channel.WaitForConfirmsOrDie ();
             } catch (Exception ex) {
-                logger.LogError ($"Failed to publish message: '{message.GetType().Name}'" +
-                    $"with correlation id: '{message.CorrelationContext.Id}'", ex);
+                logger.LogError (ex, $"Failed to publish message: '{typeof(TMessage)}'" +
+                    $"with correlation id: '{context.CorrelationContextId}'");
                 throw;
             }
+        }
+
+        private IBasicProperties CreateMessageHeaders (IModel channel, ICorrelationContext context) {
+            if (channel is null) {
+                throw new ArgumentException (nameof (channel) + "was null.");
+            }
+            if (context is null) {
+                throw new ArgumentException (nameof (context) + "was null.");
+            }
+
+            var messageProperties = channel.CreateBasicProperties ();
+            messageProperties.Persistent = true;
+            messageProperties.Headers = context.ToStringifiedDictionary ();
+
+            return messageProperties;
         }
 
         private TopologyNames TopologyForMessageType<TMessage> () where TMessage : IMessage {

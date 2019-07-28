@@ -16,4 +16,7 @@
       <packageType name="Dependency" />
     </packageTypes>
   </metadata>
+  <files>
+    <file src="bin\$configuration$\netstandard2.0\$id$.pdb" target="lib\netstandard\" />
+  </files>
 </package>

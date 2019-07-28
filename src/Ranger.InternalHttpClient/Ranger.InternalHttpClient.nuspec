@@ -19,4 +19,7 @@
       <dependency id="IdentityModel" version="3.10.10" />
     </dependencies>
   </metadata>
+  <files>
+    <file src="bin\$configuration$\netstandard2.0\$id$.pdb" target="lib\netstandard\" />
+  </files>
 </package>
