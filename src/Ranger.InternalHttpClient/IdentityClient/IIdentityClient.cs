@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Ranger.InternalHttpClient {
-    public interface IIdentityClient : IApiClient {
+    public interface IIdentityClient {
 
         Task<InternalApiResponse<T>> GetUserAsync<T> (string domain, string username);
         Task<InternalApiResponse<T>> GetAllUsersAsync<T> (string domain);
