@@ -15,11 +15,13 @@ namespace Ranger.InternalHttpClient {
 
         public async Task<bool> ExistsAsync (string domain) {
             var apiResponse = new InternalApiResponse ();
-            var httpRequestMsg = new HttpRequestMessage () {
+            Func<HttpRequestMessage> httpRequestMessageFactory = (() => {
+                return new HttpRequestMessage () {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri (httpClient.BaseAddress, $"tenant/exists?domain={domain}")
-            };
-            apiResponse = await SendAsync (httpRequestMsg);
+                RequestUri = new Uri (httpClient.BaseAddress, $"tenant/exists/{domain}")
+                };
+            });
+            apiResponse = await SendAsync (httpRequestMessageFactory);
             if (apiResponse.IsSuccessStatusCode) {
                 return true;
             } else {
@@ -30,11 +32,13 @@ namespace Ranger.InternalHttpClient {
 
         public async Task<T> GetTenantAsync<T> (string domain) {
             var apiResponse = new InternalApiResponse<T> ();
-            var httpRequestMsg = new HttpRequestMessage () {
+            Func<HttpRequestMessage> httpRequestMessageFactory = (() => {
+                return new HttpRequestMessage () {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri (httpClient.BaseAddress, $"/tenant?domain={domain}")
-            };
-            apiResponse = await SendAsync<T> (httpRequestMsg);
+                RequestUri = new Uri (httpClient.BaseAddress, $"/tenant/{domain}")
+                };
+            });
+            apiResponse = await SendAsync<T> (httpRequestMessageFactory);
             if (apiResponse.IsSuccessStatusCode) {
                 return apiResponse.ResponseObject;
             } else {

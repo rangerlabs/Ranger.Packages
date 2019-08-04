@@ -15,13 +15,15 @@ namespace Ranger.InternalHttpClient {
 
         public async Task<T> GetUserAsync<T> (string domain, string username) {
             var apiResponse = new InternalApiResponse<T> ();
-            var httpRequestMsg = new HttpRequestMessage () {
+            Func<HttpRequestMessage> httpRequestMessageFactory = (() => {
+                return new HttpRequestMessage () {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri (httpClient.BaseAddress, $"user/{username}"),
                 Headers = { { "X-Tenant-Domain", domain },
                 }
-            };
-            apiResponse = await SendAsync<T> (httpRequestMsg);
+                };
+            });
+            apiResponse = await SendAsync<T> (httpRequestMessageFactory);
             if (apiResponse.IsSuccessStatusCode) {
                 return apiResponse.ResponseObject;
             } else {
@@ -31,13 +33,15 @@ namespace Ranger.InternalHttpClient {
 
         public async Task<T> GetAllUsersAsync<T> (string domain) {
             var apiResponse = new InternalApiResponse<T> ();
-            var httpRequestMsg = new HttpRequestMessage () {
+            Func<HttpRequestMessage> httpRequestMessageFactory = (() => {
+                return new HttpRequestMessage () {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri (httpClient.BaseAddress, $"user/all"),
                 Headers = { { "X-Tenant-Domain", domain },
                 }
-            };
-            apiResponse = await SendAsync<T> (httpRequestMsg);
+                };
+            });
+            apiResponse = await SendAsync<T> (httpRequestMessageFactory);
             if (apiResponse.IsSuccessStatusCode) {
                 return apiResponse.ResponseObject;
             } else {
@@ -47,12 +51,13 @@ namespace Ranger.InternalHttpClient {
 
         public async Task<T> GetRoleAsync<T> (string name) {
             var apiResponse = new InternalApiResponse<T> ();
-            var httpRequestMsg = new HttpRequestMessage () {
+            Func<HttpRequestMessage> httpRequestMessageFactory = (() => {
+                return new HttpRequestMessage () {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri ($"role/{name}")
-            };
-
-            apiResponse = await SendAsync<T> (httpRequestMsg);
+                };
+            });
+            apiResponse = await SendAsync<T> (httpRequestMessageFactory);
             if (apiResponse.IsSuccessStatusCode) {
                 return apiResponse.ResponseObject;
             } else {

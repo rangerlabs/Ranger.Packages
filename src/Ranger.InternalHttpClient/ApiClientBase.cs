@@ -43,12 +43,13 @@ namespace Ranger.InternalHttpClient {
             httpClient.SetBearerToken (tokenResponse.AccessToken);
         }
 
-        protected async Task<InternalApiResponse> SendAsync (HttpRequestMessage httpRequestMsg) {
+        protected async Task<InternalApiResponse> SendAsync (Func<HttpRequestMessage> httpRequestMessageFactory) {
             var apiResponse = new InternalApiResponse ();
-            var response = await httpClient.SendAsync (httpRequestMsg);
+            var response = await httpClient.SendAsync (httpRequestMessageFactory ());
             if (response.StatusCode == HttpStatusCode.Unauthorized) {
+                logger.LogInformation ("Recieved a 403 Unauthorized from requested service. Attempting to set new client token.");
                 await SetClientToken ();
-                response = await httpClient.SendAsync (httpRequestMsg);
+                response = await httpClient.SendAsync (httpRequestMessageFactory ());
             }
             if (response.IsSuccessStatusCode) {
                 apiResponse.IsSuccessStatusCode = true;
@@ -63,12 +64,14 @@ namespace Ranger.InternalHttpClient {
 
         }
 
-        protected async Task<InternalApiResponse<TReponseObject>> SendAsync<TReponseObject> (HttpRequestMessage httpRequestMsg) {
+        protected async Task<InternalApiResponse<TReponseObject>> SendAsync<TReponseObject> (Func<HttpRequestMessage> httpRequestMessageFactory) {
             var apiResponse = new InternalApiResponse<TReponseObject> ();
-            var response = await httpClient.SendAsync (httpRequestMsg);
+            var response = await httpClient.SendAsync (httpRequestMessageFactory ());
             if (response.StatusCode == HttpStatusCode.Unauthorized) {
+                logger.LogDebug ("Recieved a 403 Unauthorized from requested service. Attempting to set new client token.");
                 await SetClientToken ();
-                response = await httpClient.SendAsync (httpRequestMsg);
+                logger.LogDebug ("New client token set. Resending request.");
+                response = await httpClient.SendAsync (httpRequestMessageFactory ());
             }
             if (response.IsSuccessStatusCode) {
                 apiResponse.IsSuccessStatusCode = true;
