@@ -1,19 +1,26 @@
 using System;
-using System.Collections.Generic;
-using System.Net;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
-using IdentityModel.Client;
 using IdentityServer4;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace Ranger.InternalHttpClient {
-    public class IdentityClient : ApiClientBase<IdentityClient>, IIdentityClient {
-        public IdentityClient (string uri, ILogger<IdentityClient> logger) : base (uri, logger) { }
+    public class IdentityClient : ApiClientBase, IIdentityClient {
+        private readonly ILogger<IdentityClient> logger;
+
+        public IdentityClient (string uri, ILogger<IdentityClient> logger) : base (uri, logger, IdentityServerConstants.LocalApi.ScopeName) {
+            this.logger = logger;
+        }
 
         public async Task<T> GetUserAsync<T> (string domain, string username) {
+            if (String.IsNullOrWhiteSpace (domain)) {
+                throw new ArgumentException ($"{nameof(domain)} cannot be null or whitespace.");
+            }
+
+            if (string.IsNullOrWhiteSpace (username)) {
+                throw new ArgumentException ($"{nameof(domain)} cannot be null or whitespace.");
+            }
+
             var apiResponse = new InternalApiResponse<T> ();
             Func<HttpRequestMessage> httpRequestMessageFactory = (() => {
                 return new HttpRequestMessage () {
@@ -27,11 +34,15 @@ namespace Ranger.InternalHttpClient {
             if (apiResponse.IsSuccessStatusCode) {
                 return apiResponse.ResponseObject;
             } else {
-                throw new Exception (String.Join (Environment.NewLine, apiResponse.Errors));
+                throw GenericErrorException<T> (apiResponse);
             }
         }
 
         public async Task<T> GetAllUsersAsync<T> (string domain) {
+            if (String.IsNullOrWhiteSpace (domain)) {
+                throw new ArgumentException ($"{nameof(domain)} cannot be null or whitespace.");
+            }
+
             var apiResponse = new InternalApiResponse<T> ();
             Func<HttpRequestMessage> httpRequestMessageFactory = (() => {
                 return new HttpRequestMessage () {
@@ -45,11 +56,15 @@ namespace Ranger.InternalHttpClient {
             if (apiResponse.IsSuccessStatusCode) {
                 return apiResponse.ResponseObject;
             } else {
-                throw new Exception (String.Join (Environment.NewLine, apiResponse.Errors));
+                throw GenericErrorException<T> (apiResponse);
             }
         }
 
         public async Task<T> GetRoleAsync<T> (string name) {
+            if (string.IsNullOrWhiteSpace (name)) {
+                throw new ArgumentException ($"{nameof(name)} cannot be null or whitespace.");
+            }
+
             var apiResponse = new InternalApiResponse<T> ();
             Func<HttpRequestMessage> httpRequestMessageFactory = (() => {
                 return new HttpRequestMessage () {
@@ -61,7 +76,7 @@ namespace Ranger.InternalHttpClient {
             if (apiResponse.IsSuccessStatusCode) {
                 return apiResponse.ResponseObject;
             } else {
-                throw new Exception (String.Join (Environment.NewLine, apiResponse.Errors));
+                throw GenericErrorException<T> (apiResponse);
             }
         }
     }

@@ -13,5 +13,4 @@
     <PackageReference Include="Ranger.Common" Version="1.0.24" />
     <PackageReference Include="Ranger.Monitoring" Version="1.0.1" />
   </ItemGroup>
-
 </Project>
