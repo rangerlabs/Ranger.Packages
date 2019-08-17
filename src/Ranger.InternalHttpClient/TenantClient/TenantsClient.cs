@@ -23,7 +23,7 @@ namespace Ranger.InternalHttpClient {
             Func<HttpRequestMessage> httpRequestMessageFactory = (() => {
                 return new HttpRequestMessage () {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri (httpClient.BaseAddress, $"tenant/exists/{domain}")
+                RequestUri = new Uri (httpClient.BaseAddress, $"tenant/{domain}/exists")
                 };
             });
             apiResponse = await SendAsync (httpRequestMessageFactory);
