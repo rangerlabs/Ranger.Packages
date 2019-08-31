@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
@@ -8,7 +7,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Caching.Redis" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="2.2.0" />
-    <PackageReference Include="Ranger.Common" Version="1.0.24" />
+    <PackageReference Include="Ranger.Common" Version="1.0.25" />
+    <PackageReference Include="Ranger.Monitoring" Version="1.0.1" />
   </ItemGroup>
-
 </Project>

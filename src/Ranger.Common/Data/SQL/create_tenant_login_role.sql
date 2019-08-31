@@ -1,7 +1,7 @@
-DROP FUNCTION IF EXISTS public.create_tenantloginrole
+DROP FUNCTION IF EXISTS public.create_tenant_login_role
 (NAME, TEXT);
 
-CREATE OR REPLACE FUNCTION public.create_tenantloginrole
+CREATE OR REPLACE FUNCTION public.create_tenant_login_role
 (v_username NAME, v_password TEXT) 
 RETURNS smallint AS 
 $BODY$
@@ -18,4 +18,4 @@ $BODY$
 LANGUAGE plpgsql STRICT VOLATILE SECURITY INVOKER
 COST 100;
 
-ALTER FUNCTION public.create_tenantloginrole(NAME, TEXT) OWNER TO postgres;
+ALTER FUNCTION public.create_tenant_login_role(NAME, TEXT) OWNER TO postgres;

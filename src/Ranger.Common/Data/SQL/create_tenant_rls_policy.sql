@@ -1,7 +1,7 @@
-DROP FUNCTION IF EXISTS public.create_tenantpolicy
+DROP FUNCTION IF EXISTS public.create_tenant_rls_policy
 (TEXT);
 
-CREATE OR REPLACE FUNCTION public.create_tenantpolicy
+CREATE OR REPLACE FUNCTION public.create_tenant_rls_policy
 (v_table TEXT)
 RETURNS smallint AS 
 $BODY$
@@ -20,4 +20,4 @@ $BODY$
 LANGUAGE plpgsql STRICT VOLATILE SECURITY INVOKER
 COST 100;
 
-ALTER FUNCTION public.create_tenantpolicy(TEXT) OWNER TO postgres;
+ALTER FUNCTION public.create_tenant_rls_policy(TEXT) OWNER TO postgres;
