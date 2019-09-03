@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
 
-namespace Ranger.RabbitMQ {
-    public interface ICorrelationContext {
+namespace Ranger.RabbitMQ
+{
+    public interface ICorrelationContext
+    {
         Guid CorrelationContextId { get; }
         Guid ResourceId { get; }
-        string UserId { get; }
+        string Domain { get; }
+        string UserEmail { get; }
         string TraceId { get; }
         string SpanContext { get; }
         string ConnectionId { get; }
@@ -16,6 +19,6 @@ namespace Ranger.RabbitMQ {
         DateTime CreatedAt { get; }
         int Retries { get; }
 
-        IDictionary<string, object> ToStringifiedDictionary ();
+        IDictionary<string, object> ToStringifiedDictionary();
     }
 }
