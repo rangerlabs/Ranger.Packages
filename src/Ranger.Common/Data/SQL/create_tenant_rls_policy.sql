@@ -10,7 +10,7 @@ BEGIN
     EXECUTE FORMAT
     ('ALTER TABLE %I ENABLE ROW LEVEL SECURITY;', v_table);
     EXECUTE FORMAT
-    ('CREATE POLICY user_policy ON %I USING (tenant_domain = current_user);', v_table);
+    ('CREATE POLICY user_policy ON %I USING (database_username = current_user);', v_table);
     RETURN 1;
     EXCEPTION
     WHEN others THEN

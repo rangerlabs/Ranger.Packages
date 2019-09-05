@@ -1,9 +1,12 @@
 using Newtonsoft.Json;
 
-namespace Ranger.Common {
-    public class ContextTenant {
+namespace Ranger.Common
+{
+    public class ContextTenant
+    {
         [JsonConstructor]
-        public ContextTenant (string databaseUsername, string databasePassword) {
+        public ContextTenant(string databaseUsername, string databasePassword)
+        {
             this.DatabaseUsername = databaseUsername;
             this.DatabasePassword = databasePassword;
 
