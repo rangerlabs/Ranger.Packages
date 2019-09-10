@@ -48,7 +48,7 @@ namespace Ranger.RabbitMQ
         private void ErrorPublish<TMessage>(TMessage message, BasicDeliverEventArgs ea) where TMessage : IMessage
         {
             TopologyNames topologyNames = TopologyForMessageType(message.GetType());
-            channel.Bind<TMessage>(topologyNames.ErrorExchange, topologyNames.ErrorQueue, options);
+            channel.Bind<TMessage>(topologyNames.ErrorExchange, topologyNames.ErrorQueue, topologyNames.ErrorRoutingKey, options);
 
             try
             {

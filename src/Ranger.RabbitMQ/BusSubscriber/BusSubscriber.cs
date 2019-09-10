@@ -37,7 +37,8 @@ namespace Ranger.RabbitMQ
         {
             var exchangeName = NamingConventions.ExchangeNamingConvention(typeof(TCommand), options.Namespace);
             var queueName = NamingConventions.QueueNamingConvention(typeof(TCommand), options.Namespace);
-            channel.Bind<TCommand>(exchangeName, queueName, options);
+            var routingKey = NamingConventions.RoutingKeyConvention(typeof(TCommand), options.Namespace);
+            channel.Bind<TCommand>(exchangeName, queueName, routingKey, options);
 
             AsyncEventingBasicConsumer eventingConsumer = RegisterConsumerEvents(queueName, onError);
 
@@ -56,7 +57,8 @@ namespace Ranger.RabbitMQ
         {
             var exchangeName = NamingConventions.ExchangeNamingConvention(typeof(TEvent), options.Namespace);
             var queueName = NamingConventions.QueueNamingConvention(typeof(TEvent), options.Namespace);
-            channel.Bind<TEvent>(exchangeName, queueName, options);
+            var routingKey = NamingConventions.RoutingKeyConvention(typeof(TEvent), options.Namespace);
+            channel.Bind<TEvent>(exchangeName, queueName, routingKey, options);
 
             AsyncEventingBasicConsumer eventingConsumer = RegisterConsumerEvents(queueName, onError);
 
