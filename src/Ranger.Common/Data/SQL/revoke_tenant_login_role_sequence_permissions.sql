@@ -8,7 +8,7 @@ $BODY$
 DECLARE
 BEGIN
     EXECUTE FORMAT
-    ('REVOKE USAGE ON ALL SEQUENCES IN SCHEMA public TO %I;', v_username);
+    ('REVOKE USAGE ON ALL SEQUENCES IN SCHEMA public FROM %I;', v_username);
     RETURN 1;
     EXCEPTION
     WHEN others THEN
