@@ -6,54 +6,62 @@ using System.Reflection;
 using System.Text;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace Ranger.Common {
-    public static class MultiTenantMigrationMethods {
-        public static string CreateTenantLoginRole () {
-            string sql;
-            Assembly assembly = Assembly.GetExecutingAssembly ();
-            using (var manifestStream = assembly.GetManifestResourceStream ("Ranger.Common.Data.SQL.create_tenantloginrole.sql")) {
-                if (manifestStream is null) {
-                    throw new RangerException ($@"Failed to file ""Ranger.Common.Data.SQL.create_tenantloginrole.sql"" in manifest files {String.Join(";", assembly.GetManifestResourceNames())} ");
-                }
-                using (var reader = new StreamReader (manifestStream)) {
-                    sql = reader.ReadToEnd ();
-                }
-                if (String.IsNullOrWhiteSpace (sql)) {
-                    throw new Exception ("The file 'create_tenantloginrole.sql' was empty.");
-                }
-            }
-            return sql;
-        }
-        public static string CreateTenantLoginRolePermissions () {
-            string sql;
-            Assembly assembly = Assembly.GetExecutingAssembly ();
-            using (var manifestStream = assembly.GetManifestResourceStream ("Ranger.Common.Data.SQL.create_tenantloginrolepermissions.sql")) {
-                if (manifestStream is null) {
-                    throw new RangerException ($@"Failed to file ""Ranger.Common.Data.SQL.create_tenantloginrolepermissions.sql"" in manifest files {String.Join(";", assembly.GetManifestResourceNames())} ");
-                }
-                using (var reader = new StreamReader (manifestStream)) {
-                    sql = reader.ReadToEnd ();
-                }
-                if (String.IsNullOrWhiteSpace (sql)) {
-                    throw new Exception ("The file 'create_tenantloginrolepermissions.sql' was empty.");
-                }
-            }
-            return sql;
+namespace Ranger.Common
+{
+    public static class MultiTenantMigrationSql
+    {
+        public static string CreateTenantRlsPolicy()
+        {
+            return GetManifestResourceSql("create_tenant_rls_policy");
         }
 
-        public static string CreateTenantPolicy () {
+        public static string CreateTenantLoginRole()
+        {
+            return GetManifestResourceSql("create_tenant_login_role");
+        }
+
+        public static string GrantTenantLoginRoleTablePermissions()
+        {
+            return GetManifestResourceSql("grant_tenant_login_role_table_permissions");
+        }
+
+        public static string GrantTenantLoginRoleSequencePermissions()
+        {
+            return GetManifestResourceSql("grant_tenant_login_role_sequence_permissions");
+        }
+
+        public static string RevokeTenantLoginRoleTablePermissions()
+        {
+            return GetManifestResourceSql("revoke_tenant_login_role_table_permissions");
+        }
+
+        public static string RevokeTenantLoginRoleSequencePermissions()
+        {
+            return GetManifestResourceSql("revoke_tenant_login_role_sequence_permissions");
+        }
+
+        public static string DropTenantLoginRole()
+        {
+            return GetManifestResourceSql("drop_tenant_login_role");
+        }
+
+        private static string GetManifestResourceSql(string name)
+        {
             string sql;
-            Assembly assembly = Assembly.GetExecutingAssembly ();
-            Console.WriteLine (assembly.GetManifestResourceNames ());
-            using (var manifestStream = assembly.GetManifestResourceStream ("Ranger.Common.Data.SQL.create_tenantpolicy.sql")) {
-                if (manifestStream is null) {
-                    throw new RangerException ($@"Failed to file ""Ranger.Common.Data.SQL.create_tenantpolicy.sql"" in manifest files {String.Join(";", assembly.GetManifestResourceNames())} ");
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            using (var manifestStream = assembly.GetManifestResourceStream($"Ranger.Common.Data.SQL.{name}.sql"))
+            {
+                if (manifestStream is null)
+                {
+                    throw new RangerException($@"Failed to file ""Ranger.Common.Data.SQL.{name}.sql"" in manifest files {String.Join(";", assembly.GetManifestResourceNames())} ");
                 }
-                using (var reader = new StreamReader (manifestStream)) {
-                    sql = reader.ReadToEnd ();
+                using (var reader = new StreamReader(manifestStream))
+                {
+                    sql = reader.ReadToEnd();
                 }
-                if (String.IsNullOrWhiteSpace (sql)) {
-                    throw new Exception ("The file 'create_tenantpolicy.sql' was empty.");
+                if (String.IsNullOrWhiteSpace(sql))
+                {
+                    throw new Exception($"The file '{name}.sql' was empty.");
                 }
             }
             return sql;

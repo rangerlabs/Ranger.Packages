@@ -3,25 +3,50 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
-namespace Ranger.Common {
+namespace Ranger.Common
+{
     public class LoginRoleRepository<TContext> : ILoginRoleRepository<TContext>
-        where TContext : DbContext {
-            private readonly TContext context;
+        where TContext : DbContext
+    {
+        private readonly TContext context;
 
-            public LoginRoleRepository (TContext context) {
-                this.context = context;
-            }
-
-            public async Task<int> CreateTenantLoginRole (string username, string password) {
-                return await context.Database.ExecuteSqlCommandAsync ($@"SELECT create_tenantloginrole({username}, {password});");
-            }
-
-            public async Task<int> CreateTenantLoginRolePermissions (string username, string table) {
-                return await context.Database.ExecuteSqlCommandAsync ($@"SELECT create_tenantloginrolepermissions({username}, {table});");
-            }
-
-            public async Task<int> CreateTenantLoginPolicy (string table) {
-                return await context.Database.ExecuteSqlCommandAsync ($@"SELECT create_tenantpolicy({table});");
-            }
+        public LoginRoleRepository(TContext context)
+        {
+            this.context = context;
         }
+
+        public async Task<int> CreateTenantLoginRole(string username, string password)
+        {
+            return await context.Database.ExecuteSqlCommandAsync($@"SELECT create_tenant_login_role({username}, {password});");
+        }
+        public async Task<int> DropTenantLoginRole(string username)
+        {
+            return await context.Database.ExecuteSqlCommandAsync($@"SELECT drop_tenant_login_role({username});");
+        }
+
+        public async Task<int> RevokeTenantLoginRoleTablePermissions(string username, string table)
+        {
+            return await context.Database.ExecuteSqlCommandAsync($@"SELECT revoke_tenant_login_role_table_permissions({username}, {table});");
+        }
+
+        public async Task<int> GrantTenantLoginRoleTablePermissions(string username, string table)
+        {
+            return await context.Database.ExecuteSqlCommandAsync($@"SELECT grant_tenant_login_role_table_permissions({username}, {table});");
+        }
+
+        public async Task<int> RevokeTenantLoginRoleSequencePermissions(string username)
+        {
+            return await context.Database.ExecuteSqlCommandAsync($@"SELECT revoke_tenant_login_role_sequence_permissions({username});");
+        }
+
+        public async Task<int> GrantTenantLoginRoleSequencePermissions(string username)
+        {
+            return await context.Database.ExecuteSqlCommandAsync($@"SELECT grant_tenant_login_role_sequence_permissions({username});");
+        }
+
+        public async Task<int> CreateTenantRlsPolicy(string table)
+        {
+            return await context.Database.ExecuteSqlCommandAsync($@"SELECT create_tenantpolicy({table});");
+        }
+    }
 }
