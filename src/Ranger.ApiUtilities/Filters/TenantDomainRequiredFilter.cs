@@ -34,14 +34,21 @@ namespace Ranger.ApiUtilities
                     {
                         try
                         {
-                            var tenantApiResponse = await tenantsClient.ExistsAsync(domain);
-                            if (tenantApiResponse)
+                            var tenantApiResponse = await tenantsClient.EnabledAsync<EnabledResult>(domain);
+                            if (tenantApiResponse.Enabled)
                             {
                                 await next();
                             }
                             else
                             {
-                                context.Result = new NotFoundObjectResult($"No tenant found for the provided X-Tenant-Domain header'{domain}'.");
+                                context.Result = new ForbidResult($"The tenant for the provided X-Tenant-Domain header is not enabled '{domain}'. Ensure the domain has been confirmed.");
+                            }
+                        }
+                        catch (HttpClientException ex)
+                        {
+                            if ((int)ex.ApiResponse.StatusCode == StatusCodes.Status404NotFound)
+                            {
+                                context.Result = new NotFoundObjectResult($"No tenant found for the provided X-Tenant-Domain header '{domain}'.");
                             }
                         }
                         catch (Exception ex)
