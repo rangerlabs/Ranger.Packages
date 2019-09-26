@@ -38,10 +38,10 @@ namespace Ranger.InternalHttpClient
                 {
                     Address = "http://identity:5000",
                     Policy = {
-                RequireHttps = false,
-                Authority = "http://localhost.io:5000",
-                ValidateEndpoints = false
-                },
+                        RequireHttps = false,
+                        Authority = "http://localhost.io:5000",
+                        ValidateEndpoints = false
+                    },
                 };
             }
             else
@@ -50,8 +50,9 @@ namespace Ranger.InternalHttpClient
                 {
                     Address = "http://rangerlabs.io/auth",
                     Policy = {
-                    Authority = "http://rangerlabs.io",
-                    ValidateEndpoints = false
+                        RequireHttps = false,
+                        Authority = "http://rangerlabs.io",
+                        ValidateEndpoints = false
                     },
                 };
 
