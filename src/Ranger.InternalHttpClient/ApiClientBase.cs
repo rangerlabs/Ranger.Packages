@@ -63,6 +63,7 @@ namespace Ranger.InternalHttpClient
                 throw new Exception(disco.Error);
             }
 
+            //TODO: The client secret should be on a per client basis, for now just using a single one and this works because the this Identity Client has this and the other tokens approved.
             var tokenResponse = await httpClient.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
             {
                 Address = disco.TokenEndpoint,
