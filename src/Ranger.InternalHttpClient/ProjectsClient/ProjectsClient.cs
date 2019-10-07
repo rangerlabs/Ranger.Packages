@@ -15,6 +15,33 @@ namespace Ranger.InternalHttpClient
             this.logger = logger;
         }
 
+        public async Task<T> GetAllProjectsAsycn<T>(string domain)
+        {
+            if (String.IsNullOrWhiteSpace(domain))
+            {
+                throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
+            }
+
+            Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
+            {
+                return new HttpRequestMessage()
+                {
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri(httpClient.BaseAddress, $"/{domain}/project/all"),
+                };
+            });
+
+            apiResponse = await SendAsync<T>(httpRequestMessageFactory);
+            if (apiResponse.IsSuccessStatusCode)
+            {
+                return apiResponse.ResponseObject;
+            }
+            else
+            {
+                throw new HttpClientException<T>(apiResponse);
+            }
+        }
+
         public async Task<T> PostProjectAsync<T>(string domain, string jsonContent)
         {
             if (String.IsNullOrWhiteSpace(domain))
