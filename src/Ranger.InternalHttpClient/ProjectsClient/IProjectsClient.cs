@@ -1,10 +1,11 @@
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace Ranger.InternalHttpClient
 {
     public interface IProjectsClient
     {
-        Task<T> GetAllProjectsAsycn<T>(string domain);
-        Task<T> PostProjectAsync<T>(string domain, string jsonContent);
+        Task<T> GetAllProjectsAsync<T>(string domain);
+        Task<T> SendProjectAsync<T>(HttpMethod method, string domain, string jsonContent);
     }
 }

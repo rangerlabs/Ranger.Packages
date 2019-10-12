@@ -15,7 +15,7 @@ namespace Ranger.InternalHttpClient
             this.logger = logger;
         }
 
-        public async Task<T> GetAllProjectsAsycn<T>(string domain)
+        public async Task<T> GetAllProjectsAsync<T>(string domain)
         {
             if (String.IsNullOrWhiteSpace(domain))
             {
@@ -31,7 +31,7 @@ namespace Ranger.InternalHttpClient
                 };
             });
 
-            apiResponse = await SendAsync<T>(httpRequestMessageFactory);
+            var apiResponse = await SendAsync<T>(httpRequestMessageFactory);
             if (apiResponse.IsSuccessStatusCode)
             {
                 return apiResponse.ResponseObject;
@@ -42,7 +42,7 @@ namespace Ranger.InternalHttpClient
             }
         }
 
-        public async Task<T> PostProjectAsync<T>(string domain, string jsonContent)
+        public async Task<T> SendProjectAsync<T>(HttpMethod method, string domain, string jsonContent)
         {
             if (String.IsNullOrWhiteSpace(domain))
             {
@@ -57,7 +57,7 @@ namespace Ranger.InternalHttpClient
             {
                 return new HttpRequestMessage()
                 {
-                    Method = HttpMethod.Post,
+                    Method = method,
                     RequestUri = new Uri(httpClient.BaseAddress, $"/{domain}/project"),
                     Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
                 };

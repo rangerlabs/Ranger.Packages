@@ -7,6 +7,8 @@ using IdentityModel.Client;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Ranger.Common;
 
 namespace Ranger.InternalHttpClient
 {
@@ -106,12 +108,12 @@ namespace Ranger.InternalHttpClient
                 var errorContent = await response.Content?.ReadAsStringAsync() ?? "";
                 try
                 {
-                    apiResponse.Errors = JsonConvert.DeserializeObject<IEnumerable<string>>(errorContent);
+                    apiResponse.Errors = JsonConvert.DeserializeObject<ApiErrorContent>(errorContent);
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Failed to deserialize the content of an error response. The response content may not have been valid JSON.");
-                    apiResponse.Errors = new string[] { "" };
+                    logger.LogError(ex, "Failed to deserialize the content of an error response. The response content may not have been a valid ApiErrorContent object.");
+                    apiResponse.Errors = new ApiErrorContent();
                 }
             }
             return apiResponse;
@@ -159,12 +161,12 @@ namespace Ranger.InternalHttpClient
                 var errorContent = await response.Content?.ReadAsStringAsync() ?? "";
                 try
                 {
-                    apiResponse.Errors = JsonConvert.DeserializeObject<IEnumerable<string>>(errorContent);
+                    apiResponse.Errors = JsonConvert.DeserializeObject<ApiErrorContent>(errorContent);
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Failed to deserialize the content of an error response. The response content may not have been valid JSON.");
-                    apiResponse.Errors = new string[] { "" };
+                    logger.LogError(ex, "Failed to deserialize the content of an error response. The response content may not have been a valid ApiErrorContent object.");
+                    apiResponse.Errors = new ApiErrorContent();
                 }
             }
             return apiResponse;

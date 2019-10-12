@@ -2,9 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Ranger.Common
 {
-    public class RowLevelSecurityDbSet
+    public interface IRowLevelSecurityDbSet
     {
         [Required]
-        public string DatabaseUsername { get; set; }
+        string DatabaseUsername { get; set; }
     }
 }
