@@ -15,10 +15,10 @@ namespace Ranger.Common
 
         public void SetEncrytedPropertyAccessMode(IMutableEntityType entityType)
         {
-            foreach (var property in entityType.GetProperties())
+            foreach (var property in entityType?.GetProperties())
             {
-                var attributes = property.PropertyInfo.GetCustomAttributes(typeof(EncryptedAttribute), false);
-                if (attributes.Any())
+                var attributes = property?.PropertyInfo?.GetCustomAttributes(typeof(EncryptedAttribute), true);
+                if (attributes != null && attributes.Any())
                 {
                     property.SetValueConverter(new ProtectedConverter(dataProtectionProvider));
                 }

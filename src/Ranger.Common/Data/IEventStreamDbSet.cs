@@ -4,15 +4,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Ranger.Common
 {
-    public interface IEventStreamDbSet<TStreamData>
+    public interface IEventStreamDbSet<TStreamData> : IRowLevelSecurityDbSet
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         int Id { get; set; }
         Guid StreamId { get; set; }
-        [Required]
-        [StringLength(28)]
-        string Domain { get; set; }
         [Required]
         int Version { get; set; }
         [Required]
