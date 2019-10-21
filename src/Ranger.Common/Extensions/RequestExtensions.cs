@@ -13,7 +13,7 @@ namespace Ranger.Common
         {
             string result = "";
             StringValues domain;
-            bool success = headers.TryGetValue("X-Tenant-Domain", out domain);
+            bool success = headers.TryGetValue("x-ranger-domain", out domain);
             if (success)
             {
                 if (domain.Count == 1)
@@ -22,7 +22,7 @@ namespace Ranger.Common
                 }
                 else
                 {
-                    throw new DomainNotFoundException("Multiple header values were found for X-Tenant-Domain.");
+                    throw new DomainNotFoundException("Multiple header values were found for x-ranger-domain.");
                 }
             }
             return result;

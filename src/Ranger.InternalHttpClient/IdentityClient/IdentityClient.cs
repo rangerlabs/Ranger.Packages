@@ -34,7 +34,7 @@ namespace Ranger.InternalHttpClient
                 {
                     Method = HttpMethod.Get,
                     RequestUri = new Uri(httpClient.BaseAddress, $"user/{username}"),
-                    Headers = { { "X-Tenant-Domain", domain },
+                    Headers = { { "x-ranger-domain", domain },
                 }
                 };
             });
@@ -63,7 +63,7 @@ namespace Ranger.InternalHttpClient
                 {
                     Method = HttpMethod.Get,
                     RequestUri = new Uri(httpClient.BaseAddress, $"user/all"),
-                    Headers = { { "X-Tenant-Domain", domain },
+                    Headers = { { "x-ranger-domain", domain },
                 }
                 };
             });

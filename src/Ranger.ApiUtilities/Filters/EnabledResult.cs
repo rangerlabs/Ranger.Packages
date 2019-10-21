@@ -1,8 +1,7 @@
 namespace Ranger.ApiUtilities
 {
-    internal class EnabledResult
+    public class EnabledResult
     {
         public bool Enabled { get; set; }
     }
-
 }

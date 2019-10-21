@@ -15,8 +15,7 @@ namespace Ranger.ApiUtilities
         private class TenantDomainRequiredFilterImpl : IAsyncActionFilter
         {
             private readonly ITenantsClient tenantsClient;
-
-            public ILogger<TenantDomainRequiredFilterImpl> logger { get; }
+            private ILogger<TenantDomainRequiredFilterImpl> logger { get; }
 
             public TenantDomainRequiredFilterImpl(ITenantsClient tenantsClient, ILogger<TenantDomainRequiredFilterImpl> logger)
             {
@@ -25,9 +24,8 @@ namespace Ranger.ApiUtilities
             }
             public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
             {
-
                 StringValues domain;
-                bool success = context.HttpContext.Request.Headers.TryGetValue("X-Tenant-Domain", out domain);
+                bool success = context.HttpContext.Request.Headers.TryGetValue("x-ranger-domain", out domain);
                 if (success)
                 {
                     if (domain.Count == 1)
@@ -41,30 +39,35 @@ namespace Ranger.ApiUtilities
                             }
                             else
                             {
-                                context.Result = new ForbidResult($"The tenant for the provided X-Tenant-Domain header is not enabled '{domain}'. Ensure the domain has been confirmed.");
+                                context.Result = new ForbidResult($"The tenant for the provided x-ranger-domain header is not enabled '{domain}'. Ensure the domain has been confirmed.");
+                                return;
                             }
                         }
                         catch (HttpClientException ex)
                         {
                             if ((int)ex.ApiResponse.StatusCode == StatusCodes.Status404NotFound)
                             {
-                                context.Result = new NotFoundObjectResult($"No tenant found for the provided X-Tenant-Domain header '{domain}'.");
+                                context.Result = new NotFoundObjectResult($"No tenant found for the provided x-ranger-domain header '{domain}'.");
+                                return;
                             }
                         }
                         catch (Exception ex)
                         {
                             this.logger.LogError(ex, $"An exception occurred validating whether the domain '{domain}' exists.");
                             context.Result = new StatusCodeResult(StatusCodes.Status500InternalServerError);
+                            return;
                         }
                     }
                     else
                     {
-                        context.Result = new BadRequestObjectResult(new { errors = new { serverErrors = "Multiple X-Tenant-Domain header values were found for X-Tenant-Domain." } });
+                        context.Result = new BadRequestObjectResult(new { errors = new { serverErrors = "Multiple x-ranger-domain header values were found for x-ranger-domain." } });
+                        return;
                     }
                 }
                 else
                 {
-                    context.Result = new BadRequestObjectResult(new { errors = new { serverErrors = "No X-Tenant-Domain header value was found." } });
+                    context.Result = new BadRequestObjectResult(new { errors = new { serverErrors = "No x-ranger-domain header value was found." } });
+                    return;
                 }
             }
         }

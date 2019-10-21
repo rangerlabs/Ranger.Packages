@@ -15,6 +15,65 @@ namespace Ranger.InternalHttpClient
             this.logger = logger;
         }
 
+        public async Task<T> GetDatabaseUsernameByApiKeyAsync<T>(string apiKey)
+        {
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                throw new ArgumentException($"{nameof(apiKey)} cannot be null or whitespace.");
+            }
+
+            Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
+            {
+                return new HttpRequestMessage()
+                {
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri(httpClient.BaseAddress, $"/project/{apiKey}/databaseusername"),
+                };
+            });
+
+            var apiResponse = await SendAsync<T>(httpRequestMessageFactory);
+            if (apiResponse.IsSuccessStatusCode)
+            {
+                return apiResponse.ResponseObject;
+            }
+            else
+            {
+                throw new HttpClientException<T>(apiResponse);
+            }
+        }
+
+        public async Task<T> GetProjectByApiKeyAsync<T>(string domain, string apiKey)
+        {
+            if (string.IsNullOrWhiteSpace(domain))
+            {
+                throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
+            }
+
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                throw new ArgumentException($"{nameof(apiKey)} cannot be null or whitespace.");
+            }
+
+            Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
+            {
+                return new HttpRequestMessage()
+                {
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri(httpClient.BaseAddress, $"/{domain}/project?apiKey={apiKey}"),
+                };
+            });
+
+            var apiResponse = await SendAsync<T>(httpRequestMessageFactory);
+            if (apiResponse.IsSuccessStatusCode)
+            {
+                return apiResponse.ResponseObject;
+            }
+            else
+            {
+                throw new HttpClientException<T>(apiResponse);
+            }
+        }
+
         public async Task<T> GetAllProjectsAsync<T>(string domain)
         {
             if (String.IsNullOrWhiteSpace(domain))
