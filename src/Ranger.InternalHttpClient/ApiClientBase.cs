@@ -7,6 +7,8 @@ using IdentityModel.Client;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Ranger.Common;
 
 namespace Ranger.InternalHttpClient
 {
@@ -38,10 +40,10 @@ namespace Ranger.InternalHttpClient
                 {
                     Address = "http://identity:5000",
                     Policy = {
-                RequireHttps = false,
-                Authority = "http://localhost.io:5000",
-                ValidateEndpoints = false
-                },
+                        RequireHttps = false,
+                        Authority = "http://localhost.io:5000",
+                        ValidateEndpoints = false
+                    },
                 };
             }
             else
@@ -50,8 +52,9 @@ namespace Ranger.InternalHttpClient
                 {
                     Address = "http://rangerlabs.io/auth",
                     Policy = {
-                    Authority = "http://rangerlabs.io",
-                    ValidateEndpoints = false
+                        RequireHttps = false,
+                        Authority = "http://rangerlabs.io",
+                        ValidateEndpoints = false
                     },
                 };
 
@@ -62,6 +65,7 @@ namespace Ranger.InternalHttpClient
                 throw new Exception(disco.Error);
             }
 
+            //TODO: The client secret should be on a per client basis, for now just using a single one and this works because the this Identity Client has this and the other tokens approved.
             var tokenResponse = await httpClient.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
             {
                 Address = disco.TokenEndpoint,
@@ -104,12 +108,12 @@ namespace Ranger.InternalHttpClient
                 var errorContent = await response.Content?.ReadAsStringAsync() ?? "";
                 try
                 {
-                    apiResponse.Errors = JsonConvert.DeserializeObject<IEnumerable<string>>(errorContent);
+                    apiResponse.Errors = JsonConvert.DeserializeObject<ApiErrorContent>(errorContent);
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Failed to deserialize the content of an error response. The response content may not have been valid JSON.");
-                    apiResponse.Errors = new string[] { "" };
+                    logger.LogError(ex, "Failed to deserialize the content of an error response. The response content may not have been a valid ApiErrorContent object.");
+                    apiResponse.Errors = new ApiErrorContent();
                 }
             }
             return apiResponse;
@@ -157,12 +161,12 @@ namespace Ranger.InternalHttpClient
                 var errorContent = await response.Content?.ReadAsStringAsync() ?? "";
                 try
                 {
-                    apiResponse.Errors = JsonConvert.DeserializeObject<IEnumerable<string>>(errorContent);
+                    apiResponse.Errors = JsonConvert.DeserializeObject<ApiErrorContent>(errorContent);
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Failed to deserialize the content of an error response. The response content may not have been valid JSON.");
-                    apiResponse.Errors = new string[] { "" };
+                    logger.LogError(ex, "Failed to deserialize the content of an error response. The response content may not have been a valid ApiErrorContent object.");
+                    apiResponse.Errors = new ApiErrorContent();
                 }
             }
             return apiResponse;

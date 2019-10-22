@@ -46,7 +46,7 @@ namespace Ranger.Common
 
         public async Task<int> CreateTenantRlsPolicy(string table)
         {
-            return await context.Database.ExecuteSqlCommandAsync($@"SELECT create_tenantpolicy({table});");
+            return await context.Database.ExecuteSqlCommandAsync($@"SELECT create_tenant_rls_policy({table});");
         }
     }
 }

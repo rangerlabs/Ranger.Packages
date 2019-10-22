@@ -62,6 +62,30 @@ namespace Ranger.InternalHttpClient
             throw new HttpClientException<T>(apiResponse);
         }
 
+        public async Task<T> GetTenantByDatabaseUsernameAsync<T>(string databaseUsername)
+        {
+            if (String.IsNullOrWhiteSpace(databaseUsername))
+            {
+                throw new ArgumentException($"{nameof(databaseUsername)} cannot be null or whitespace.");
+            }
+
+            var apiResponse = new InternalApiResponse<T>();
+            Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
+            {
+                return new HttpRequestMessage()
+                {
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri(httpClient.BaseAddress, $"/tenant?databaseUsername={databaseUsername}"),
+                };
+            });
+            apiResponse = await SendAsync<T>(httpRequestMessageFactory);
+            if (apiResponse.IsSuccessStatusCode)
+            {
+                return apiResponse.ResponseObject;
+            }
+            throw new HttpClientException<T>(apiResponse);
+        }
+
         public async Task<T> GetTenantAsync<T>(string domain)
         {
             if (String.IsNullOrWhiteSpace(domain))
