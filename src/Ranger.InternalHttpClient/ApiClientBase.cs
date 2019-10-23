@@ -50,10 +50,10 @@ namespace Ranger.InternalHttpClient
             {
                 discoveryDocument = new DiscoveryDocumentRequest()
                 {
-                    Address = "http://rangerlabs.io/auth",
+                    Address = "http://identity:5000",
                     Policy = {
                         RequireHttps = false,
-                        Authority = "http://rangerlabs.io",
+                        Authority = "https://rangerlabs.io",
                         ValidateEndpoints = false
                     },
                 };
