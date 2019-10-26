@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Ranger.Common
 {
-    public interface IEventStreamDbSet<TStreamData> : IRowLevelSecurityDbSet
+    public interface IEventStreamDbSet : IRowLevelSecurityDbSet
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
