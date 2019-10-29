@@ -11,6 +11,6 @@ namespace Ranger.InternalHttpClient
         Task<T> PostProjectAsync<T>(string domain, string jsonContent);
         Task<T> PutProjectAsync<T>(string domain, string projectId, string jsonContent);
         Task<T> ApiKeyResetAsync<T>(string domain, string projectId, string environment, string jsonContent);
-        Task SoftDeleteProjectAsync(string domain, string projectId);
+        Task SoftDeleteProjectAsync(string domain, string projectId, string userEmail);
     }
 }

@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace Ranger.InternalHttpClient
 {
@@ -164,7 +165,7 @@ namespace Ranger.InternalHttpClient
             throw new HttpClientException<T>(apiResponse);
         }
 
-        public async Task SoftDeleteProjectAsync(string domain, string projectId)
+        public async Task SoftDeleteProjectAsync(string domain, string projectId, string userEmail)
         {
             if (String.IsNullOrWhiteSpace(domain))
             {
@@ -180,6 +181,7 @@ namespace Ranger.InternalHttpClient
                 {
                     Method = HttpMethod.Delete,
                     RequestUri = new Uri(httpClient.BaseAddress, $"/{domain}/project/{projectId}"),
+                    Content = new StringContent(JsonConvert.SerializeObject(new { UserEmail = userEmail }), Encoding.UTF8, "application/json")
                 };
             });
             var apiResponse = await SendAsync(httpRequestMessageFactory);
