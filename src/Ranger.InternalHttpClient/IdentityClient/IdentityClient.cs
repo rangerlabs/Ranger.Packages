@@ -2,6 +2,7 @@ using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 using IdentityServer4;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 namespace Ranger.InternalHttpClient
@@ -39,14 +40,7 @@ namespace Ranger.InternalHttpClient
                 };
             });
             apiResponse = await SendAsync<T>(httpRequestMessageFactory);
-            if (apiResponse.IsSuccessStatusCode)
-            {
-                return apiResponse.ResponseObject;
-            }
-            else
-            {
-                throw new HttpClientException<T>(apiResponse);
-            }
+            return apiResponse.IsSuccessStatusCode ? apiResponse.ResponseObject : throw new HttpClientException<T>(apiResponse);
         }
 
         public async Task<T> GetAllUsersAsync<T>(string domain)
@@ -68,14 +62,7 @@ namespace Ranger.InternalHttpClient
                 };
             });
             apiResponse = await SendAsync<T>(httpRequestMessageFactory);
-            if (apiResponse.IsSuccessStatusCode)
-            {
-                return apiResponse.ResponseObject;
-            }
-            else
-            {
-                throw new HttpClientException<T>(apiResponse);
-            }
+            return apiResponse.IsSuccessStatusCode ? apiResponse.ResponseObject : throw new HttpClientException<T>(apiResponse);
         }
 
         public async Task<T> GetRoleAsync<T>(string name)
@@ -91,18 +78,40 @@ namespace Ranger.InternalHttpClient
                 return new HttpRequestMessage()
                 {
                     Method = HttpMethod.Get,
-                    RequestUri = new Uri($"role/{name}")
+                    RequestUri = new Uri(httpClient.BaseAddress, $"role/{name}")
                 };
             });
             apiResponse = await SendAsync<T>(httpRequestMessageFactory);
+            return apiResponse.IsSuccessStatusCode ? apiResponse.ResponseObject : throw new HttpClientException<T>(apiResponse);
+        }
+
+        public async Task<bool> ConfirmUserAsync(string domain, string registrationKey)
+        {
+            if (string.IsNullOrWhiteSpace(registrationKey))
+            {
+                throw new ArgumentException($"{nameof(registrationKey)} cannot be null or whitespace.");
+            }
+
+            var apiResponse = new InternalApiResponse();
+            Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
+            {
+                return new HttpRequestMessage()
+                {
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri(httpClient.BaseAddress, $"user/confirm?registrationKey={registrationKey}"),
+                    Headers = { { "x-ranger-domain", domain } }
+                };
+            });
+            apiResponse = await SendAsync(httpRequestMessageFactory);
             if (apiResponse.IsSuccessStatusCode)
             {
-                return apiResponse.ResponseObject;
+                return true;
             }
-            else
+            if ((int)apiResponse.StatusCode == StatusCodes.Status304NotModified)
             {
-                throw new HttpClientException<T>(apiResponse);
+                return false;
             }
+            throw new HttpClientException(apiResponse);
         }
     }
 }

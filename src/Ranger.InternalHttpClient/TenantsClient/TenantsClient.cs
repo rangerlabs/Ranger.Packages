@@ -45,7 +45,6 @@ namespace Ranger.InternalHttpClient
             {
                 throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
             }
-
             Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
             {
                 return new HttpRequestMessage()

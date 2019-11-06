@@ -33,14 +33,7 @@ namespace Ranger.InternalHttpClient
             });
 
             var apiResponse = await SendAsync<T>(httpRequestMessageFactory);
-            if (apiResponse.IsSuccessStatusCode)
-            {
-                return apiResponse.ResponseObject;
-            }
-            else
-            {
-                throw new HttpClientException<T>(apiResponse);
-            }
+            return apiResponse.IsSuccessStatusCode ? apiResponse.ResponseObject : throw new HttpClientException<T>(apiResponse);
         }
 
         public async Task<T> GetProjectByApiKeyAsync<T>(string domain, string apiKey)
@@ -65,14 +58,7 @@ namespace Ranger.InternalHttpClient
             });
 
             var apiResponse = await SendAsync<T>(httpRequestMessageFactory);
-            if (apiResponse.IsSuccessStatusCode)
-            {
-                return apiResponse.ResponseObject;
-            }
-            else
-            {
-                throw new HttpClientException<T>(apiResponse);
-            }
+            return apiResponse.IsSuccessStatusCode ? apiResponse.ResponseObject : throw new HttpClientException<T>(apiResponse);
         }
 
         public async Task<T> GetAllProjectsAsync<T>(string domain)
@@ -92,14 +78,7 @@ namespace Ranger.InternalHttpClient
             });
 
             var apiResponse = await SendAsync<T>(httpRequestMessageFactory);
-            if (apiResponse.IsSuccessStatusCode)
-            {
-                return apiResponse.ResponseObject;
-            }
-            else
-            {
-                throw new HttpClientException<T>(apiResponse);
-            }
+            return apiResponse.IsSuccessStatusCode ? apiResponse.ResponseObject : throw new HttpClientException<T>(apiResponse);
         }
 
         public async Task<T> PutProjectAsync<T>(string domain, string projectId, string jsonContent)
@@ -123,11 +102,7 @@ namespace Ranger.InternalHttpClient
                 };
             });
             var apiResponse = await SendAsync<T>(httpRequestMessageFactory);
-            if (apiResponse.IsSuccessStatusCode)
-            {
-                return apiResponse.ResponseObject;
-            }
-            throw new HttpClientException<T>(apiResponse);
+            return apiResponse.IsSuccessStatusCode ? apiResponse.ResponseObject : throw new HttpClientException<T>(apiResponse);
         }
 
         public async Task<T> ApiKeyResetAsync<T>(string domain, string projectId, string environment, string jsonContent)
@@ -158,11 +133,7 @@ namespace Ranger.InternalHttpClient
                 };
             });
             var apiResponse = await SendAsync<T>(httpRequestMessageFactory);
-            if (apiResponse.IsSuccessStatusCode)
-            {
-                return apiResponse.ResponseObject;
-            }
-            throw new HttpClientException<T>(apiResponse);
+            return apiResponse.IsSuccessStatusCode ? apiResponse.ResponseObject : throw new HttpClientException<T>(apiResponse);
         }
 
         public async Task SoftDeleteProjectAsync(string domain, string projectId, string userEmail)
@@ -213,11 +184,7 @@ namespace Ranger.InternalHttpClient
                 };
             });
             var apiResponse = await SendAsync<T>(httpRequestMessageFactory);
-            if (apiResponse.IsSuccessStatusCode)
-            {
-                return apiResponse.ResponseObject;
-            }
-            throw new HttpClientException<T>(apiResponse);
+            return apiResponse.IsSuccessStatusCode ? apiResponse.ResponseObject : throw new HttpClientException<T>(apiResponse);
         }
     }
 }

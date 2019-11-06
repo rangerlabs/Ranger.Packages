@@ -53,7 +53,7 @@ namespace Ranger.Common
             {
                 if (manifestStream is null)
                 {
-                    throw new RangerException($@"Failed to file ""Ranger.Common.Data.SQL.{name}.sql"" in manifest files {String.Join(";", assembly.GetManifestResourceNames())} ");
+                    throw new Exception($@"Failed to file ""Ranger.Common.Data.SQL.{name}.sql"" in manifest files {String.Join(";", assembly.GetManifestResourceNames())} ");
                 }
                 using (var reader = new StreamReader(manifestStream))
                 {
