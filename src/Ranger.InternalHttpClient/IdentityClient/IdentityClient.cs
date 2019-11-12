@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using IdentityServer4;
 using Microsoft.AspNetCore.Http;
@@ -85,11 +86,11 @@ namespace Ranger.InternalHttpClient
             return apiResponse.IsSuccessStatusCode ? apiResponse.ResponseObject : throw new HttpClientException<T>(apiResponse);
         }
 
-        public async Task<bool> ConfirmUserAsync(string domain, string registrationKey)
+        public async Task<bool> ConfirmUserAsync(string domain, string jsonContent)
         {
-            if (string.IsNullOrWhiteSpace(registrationKey))
+            if (string.IsNullOrWhiteSpace(jsonContent))
             {
-                throw new ArgumentException($"{nameof(registrationKey)} cannot be null or whitespace.");
+                throw new ArgumentException($"{nameof(jsonContent)} cannot be null or whitespace.");
             }
 
             var apiResponse = new InternalApiResponse();
@@ -97,8 +98,9 @@ namespace Ranger.InternalHttpClient
             {
                 return new HttpRequestMessage()
                 {
-                    Method = HttpMethod.Get,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"user/confirm?registrationKey={registrationKey}"),
+                    Method = HttpMethod.Put,
+                    RequestUri = new Uri(httpClient.BaseAddress, $"user/confirm"),
+                    Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
                     Headers = { { "x-ranger-domain", domain } }
                 };
             });
