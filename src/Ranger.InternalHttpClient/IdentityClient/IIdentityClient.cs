@@ -8,6 +8,7 @@ namespace Ranger.InternalHttpClient
         Task<T> GetUserAsync<T>(string domain, string username);
         Task<T> GetAllUsersAsync<T>(string domain);
         Task<T> GetRoleAsync<T>(string name);
-        Task<bool> ConfirmUserAsync(string domain, string jsonContent);
+        Task<bool> ConfirmUserAsync(string domain, string userId, string jsonContent);
+        Task<bool> UserConfirmPasswordResetAsync(string domain, string userId, string jsonContent);
     }
 }

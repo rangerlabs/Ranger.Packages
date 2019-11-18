@@ -86,7 +86,7 @@ namespace Ranger.InternalHttpClient
             return apiResponse.IsSuccessStatusCode ? apiResponse.ResponseObject : throw new HttpClientException<T>(apiResponse);
         }
 
-        public async Task<bool> ConfirmUserAsync(string domain, string jsonContent)
+        public async Task<bool> ConfirmUserAsync(string domain, string userId, string jsonContent)
         {
             if (string.IsNullOrWhiteSpace(jsonContent))
             {
@@ -99,7 +99,41 @@ namespace Ranger.InternalHttpClient
                 return new HttpRequestMessage()
                 {
                     Method = HttpMethod.Put,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"user/confirm"),
+                    RequestUri = new Uri(httpClient.BaseAddress, $"user/{userId}/confirm"),
+                    Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
+                    Headers = { { "x-ranger-domain", domain } }
+                };
+            });
+            apiResponse = await SendAsync(httpRequestMessageFactory);
+            if (apiResponse.IsSuccessStatusCode)
+            {
+                return true;
+            }
+            if ((int)apiResponse.StatusCode == StatusCodes.Status304NotModified)
+            {
+                return false;
+            }
+            throw new HttpClientException(apiResponse);
+        }
+
+        public async Task<bool> UserConfirmPasswordResetAsync(string domain, string userId, string jsonContent)
+        {
+            if (string.IsNullOrWhiteSpace(jsonContent))
+            {
+                throw new ArgumentException($"{nameof(userId)} cannot be null or whitespace.");
+            }
+            if (string.IsNullOrWhiteSpace(jsonContent))
+            {
+                throw new ArgumentException($"{nameof(jsonContent)} cannot be null or whitespace.");
+            }
+
+            var apiResponse = new InternalApiResponse();
+            Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
+            {
+                return new HttpRequestMessage()
+                {
+                    Method = HttpMethod.Post,
+                    RequestUri = new Uri(httpClient.BaseAddress, $"user/{userId}/password-reset"),
                     Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
                     Headers = { { "x-ranger-domain", domain } }
                 };
