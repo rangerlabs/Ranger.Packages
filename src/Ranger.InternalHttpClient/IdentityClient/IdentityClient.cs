@@ -206,7 +206,11 @@ namespace Ranger.InternalHttpClient
 
         public async Task<bool> UserConfirmPasswordResetAsync(string domain, string userId, string jsonContent)
         {
-            if (string.IsNullOrWhiteSpace(jsonContent))
+            if (string.IsNullOrWhiteSpace(domain))
+            {
+                throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
+            }
+            if (string.IsNullOrWhiteSpace(userId))
             {
                 throw new ArgumentException($"{nameof(userId)} cannot be null or whitespace.");
             }
