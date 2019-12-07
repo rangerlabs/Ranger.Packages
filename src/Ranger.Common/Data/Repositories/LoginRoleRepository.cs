@@ -17,36 +17,36 @@ namespace Ranger.Common
 
         public async Task<int> CreateTenantLoginRole(string username, string password)
         {
-            return await context.Database.ExecuteSqlCommandAsync($@"SELECT create_tenant_login_role({username}, {password});");
+            return await context.Database.ExecuteSqlRawAsync($@"SELECT create_tenant_login_role({username}, {password});");
         }
         public async Task<int> DropTenantLoginRole(string username)
         {
-            return await context.Database.ExecuteSqlCommandAsync($@"SELECT drop_tenant_login_role({username});");
+            return await context.Database.ExecuteSqlRawAsync($@"SELECT drop_tenant_login_role({username});");
         }
 
         public async Task<int> RevokeTenantLoginRoleTablePermissions(string username, string table)
         {
-            return await context.Database.ExecuteSqlCommandAsync($@"SELECT revoke_tenant_login_role_table_permissions({username}, {table});");
+            return await context.Database.ExecuteSqlRawAsync($@"SELECT revoke_tenant_login_role_table_permissions({username}, {table});");
         }
 
         public async Task<int> GrantTenantLoginRoleTablePermissions(string username, string table)
         {
-            return await context.Database.ExecuteSqlCommandAsync($@"SELECT grant_tenant_login_role_table_permissions({username}, {table});");
+            return await context.Database.ExecuteSqlRawAsync($@"SELECT grant_tenant_login_role_table_permissions({username}, {table});");
         }
 
         public async Task<int> RevokeTenantLoginRoleSequencePermissions(string username)
         {
-            return await context.Database.ExecuteSqlCommandAsync($@"SELECT revoke_tenant_login_role_sequence_permissions({username});");
+            return await context.Database.ExecuteSqlRawAsync($@"SELECT revoke_tenant_login_role_sequence_permissions({username});");
         }
 
         public async Task<int> GrantTenantLoginRoleSequencePermissions(string username)
         {
-            return await context.Database.ExecuteSqlCommandAsync($@"SELECT grant_tenant_login_role_sequence_permissions({username});");
+            return await context.Database.ExecuteSqlRawAsync($@"SELECT grant_tenant_login_role_sequence_permissions({username});");
         }
 
         public async Task<int> CreateTenantRlsPolicy(string table)
         {
-            return await context.Database.ExecuteSqlCommandAsync($@"SELECT create_tenant_rls_policy({table});");
+            return await context.Database.ExecuteSqlRawAsync($@"SELECT create_tenant_rls_policy({table});");
         }
     }
 }

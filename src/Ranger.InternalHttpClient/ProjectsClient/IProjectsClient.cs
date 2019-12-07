@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -5,6 +6,7 @@ namespace Ranger.InternalHttpClient
 {
     public interface IProjectsClient
     {
+        Task<IEnumerable<string>> GetProjectIdsForUser(string domain, string email);
         Task<T> GetDatabaseUsernameByApiKeyAsync<T>(string apiKey);
         Task<T> GetProjectByApiKeyAsync<T>(string domain, string apiKey);
         Task<T> GetAllProjectsAsync<T>(string domain);

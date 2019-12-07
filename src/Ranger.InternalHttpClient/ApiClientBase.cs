@@ -1,13 +1,11 @@
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using IdentityModel.Client;
-using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Ranger.Common;
 
 namespace Ranger.InternalHttpClient
@@ -34,7 +32,7 @@ namespace Ranger.InternalHttpClient
         public async Task SetClientToken()
         {
             DiscoveryDocumentRequest discoveryDocument = null;
-            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == EnvironmentName.Development)
+            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == Environments.Development)
             {
                 discoveryDocument = new DiscoveryDocumentRequest()
                 {

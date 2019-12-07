@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,6 +15,29 @@ namespace Ranger.InternalHttpClient
         public ProjectsClient(string uri, ILogger<ProjectsClient> logger) : base(uri, logger, "projectsApi")
         {
             this.logger = logger;
+        }
+
+        public async Task<IEnumerable<string>> GetProjectIdsForUser(string domain, string email)
+        {
+            if (string.IsNullOrWhiteSpace(domain))
+            {
+                throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
+            }
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                throw new ArgumentException($"{nameof(email)} cannot be null or whitespace.");
+            }
+
+            Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
+            {
+                return new HttpRequestMessage()
+                {
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri(httpClient.BaseAddress, $"/{domain}/project/authorized/{email}")
+                };
+            });
+            var apiResponse = await SendAsync<IEnumerable<string>>(httpRequestMessageFactory);
+            return apiResponse.IsSuccessStatusCode ? apiResponse.ResponseObject : throw new HttpClientException<IEnumerable<string>>(apiResponse);
         }
 
         public async Task<T> GetDatabaseUsernameByApiKeyAsync<T>(string apiKey)
