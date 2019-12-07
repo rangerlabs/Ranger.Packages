@@ -1,4 +1,3 @@
-using System.Net;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -10,7 +9,7 @@ namespace Ranger.Redis
     {
         private static readonly string SectionName = "redis";
 
-        public static IServiceCollection AddRedis(this IServiceCollection services, ILogger logger = null)
+        public static void AddRedis(this IServiceCollection services, ILogger logger = null)
         {
             IConfiguration configuration;
             using (var serviceProvider = services.BuildServiceProvider())
@@ -35,7 +34,6 @@ namespace Ranger.Redis
             {
                 logger.LogInformation($"Connected to redis instance {options.Instance}:{options.ConnectionString}.");
             }
-            return services;
         }
     }
 }
