@@ -21,7 +21,7 @@ namespace Ranger.Logging
             applicationName = string.IsNullOrWhiteSpace(applicationName) ? appOptions.Name : applicationName;
             loggerConfiguration.Enrich.FromLogContext()
                 .MinimumLevel.Is(level)
-                .Enrich.WithProperty("Environment", context.HostingEnvironment.EnvironmentName)
+                .Enrich.WithProperty("Environment", Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"))
                 .Enrich.WithProperty("ApplicationName", applicationName);
             Configure(loggerConfiguration, seqOptions, serilogOptions);
         });
