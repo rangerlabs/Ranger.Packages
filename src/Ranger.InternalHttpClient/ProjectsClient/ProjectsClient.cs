@@ -85,11 +85,15 @@ namespace Ranger.InternalHttpClient
             return apiResponse.IsSuccessStatusCode ? apiResponse.ResponseObject : throw new HttpClientException<T>(apiResponse);
         }
 
-        public async Task<T> GetAllProjectsAsync<T>(string domain)
+        public async Task<T> GetAllProjectsForUserAsync<T>(string domain, string email)
         {
             if (String.IsNullOrWhiteSpace(domain))
             {
                 throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
+            }
+            if (String.IsNullOrWhiteSpace(email))
+            {
+                throw new ArgumentException($"{nameof(email)} cannot be null or whitespace.");
             }
 
             Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
@@ -97,7 +101,7 @@ namespace Ranger.InternalHttpClient
                 return new HttpRequestMessage()
                 {
                     Method = HttpMethod.Get,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"/{domain}/project/all"),
+                    RequestUri = new Uri(httpClient.BaseAddress, $"/{domain}/project/{email}"),
                 };
             });
 

@@ -35,14 +35,20 @@ namespace Ranger.Common
                 user.Claims.SingleOrDefault(c => c.Type == "firstName")?.Value ?? "",
                 user.Claims.SingleOrDefault(c => c.Type == "lastName")?.Value ?? "",
                 user.Claims.SingleOrDefault(c => c.Type == "phoneNumber")?.Value ?? "",
-                SystemRole(user.Claims.Where(c => c.Type == "role").Select(c => c.Value))
+                SystemRole(user.Claims.Where(c => c.Type == "role").Select(c => c.Value)),
+                user.Claims.Where(c => c.Type == "authorizedProjects").Select(c => c.Value) ?? new string[0]
             );
 
         private static string SystemRole(IEnumerable<string> roles)
         {
+            var tenantOwner = Enum.GetName(typeof(RolesEnum), RolesEnum.TenantOwner);
             var owner = Enum.GetName(typeof(RolesEnum), RolesEnum.Owner);
             var admin = Enum.GetName(typeof(RolesEnum), RolesEnum.Admin);
             var user = Enum.GetName(typeof(RolesEnum), RolesEnum.User);
+            if (roles.Contains(tenantOwner))
+            {
+                return tenantOwner;
+            }
             if (roles.Contains(owner))
             {
                 return owner;

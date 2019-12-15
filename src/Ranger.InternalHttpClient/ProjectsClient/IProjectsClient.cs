@@ -9,7 +9,7 @@ namespace Ranger.InternalHttpClient
         Task<IEnumerable<string>> GetProjectIdsForUser(string domain, string email);
         Task<T> GetDatabaseUsernameByApiKeyAsync<T>(string apiKey);
         Task<T> GetProjectByApiKeyAsync<T>(string domain, string apiKey);
-        Task<T> GetAllProjectsAsync<T>(string domain);
+        Task<T> GetAllProjectsForUserAsync<T>(string domain, string user);
         Task<T> PostProjectAsync<T>(string domain, string jsonContent);
         Task<T> PutProjectAsync<T>(string domain, string projectId, string jsonContent);
         Task<T> ApiKeyResetAsync<T>(string domain, string projectId, string environment, string jsonContent);

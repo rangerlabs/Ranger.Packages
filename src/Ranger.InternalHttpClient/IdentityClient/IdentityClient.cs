@@ -86,6 +86,31 @@ namespace Ranger.InternalHttpClient
             return apiResponse.IsSuccessStatusCode ? apiResponse.ResponseObject : throw new HttpClientException<T>(apiResponse);
         }
 
+        public async Task<T> GetUserRoleAsync<T>(string domain, string email)
+        {
+            if (string.IsNullOrWhiteSpace(domain))
+            {
+                throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
+            }
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                throw new ArgumentException($"{nameof(email)} cannot be null or whitespace.");
+            }
+
+            var apiResponse = new InternalApiResponse<T>();
+            Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
+            {
+                return new HttpRequestMessage()
+                {
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri(httpClient.BaseAddress, $"user/{email}/role"),
+                    Headers = { { "x-ranger-domain", domain } }
+                };
+            });
+            apiResponse = await SendAsync<T>(httpRequestMessageFactory);
+            return apiResponse.IsSuccessStatusCode ? apiResponse.ResponseObject : throw new HttpClientException<T>(apiResponse);
+        }
+
         public async Task<bool> RequestPasswordReset(string domain, string email, string jsonContent)
         {
             if (string.IsNullOrWhiteSpace(domain))
