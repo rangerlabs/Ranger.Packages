@@ -13,6 +13,7 @@ namespace Ranger.InternalHttpClient
         Task<bool> UserConfirmPasswordResetAsync(string domain, string userId, string jsonContent);
         Task<bool> RequestPasswordReset(string domain, string email, string jsonContent);
         Task<bool> RequestEmailChange(string domain, string email, string jsonContent);
+        Task UpdateUserAsync(string domain, string username, string jsonContent);
         Task UserConfirmEmailChangeAsync(string domain, string userId, string jsonContent);
     }
 }

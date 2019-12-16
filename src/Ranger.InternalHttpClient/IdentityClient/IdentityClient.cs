@@ -17,6 +17,40 @@ namespace Ranger.InternalHttpClient
             this.logger = logger;
         }
 
+        public async Task UpdateUserAsync(string domain, string username, string jsonContent)
+        {
+            if (String.IsNullOrWhiteSpace(domain))
+            {
+                throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
+            }
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
+            }
+            if (string.IsNullOrWhiteSpace(jsonContent))
+            {
+                throw new ArgumentException($"{nameof(jsonContent)} cannot be null or whitespace.");
+            }
+
+            var apiResponse = new InternalApiResponse();
+            Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
+            {
+                return new HttpRequestMessage()
+                {
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri(httpClient.BaseAddress, $"user/{username}"),
+                    Headers = { { "x-ranger-domain", domain },
+                }
+                };
+            });
+            apiResponse = await SendAsync(httpRequestMessageFactory);
+            if (apiResponse.IsSuccessStatusCode)
+            {
+                return;
+            }
+            throw new HttpClientException(apiResponse);
+        }
+
         public async Task<T> GetUserAsync<T>(string domain, string username)
         {
             if (String.IsNullOrWhiteSpace(domain))
