@@ -37,8 +37,9 @@ namespace Ranger.InternalHttpClient
             {
                 return new HttpRequestMessage()
                 {
-                    Method = HttpMethod.Get,
+                    Method = HttpMethod.Put,
                     RequestUri = new Uri(httpClient.BaseAddress, $"user/{username}"),
+                    Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
                     Headers = { { "x-ranger-domain", domain },
                 }
                 };
