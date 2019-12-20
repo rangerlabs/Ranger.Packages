@@ -17,6 +17,77 @@ namespace Ranger.InternalHttpClient
             this.logger = logger;
         }
 
+        public async Task DeleteAccountAsync(string domain, string email, string jsonContent)
+        {
+            if (String.IsNullOrWhiteSpace(domain))
+            {
+                throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
+            }
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                throw new ArgumentException($"{nameof(email)} cannot be null or whitespace.");
+            }
+            if (string.IsNullOrWhiteSpace(jsonContent))
+            {
+                throw new ArgumentException($"{nameof(jsonContent)} cannot be null or whitespace.");
+            }
+
+
+            var apiResponse = new InternalApiResponse();
+            Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
+            {
+                return new HttpRequestMessage()
+                {
+                    Method = HttpMethod.Delete,
+                    RequestUri = new Uri(httpClient.BaseAddress, $"user/{email}/account"),
+                    Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
+                    Headers = { { "x-ranger-domain", domain },
+                }
+                };
+            });
+            apiResponse = await SendAsync(httpRequestMessageFactory);
+            if (apiResponse.IsSuccessStatusCode)
+            {
+                return;
+            }
+            throw new HttpClientException(apiResponse);
+        }
+
+        public async Task DeleteUserAsync(string domain, string email, string jsonContent)
+        {
+            if (String.IsNullOrWhiteSpace(domain))
+            {
+                throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
+            }
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                throw new ArgumentException($"{nameof(email)} cannot be null or whitespace.");
+            }
+            if (string.IsNullOrWhiteSpace(jsonContent))
+            {
+                throw new ArgumentException($"{nameof(jsonContent)} cannot be null or whitespace.");
+            }
+
+            var apiResponse = new InternalApiResponse();
+            Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
+            {
+                return new HttpRequestMessage()
+                {
+                    Method = HttpMethod.Delete,
+                    RequestUri = new Uri(httpClient.BaseAddress, $"user/{email}"),
+                    Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
+                    Headers = { { "x-ranger-domain", domain },
+                }
+                };
+            });
+            apiResponse = await SendAsync(httpRequestMessageFactory);
+            if (apiResponse.IsSuccessStatusCode)
+            {
+                return;
+            }
+            throw new HttpClientException(apiResponse);
+        }
+
         public async Task UpdateUserAsync(string domain, string username, string jsonContent)
         {
             if (String.IsNullOrWhiteSpace(domain))
@@ -25,7 +96,7 @@ namespace Ranger.InternalHttpClient
             }
             if (string.IsNullOrWhiteSpace(username))
             {
-                throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
+                throw new ArgumentException($"{nameof(username)} cannot be null or whitespace.");
             }
             if (string.IsNullOrWhiteSpace(jsonContent))
             {
@@ -61,7 +132,7 @@ namespace Ranger.InternalHttpClient
 
             if (string.IsNullOrWhiteSpace(username))
             {
-                throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
+                throw new ArgumentException($"{nameof(username)} cannot be null or whitespace.");
             }
 
             var apiResponse = new InternalApiResponse<T>();
@@ -304,7 +375,11 @@ namespace Ranger.InternalHttpClient
 
         public async Task UserConfirmEmailChangeAsync(string domain, string userId, string jsonContent)
         {
-            if (string.IsNullOrWhiteSpace(jsonContent))
+            if (string.IsNullOrWhiteSpace(domain))
+            {
+                throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
+            }
+            if (string.IsNullOrWhiteSpace(userId))
             {
                 throw new ArgumentException($"{nameof(userId)} cannot be null or whitespace.");
             }

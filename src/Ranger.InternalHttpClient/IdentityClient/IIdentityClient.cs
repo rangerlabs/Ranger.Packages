@@ -5,6 +5,8 @@ namespace Ranger.InternalHttpClient
 {
     public interface IIdentityClient
     {
+        Task DeleteAccountAsync(string domain, string email, string jsonContent);
+        Task DeleteUserAsync(string domain, string email, string jsonContent);
         Task<T> GetUserAsync<T>(string domain, string username);
         Task<T> GetAllUsersAsync<T>(string domain);
         Task<T> GetUserRoleAsync<T>(string domain, string email);
