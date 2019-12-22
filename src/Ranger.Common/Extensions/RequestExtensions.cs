@@ -41,13 +41,13 @@ namespace Ranger.Common
 
         private static string SystemRole(IEnumerable<string> roles)
         {
-            var tenantOwner = Enum.GetName(typeof(RolesEnum), RolesEnum.TenantOwner);
+            var PrimaryOwner = Enum.GetName(typeof(RolesEnum), RolesEnum.PrimaryOwner);
             var owner = Enum.GetName(typeof(RolesEnum), RolesEnum.Owner);
             var admin = Enum.GetName(typeof(RolesEnum), RolesEnum.Admin);
             var user = Enum.GetName(typeof(RolesEnum), RolesEnum.User);
-            if (roles.Contains(tenantOwner))
+            if (roles.Contains(PrimaryOwner))
             {
-                return tenantOwner;
+                return PrimaryOwner;
             }
             if (roles.Contains(owner))
             {
