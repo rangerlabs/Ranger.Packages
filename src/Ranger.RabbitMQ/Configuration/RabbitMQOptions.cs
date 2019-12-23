@@ -1,5 +1,7 @@
-namespace Ranger.RabbitMQ {
-    public class RabbitMQOptions {
+namespace Ranger.RabbitMQ
+{
+    public class RabbitMQOptions
+    {
         public string Host { get; set; }
         public int Port { get; set; }
         public string VirtualHost { get; set; }

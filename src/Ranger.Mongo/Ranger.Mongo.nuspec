@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<package >
+  <metadata minClientVersion="3.3.0">
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>$author$</authors>
+    <owners>$author$</owners>
+    <projectUrl>https://github.com/rangerlabs/Ranger.Mongo</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Ranger mongo connector and repository package</description>
+    <!-- <releaseNotes>Summary of changes made in this release of the package.</releaseNotes> -->
+    <copyright>Copyright 2019</copyright>
+    <tags>Ranger Mongo</tags>
+    <packageTypes>
+      <packageType name="Dependency" />
+    </packageTypes>
+    <dependencies>
+      <dependency id="MongoDB.Driver" version="2.10.0" />
+      <dependency id="Microsoft.Extensions.Logging" version="3.1.0" />
+      <dependency id="Ranger.Common" version="2.0.4" />
+      <dependency id="Ranger.Monitoring" version="2.0.1" />
+      <dependency id="Autofac" version="4.9.4" />
+      <dependency id="Autofac.Extensions.DependencyInjection" version="5.0.1" />
+      <dependency id="Newtonsoft.Json" version="12.0.3" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="bin\$configuration$\netstandard2.1\$id$.pdb" target="lib\netstandard\" />
+  </files>
+</package>
