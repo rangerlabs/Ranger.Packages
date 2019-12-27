@@ -13,13 +13,8 @@ namespace Ranger.RabbitMQ
     {
         public static IBusSubscriber UseRabbitMQ(this IApplicationBuilder app) => new BusSubscriber(app);
 
-        public static void AddRabbitMq(this ContainerBuilder builder, ILoggerFactory loggerFactory = null)
+        public static void AddRabbitMq(this ContainerBuilder builder)
         {
-            if (loggerFactory != null)
-            {
-                LoggerFactoryInstance.Instance = loggerFactory;
-            }
-
             builder.Register(context =>
             {
                 var configuration = context.Resolve<IConfiguration>();

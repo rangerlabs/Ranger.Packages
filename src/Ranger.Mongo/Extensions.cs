@@ -1,6 +1,7 @@
 ﻿using System;
 using Autofac;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using Ranger.Common;
 
@@ -19,21 +20,35 @@ namespace Ranger.Mongo
 
             builder.Register(context =>
             {
+                var loggerFactory = context.Resolve<ILoggerFactory>();
+                var logger = loggerFactory.CreateLogger("Ranger.Mongo.Extensions");
                 var options = context.Resolve<MongoDbOptions>();
-                return new MongoClient(options.ConnectionString);
+
+                logger.LogInformation($"Adding MongoCredential for user '{options.Username}' with password '{options.Password}' on database '{options.Database}'.");
+                var clientSettings = new MongoClientSettings()
+                {
+                    Credential = MongoCredential.CreateCredential(options.Database, options.Username, options.Password),
+                    Server = MongoServerAddress.Parse(options.ConnectionString),
+                };
+
+                logger.LogInformation($"Creating new MongoClient for '{options.ConnectionString}'.");
+                return new MongoClient(clientSettings);
             }).SingleInstance();
 
             builder.Register(context =>
-            {
-                var options = context.Resolve<MongoDbOptions>();
-                var client = context.Resolve<MongoClient>();
-                return client.GetDatabase(options.Database);
+                {
+                    var loggerFactory = context.Resolve<ILoggerFactory>();
+                    var logger = loggerFactory.CreateLogger("Ranger.Mongo.Extensions");
+                    var options = context.Resolve<MongoDbOptions>();
+                    var client = context.Resolve<MongoClient>();
+                    logger.LogInformation($"Creating new MongoDatabase '{options.Database}'.");
+                    return client.GetDatabase(options.Database);
 
-            }).InstancePerLifetimeScope();
+                }).InstancePerLifetimeScope();
 
             builder.RegisterType<MongoDbInitializer>()
-                .As<IMongoDbInitializer>()
-                .InstancePerLifetimeScope();
+                        .As<IMongoDbInitializer>()
+                        .InstancePerLifetimeScope();
         }
     }
 }

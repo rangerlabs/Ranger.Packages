@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using MongoDB.Bson;
@@ -12,14 +13,18 @@ namespace Ranger.Mongo
     {
         private static bool _initialized;
         private readonly IMongoDatabase _database;
+        private readonly IMongoDbSeeder _seeder;
 
         public MongoDbInitializer(IMongoDatabase database,
-            MongoDbOptions options)
+            IMongoDbSeeder seeder,
+            MongoDbOptions options
+            )
         {
             _database = database;
+            _seeder = seeder;
         }
 
-        public void Initialize()
+        public async Task Initialize()
         {
             if (_initialized)
             {
@@ -27,6 +32,7 @@ namespace Ranger.Mongo
             }
             RegisterConventions();
             _initialized = true;
+            await _seeder.SeedAsync();
         }
 
         private void RegisterConventions()
