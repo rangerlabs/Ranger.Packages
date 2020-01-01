@@ -24,7 +24,7 @@ namespace Ranger.Mongo
                 var logger = loggerFactory.CreateLogger("Ranger.Mongo.Extensions");
                 var options = context.Resolve<MongoDbOptions>();
 
-                logger.LogInformation($"Adding MongoCredential for user '{options.Username}' with password '{options.Password}' on database '{options.Database}'.");
+                logger.LogInformation($"Adding MongoCredential for user '{options.Username}' on database '{options.Database}'.");
                 var clientSettings = new MongoClientSettings()
                 {
                     Credential = MongoCredential.CreateCredential(options.Database, options.Username, options.Password),
