@@ -1,6 +1,3 @@
-using System.Collections.ObjectModel;
-using MongoDB.Driver.GeoJsonObjectModel;
-
 namespace Ranger.Common
 {
     public class LngLat
