@@ -1,3 +1,5 @@
+using System;
+
 namespace Ranger.Common
 {
     public class LngLat
@@ -9,6 +11,18 @@ namespace Ranger.Common
         {
             this.Lng = lng;
             this.Lat = lat;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is LngLat lngLat &&
+                   Lat == lngLat.Lat &&
+                   Lng == lngLat.Lng;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Lat, Lng);
         }
     }
 }
