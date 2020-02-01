@@ -17,15 +17,11 @@ namespace Ranger.InternalHttpClient
             this.logger = logger;
         }
 
-        public async Task<T> GetOperationStateById<T>(string domain, string id)
+        public async Task<T> GetOperationStateById<T>(string domain, Guid id)
         {
             if (string.IsNullOrWhiteSpace(domain))
             {
                 throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
-            }
-            if (string.IsNullOrWhiteSpace(id))
-            {
-                throw new ArgumentException($"{nameof(id)} cannot be null or whitespace.");
             }
 
             Func<HttpRequestMessage> httpRequestMessageFactory = (() =>

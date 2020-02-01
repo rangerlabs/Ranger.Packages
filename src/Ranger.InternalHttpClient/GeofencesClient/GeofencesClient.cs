@@ -1,10 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace Ranger.InternalHttpClient
 {
@@ -17,15 +14,11 @@ namespace Ranger.InternalHttpClient
             this.logger = logger;
         }
 
-        public async Task<T> GetAllGeofencesByProjectId<T>(string domain, string projectId)
+        public async Task<T> GetAllGeofencesByProjectId<T>(string domain, Guid projectId)
         {
             if (string.IsNullOrWhiteSpace(domain))
             {
                 throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
-            }
-            if (string.IsNullOrWhiteSpace(projectId))
-            {
-                throw new ArgumentException($"{nameof(projectId)} cannot be null or whitespace.");
             }
 
             Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
