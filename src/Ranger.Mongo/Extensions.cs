@@ -3,6 +3,7 @@ using Autofac;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
+using MongoDB.Driver.Core.Configuration;
 using Ranger.Common;
 
 namespace Ranger.Mongo
@@ -24,15 +25,8 @@ namespace Ranger.Mongo
                 var logger = loggerFactory.CreateLogger("Ranger.Mongo.Extensions");
                 var options = context.Resolve<MongoDbOptions>();
 
-                logger.LogInformation($"Adding MongoCredential for user '{options.Username}' on database '{options.Database}'.");
-                var clientSettings = new MongoClientSettings()
-                {
-                    Credential = MongoCredential.CreateCredential(options.Database, options.Username, options.Password),
-                    Server = MongoServerAddress.Parse(options.ConnectionString),
-                };
+                return new MongoClient(options.ConnectionString);
 
-                logger.LogInformation($"Creating new MongoClient for '{options.ConnectionString}'.");
-                return new MongoClient(clientSettings);
             }).SingleInstance();
 
             builder.Register(context =>
@@ -41,9 +35,8 @@ namespace Ranger.Mongo
                     var logger = loggerFactory.CreateLogger("Ranger.Mongo.Extensions");
                     var options = context.Resolve<MongoDbOptions>();
                     var client = context.Resolve<MongoClient>();
-                    logger.LogInformation($"Creating new MongoDatabase '{options.Database}'.");
-                    return client.GetDatabase(options.Database);
-
+                    logger.LogInformation($"Creating new MongoDatabase '{options.DefaultDatabase}'.");
+                    return client.GetDatabase(options.DefaultDatabase);
                 }).InstancePerLifetimeScope();
 
             builder.RegisterType<MongoDbInitializer>()
