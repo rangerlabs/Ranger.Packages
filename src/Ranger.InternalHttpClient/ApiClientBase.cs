@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using IdentityModel.Client;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -129,43 +130,52 @@ namespace Ranger.InternalHttpClient
                 logger.LogDebug("New client token set. Resending request.");
                 response = await httpClient.SendAsync(httpRequestMessageFactory());
             }
-            if (response.IsSuccessStatusCode)
+            apiResponse.IsSuccessStatusCode = true;
+            apiResponse.StatusCode = response.StatusCode;
+            var content = await response.Content?.ReadAsStringAsync() ?? "";
+            switch (response.StatusCode)
             {
-                logger.LogDebug("Request was successful.");
-                apiResponse.IsSuccessStatusCode = true;
-                apiResponse.StatusCode = response.StatusCode;
-                var content = await response.Content?.ReadAsStringAsync() ?? "";
-                if (!String.IsNullOrWhiteSpace(content))
-                {
-                    try
+                case HttpStatusCode.NoContent:
                     {
-                        apiResponse.ResponseObject = JsonConvert.DeserializeObject<TResponseObject>(content);
+
+                        logger.LogDebug("Request was successful.");
+                        apiResponse.ResponseObject = default;
+                        break;
                     }
-                    catch (JsonSerializationException ex)
+                case HttpStatusCode.OK:
                     {
-                        throw new Exception($"Failed to deserialize object to type '{typeof(TResponseObject)}'.", ex);
+                        logger.LogDebug("Request was successful.");
+                        if (!String.IsNullOrWhiteSpace(content))
+                        {
+                            try
+                            {
+                                apiResponse.ResponseObject = JsonConvert.DeserializeObject<TResponseObject>(content);
+                            }
+                            catch (JsonSerializationException ex)
+                            {
+                                throw new Exception($"Failed to deserialize object to type '{typeof(TResponseObject)}'.", ex);
+                            }
+                        }
+                        else
+                        {
+                            throw new Exception($"The response body was empty. Verify the requested method returns a response body. Did you intend to use the non-generic 'SendAsync(HttpRequestMessage)'?");
+                        }
+                        break;
                     }
-                }
-                else
-                {
-                    throw new Exception($"The response body was empty. Verify the requested method returns a response body. Did you intend to use the non-generic 'SendAsync(HttpRequestMessage)'?");
-                }
-            }
-            else
-            {
-                logger.LogDebug("Request was unsuccessful.");
-                apiResponse.IsSuccessStatusCode = false;
-                apiResponse.StatusCode = response.StatusCode;
-                var errorContent = await response.Content?.ReadAsStringAsync() ?? "";
-                try
-                {
-                    apiResponse.Errors = JsonConvert.DeserializeObject<ApiErrorContent>(errorContent);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Failed to deserialize the content of an error response. The response content may not have been a valid ApiErrorContent object.");
-                    apiResponse.Errors = new ApiErrorContent();
-                }
+                default:
+                    {
+                        logger.LogDebug("Request was unsuccessful.");
+                        try
+                        {
+                            apiResponse.Errors = JsonConvert.DeserializeObject<ApiErrorContent>(content);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogError(ex, "Failed to deserialize the content of an error response. The response content may not have been a valid ApiErrorContent object.");
+                            apiResponse.Errors = new ApiErrorContent();
+                        }
+                        break;
+                    }
             }
             return apiResponse;
         }

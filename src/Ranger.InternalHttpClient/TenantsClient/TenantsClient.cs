@@ -61,6 +61,30 @@ namespace Ranger.InternalHttpClient
             throw new HttpClientException<T>(apiResponse);
         }
 
+        public async Task<T> GetPrimaryOwnerTransferByDomain<T>(string domain)
+        {
+            if (String.IsNullOrWhiteSpace(domain))
+            {
+                throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
+            }
+
+            var apiResponse = new InternalApiResponse<T>();
+            Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
+            {
+                return new HttpRequestMessage()
+                {
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri(httpClient.BaseAddress, $"/tenant/{domain}/primary-owner-transfer"),
+                };
+            });
+            apiResponse = await SendAsync<T>(httpRequestMessageFactory);
+            if (apiResponse.IsSuccessStatusCode)
+            {
+                return apiResponse.ResponseObject;
+            }
+            throw new HttpClientException<T>(apiResponse);
+        }
+
         public async Task<T> GetTenantByDatabaseUsernameAsync<T>(string databaseUsername)
         {
             if (String.IsNullOrWhiteSpace(databaseUsername))
