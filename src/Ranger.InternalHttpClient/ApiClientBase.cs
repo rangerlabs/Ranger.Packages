@@ -165,6 +165,7 @@ namespace Ranger.InternalHttpClient
                 default:
                     {
                         logger.LogDebug("Request was unsuccessful.");
+                        apiResponse.IsSuccessStatusCode = false;
                         try
                         {
                             apiResponse.Errors = JsonConvert.DeserializeObject<ApiErrorContent>(content);
