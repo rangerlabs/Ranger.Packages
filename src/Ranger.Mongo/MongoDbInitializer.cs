@@ -42,6 +42,7 @@ namespace Ranger.Mongo
             NodaTimeSerializers.Register();
             BsonSerializer.RegisterSerializer(typeof(decimal), new DecimalSerializer(BsonType.Decimal128));
             BsonSerializer.RegisterSerializer(typeof(decimal?), new NullableSerializer<decimal>(new DecimalSerializer(BsonType.Decimal128)));
+            BsonDefaults.GuidRepresentation = GuidRepresentation.Standard;
             ConventionRegistry.Register("Conventions", new MongoDbConventions(), x => true);
         }
 
