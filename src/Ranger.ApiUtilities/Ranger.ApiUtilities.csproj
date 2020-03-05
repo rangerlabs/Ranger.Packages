@@ -14,6 +14,6 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.0" />
     <PackageReference Include="Ranger.Mongo" Version="2.1.0" />
     <PackageReference Include="Ranger.InternalHttpClient" Version="3.1.0" />
-    <PackageReference Include="Ranger.Common" Version="2.2.13" />
+    <PackageReference Include="Ranger.Common" Version="2.2.16" />
   </ItemGroup>
 </Project>
