@@ -3,6 +3,9 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>Ranger.Common</AssemblyName>
+    <DebugSymbols>True</DebugSymbols>
+    <DebugType>Embedded</DebugType>
+    <EmbedAllSources>True</EmbedAllSources>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="./Data/SQL/*.sql" />

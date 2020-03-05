@@ -2,17 +2,20 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
+    <DebugSymbols>True</DebugSymbols>
+    <DebugType>Embedded</DebugType>
+    <EmbedAllSources>True</EmbedAllSources>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="MongoDB.Driver" Version="2.10.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="3.1.0" />
-    <PackageReference Include="Ranger.Common" Version="2.2.1" />
-    <PackageReference Include="Ranger.Monitoring" Version="2.0.1" />
+    <PackageReference Include="Ranger.Common" Version="2.2.13" />
+    <PackageReference Include="Ranger.Mongo" Version="2.1.0" />
     <PackageReference Include="Autofac" Version="4.9.4" />
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="5.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="MongoDb.Bson.NodaTime" Version="2.0.0" />
+    <PackageReference Include="MongoDb.Bson.NodaTime" Version="2.0.2" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,4 @@
-namespace Ranger.Common.SharedKernel
+namespace Ranger.Common
 {
     public enum IntegrationsEnum
     {

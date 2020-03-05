@@ -35,5 +35,14 @@ namespace Ranger.Common
         public static Tuple<LocalTime, LocalTime> FullDay => new Tuple<LocalTime, LocalTime>(new LocalTime(0, 0, 0, 0), new LocalTime(23, 59, 59, 999));
 
         public static Schedule FullSchedule => new Schedule(FullDay, FullDay, FullDay, FullDay, FullDay, FullDay, FullDay);
+
+        public bool IsWithinSchedule(DateTime dateTime)
+        {
+            var dayOfWeek = Enum.GetName(typeof(DayOfWeek), dateTime.DayOfWeek);
+            var propertyInfo = this.GetType().GetProperty(dayOfWeek);
+            var daySchedule = (Tuple<LocalTime, LocalTime>)propertyInfo.GetValue(this);
+            var localDateTime = LocalDateTime.FromDateTime(dateTime.ToUniversalTime());
+            return (daySchedule.Item1 <= localDateTime.TimeOfDay && localDateTime.TimeOfDay >= daySchedule.Item2) ? true : false;
+        }
     }
 }
