@@ -36,6 +36,7 @@ namespace Ranger.Common
         public Tuple<LocalTime, LocalTime> Saturday { get; private set; }
 
         public static Tuple<LocalTime, LocalTime> FullDay => new Tuple<LocalTime, LocalTime>(new LocalTime(0, 0, 0, 0), new LocalTime(23, 59, 59, 999));
+        public static Tuple<LocalTime, LocalTime> EmptyDay => new Tuple<LocalTime, LocalTime>(new LocalTime(0, 0, 0, 0), new LocalTime(0, 0, 0, 0));
 
         public static Schedule FullSchedule(string timeZoneId)
         {
@@ -52,41 +53,29 @@ namespace Ranger.Common
             {
                 throw new ArgumentException($"{nameof(eventDateTime)} is not a UTC DateTime.");
             }
-            var daySchedule = GetScheduleForEventDay(eventDateTime);
+            var eventInstance = LocalDateTime.FromDateTime(eventDateTime).InUtc().ToInstant().InZone(DateTimeZoneProviders.Tzdb[this.TimeZoneId]).ToDateTimeUnspecified();
 
-            Offset offset = OffsetFromUTCForEventDay(eventDateTime);
-            var offsetEventTime = LocalDateTime.FromDateTime(eventDateTime).WithOffset(offset);
-            var offsetStartTime = daySchedule.Item1.WithOffset(offset);
-            var offsetEndTime = daySchedule.Item2.WithOffset(offset);
+            var daySchedule = GetScheduleForEventDay(eventInstance.DayOfWeek);
 
-            var offsetEventDateTime = LocalDateTime.FromDateTime(new DateTime(
-                eventDateTime.Year,
-                eventDateTime.Month,
-                eventDateTime.Day,
-                offsetEventTime.Hour,
-                offsetEventTime.Minute,
-                offsetEventTime.Second,
-                DateTimeKind.Unspecified
-            ));
             var offseLocalStartTime = LocalDateTime.FromDateTime(new DateTime(
-                eventDateTime.Year,
-                eventDateTime.Month,
-                eventDateTime.Day,
-                offsetStartTime.Hour,
-                offsetStartTime.Minute,
-                offsetStartTime.Second,
-                DateTimeKind.Unspecified));
+                eventInstance.Year,
+                eventInstance.Month,
+                eventInstance.Day,
+                daySchedule.Item1.Hour,
+                daySchedule.Item1.Minute,
+                daySchedule.Item1.Second,
+                DateTimeKind.Unspecified)).InUtc().ToInstant().InZone(DateTimeZoneProviders.Tzdb[this.TimeZoneId]).ToDateTimeUnspecified();
 
             var offsetLocalEndTime = LocalDateTime.FromDateTime(new DateTime(
-                eventDateTime.Year,
-                eventDateTime.Month,
-                eventDateTime.Day,
-                offsetEndTime.Hour,
-                offsetEndTime.Minute,
-                offsetEndTime.Second,
-                DateTimeKind.Unspecified));
+                eventInstance.Year,
+                eventInstance.Month,
+                eventInstance.Day,
+                daySchedule.Item2.Hour,
+                daySchedule.Item2.Minute,
+                daySchedule.Item2.Second,
+                DateTimeKind.Unspecified)).InUtc().ToInstant().InZone(DateTimeZoneProviders.Tzdb[this.TimeZoneId]).ToDateTimeUnspecified();
 
-            return (offseLocalStartTime <= offsetEventDateTime && offsetEventDateTime <= offsetLocalEndTime) ? true : false;
+            return (offseLocalStartTime <= eventInstance && eventInstance <= offsetLocalEndTime) ? true : false;
         }
 
         private Offset OffsetFromUTCForEventDay(DateTime dateTime)
@@ -94,10 +83,10 @@ namespace Ranger.Common
             return DateTimeZoneProviders.Tzdb[this.TimeZoneId].GetUtcOffset(Instant.FromDateTimeUtc(dateTime));
         }
 
-        private Tuple<LocalTime, LocalTime> GetScheduleForEventDay(DateTime dateTime)
+        private Tuple<LocalTime, LocalTime> GetScheduleForEventDay(DayOfWeek dayOfWeek)
         {
-            var dayOfWeek = Enum.GetName(typeof(DayOfWeek), dateTime.DayOfWeek);
-            var propertyInfo = this.GetType().GetProperty(dayOfWeek);
+            var day = Enum.GetName(typeof(DayOfWeek), dayOfWeek);
+            var propertyInfo = this.GetType().GetProperty(day);
             var daySchedule = (Tuple<LocalTime, LocalTime>)propertyInfo.GetValue(this);
             return daySchedule;
         }
@@ -144,7 +133,7 @@ namespace Ranger.Common
             {
                 throw new ArgumentException("Tuple was null.");
             }
-            if (tuple.Item1 >= tuple.Item2)
+            if (tuple.Item1 > tuple.Item2)
             {
                 throw new ArgumentException("Item1 of the tuple must a time which is before Item2.");
             }
