@@ -64,7 +64,7 @@ namespace Ranger.Common
                 daySchedule.Item1.Hour,
                 daySchedule.Item1.Minute,
                 daySchedule.Item1.Second,
-                DateTimeKind.Unspecified)).InUtc().ToInstant().InZone(DateTimeZoneProviders.Tzdb[this.TimeZoneId]).ToDateTimeUnspecified();
+                DateTimeKind.Unspecified)).InUtc().ToDateTimeUnspecified();
 
             var offsetLocalEndTime = LocalDateTime.FromDateTime(new DateTime(
                 eventInstance.Year,
@@ -73,7 +73,7 @@ namespace Ranger.Common
                 daySchedule.Item2.Hour,
                 daySchedule.Item2.Minute,
                 daySchedule.Item2.Second,
-                DateTimeKind.Unspecified)).InUtc().ToInstant().InZone(DateTimeZoneProviders.Tzdb[this.TimeZoneId]).ToDateTimeUnspecified();
+                DateTimeKind.Unspecified)).InUtc().ToDateTimeUnspecified();
 
             return (offseLocalStartTime <= eventInstance && eventInstance <= offsetLocalEndTime) ? true : false;
         }
