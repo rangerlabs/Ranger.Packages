@@ -6,13 +6,13 @@ namespace Ranger.Common
     public class Schedule
     {
         public Schedule(
-            Tuple<LocalTime, LocalTime> sunday,
-            Tuple<LocalTime, LocalTime> monday,
-            Tuple<LocalTime, LocalTime> tuesday,
-            Tuple<LocalTime, LocalTime> wednesday,
-            Tuple<LocalTime, LocalTime> thursday,
-            Tuple<LocalTime, LocalTime> friday,
-            Tuple<LocalTime, LocalTime> saturday,
+            DailySchedule sunday,
+            DailySchedule monday,
+            DailySchedule tuesday,
+            DailySchedule wednesday,
+            DailySchedule thursday,
+            DailySchedule friday,
+            DailySchedule saturday,
             string timeZoneId
             )
         {
@@ -26,17 +26,17 @@ namespace Ranger.Common
             TimeZoneId = timeZoneId;
         }
 
-        public string TimeZoneId { get; private set; }
-        public Tuple<LocalTime, LocalTime> Sunday { get; private set; }
-        public Tuple<LocalTime, LocalTime> Monday { get; private set; }
-        public Tuple<LocalTime, LocalTime> Tuesday { get; private set; }
-        public Tuple<LocalTime, LocalTime> Wednesday { get; private set; }
-        public Tuple<LocalTime, LocalTime> Thursday { get; private set; }
-        public Tuple<LocalTime, LocalTime> Friday { get; private set; }
-        public Tuple<LocalTime, LocalTime> Saturday { get; private set; }
+        public string TimeZoneId { get; set; }
+        public DailySchedule Sunday { get; set; }
+        public DailySchedule Monday { get; set; }
+        public DailySchedule Tuesday { get; set; }
+        public DailySchedule Wednesday { get; set; }
+        public DailySchedule Thursday { get; set; }
+        public DailySchedule Friday { get; set; }
+        public DailySchedule Saturday { get; set; }
 
-        public static Tuple<LocalTime, LocalTime> FullDay => new Tuple<LocalTime, LocalTime>(new LocalTime(0, 0, 0, 0), new LocalTime(23, 59, 59, 999));
-        public static Tuple<LocalTime, LocalTime> EmptyDay => new Tuple<LocalTime, LocalTime>(new LocalTime(0, 0, 0, 0), new LocalTime(0, 0, 0, 0));
+        public static DailySchedule FullDay => new DailySchedule(new LocalTime(0, 0, 0, 0), new LocalTime(23, 59, 59, 999));
+        public static DailySchedule EmptyDay => new DailySchedule(new LocalTime(0, 0, 0, 0), new LocalTime(0, 0, 0, 0));
 
         public static Schedule FullSchedule(string timeZoneId)
         {
@@ -61,18 +61,18 @@ namespace Ranger.Common
                 eventInstance.Year,
                 eventInstance.Month,
                 eventInstance.Day,
-                daySchedule.Item1.Hour,
-                daySchedule.Item1.Minute,
-                daySchedule.Item1.Second,
+                daySchedule.StartTime.Hour,
+                daySchedule.StartTime.Minute,
+                daySchedule.StartTime.Second,
                 DateTimeKind.Unspecified)).InUtc().ToDateTimeUnspecified();
 
             var offsetLocalEndTime = LocalDateTime.FromDateTime(new DateTime(
                 eventInstance.Year,
                 eventInstance.Month,
                 eventInstance.Day,
-                daySchedule.Item2.Hour,
-                daySchedule.Item2.Minute,
-                daySchedule.Item2.Second,
+                daySchedule.EndTime.Hour,
+                daySchedule.EndTime.Minute,
+                daySchedule.EndTime.Second,
                 DateTimeKind.Unspecified)).InUtc().ToDateTimeUnspecified();
 
             return (offseLocalStartTime <= eventInstance && eventInstance <= offsetLocalEndTime) ? true : false;
@@ -83,60 +83,12 @@ namespace Ranger.Common
             return DateTimeZoneProviders.Tzdb[this.TimeZoneId].GetUtcOffset(Instant.FromDateTimeUtc(dateTime));
         }
 
-        private Tuple<LocalTime, LocalTime> GetScheduleForEventDay(DayOfWeek dayOfWeek)
+        private DailySchedule GetScheduleForEventDay(DayOfWeek dayOfWeek)
         {
             var day = Enum.GetName(typeof(DayOfWeek), dayOfWeek);
             var propertyInfo = this.GetType().GetProperty(day);
-            var daySchedule = (Tuple<LocalTime, LocalTime>)propertyInfo.GetValue(this);
+            var daySchedule = (DailySchedule)propertyInfo.GetValue(this);
             return daySchedule;
-        }
-
-        public void SetSunday(Tuple<LocalTime, LocalTime> scheduleTuple)
-        {
-            IsValidTuple(scheduleTuple);
-            this.Sunday = scheduleTuple;
-        }
-        public void SetMonday(Tuple<LocalTime, LocalTime> scheduleTuple)
-        {
-            IsValidTuple(scheduleTuple);
-            this.Monday = scheduleTuple;
-        }
-        public void SetTuesday(Tuple<LocalTime, LocalTime> scheduleTuple)
-        {
-            IsValidTuple(scheduleTuple);
-            this.Sunday = scheduleTuple;
-        }
-        public void SetWednesday(Tuple<LocalTime, LocalTime> scheduleTuple)
-        {
-            IsValidTuple(scheduleTuple);
-            this.Wednesday = scheduleTuple;
-        }
-        public void SetThursday(Tuple<LocalTime, LocalTime> scheduleTuple)
-        {
-            IsValidTuple(scheduleTuple);
-            this.Thursday = scheduleTuple;
-        }
-        public void SetFriday(Tuple<LocalTime, LocalTime> scheduleTuple)
-        {
-            IsValidTuple(scheduleTuple);
-            this.Friday = scheduleTuple;
-        }
-        public void SetSaturday(Tuple<LocalTime, LocalTime> scheduleTuple)
-        {
-            IsValidTuple(scheduleTuple);
-            this.Saturday = scheduleTuple;
-        }
-
-        private void IsValidTuple(Tuple<LocalTime, LocalTime> tuple)
-        {
-            if (tuple is null)
-            {
-                throw new ArgumentException("Tuple was null.");
-            }
-            if (tuple.Item1 > tuple.Item2)
-            {
-                throw new ArgumentException("Item1 of the tuple must a time which is before Item2.");
-            }
         }
     }
 }

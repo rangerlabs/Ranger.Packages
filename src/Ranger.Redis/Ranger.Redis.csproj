@@ -8,7 +8,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.0" />
     <PackageReference Include="Microsoft.Extensions.Caching.Redis" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="3.1.0" />
-    <PackageReference Include="Ranger.Common" Version="2.3.2" />
-    <PackageReference Include="Ranger.Mongo" Version="2.1.0" />
+    <PackageReference Include="Ranger.Common" Version="2.3.3" />
+    <PackageReference Include="Ranger.Monitoring" Version="2.1.0" />
   </ItemGroup>
 </Project>

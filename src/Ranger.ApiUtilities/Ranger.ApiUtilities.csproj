@@ -12,8 +12,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.1.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.0" />
-    <PackageReference Include="Ranger.Mongo" Version="2.1.0" />
+    <PackageReference Include="Ranger.Monitoring" Version="2.1.0" />
     <PackageReference Include="Ranger.InternalHttpClient" Version="3.1.0" />
-    <PackageReference Include="Ranger.Common" Version="2.3.2" />
+    <PackageReference Include="Ranger.Common" Version="2.3.3" />
   </ItemGroup>
 </Project>

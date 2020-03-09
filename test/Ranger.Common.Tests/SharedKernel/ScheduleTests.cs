@@ -17,10 +17,10 @@ namespace Ranger.Common.Tests
             this.FullSchedule = Schedule.FullSchedule("America/New_York");
 
             this.NoSunday = Schedule.FullSchedule("America/New_York");
-            this.NoSunday.SetSunday(Schedule.EmptyDay);
+            this.NoSunday.Sunday = Schedule.EmptyDay;
 
             this.HalfSunday = Schedule.FullSchedule("America/New_York");
-            this.HalfSunday.SetSunday(new Tuple<LocalTime, LocalTime>(new LocalTime(0, 0, 0, 0), new LocalTime(12, 0, 0, 0)));
+            this.HalfSunday.Sunday = new DailySchedule(new LocalTime(0, 0, 0, 0), new LocalTime(12, 0, 0, 0));
         }
     }
 
@@ -30,15 +30,6 @@ namespace Ranger.Common.Tests
         public ScheduleTests(ScheduleFixture scheduleFixture)
         {
             fixture = scheduleFixture;
-        }
-
-        [Fact]
-        public void Setting_A_Day_Throws_If_First_Time_Greater_Than_Second_Time()
-        {
-            Should.Throw<ArgumentException>(() =>
-            {
-                fixture.NoSunday.SetFriday(new Tuple<LocalTime, LocalTime>(new LocalTime(0, 0, 0, 1), new LocalTime(0, 0, 0, 0)));
-            });
         }
 
         [Fact]
