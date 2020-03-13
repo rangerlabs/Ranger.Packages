@@ -73,5 +73,47 @@ namespace Ranger.Common.Tests
             var noSundayResult2 = fixture.NoSunday.IsWithinSchedule(aUtcEventOnMondayMorningNearTheBoundry);
             noSundayResult2.ShouldBeFalse();
         }
+
+        [Fact]
+        public void IsUtcFullSchedule_Returns_False_When_TimeZoneId_Is_NOT_UTC()
+        {
+            var schedule = Schedule.FullUtcSchedule;
+            schedule.TimeZoneId = "America/New_York";
+            var result = Schedule.IsUtcFullSchedule(schedule);
+            result.ShouldBeFalse();
+        }
+
+        [Fact]
+        public void IsUtcFullSchedule_Returns_True_When_FullUtcSchedule()
+        {
+            var schedule = Schedule.FullUtcSchedule;
+            var result = Schedule.IsUtcFullSchedule(schedule);
+            result.ShouldBeTrue();
+        }
+
+        [Fact]
+        public void IsUtcFullSchedule_Returns_False_When_NotFull()
+        {
+            var schedule = Schedule.FullUtcSchedule;
+            schedule.Monday = new DailySchedule(new LocalTime(0, 0, 0, 0), new LocalTime(12, 0, 0, 0));
+            var result = Schedule.IsUtcFullSchedule(schedule);
+            result.ShouldBeFalse();
+        }
+
+        [Fact]
+        public void IsFullDailySchedule_Returns_False_When_NotFull()
+        {
+            var dailySchedule = new DailySchedule(new LocalTime(0, 0, 0, 0), new LocalTime(12, 0, 0, 0));
+            var result = Schedule.IsFullDailySchedule(dailySchedule);
+            result.ShouldBeFalse();
+        }
+
+        [Fact]
+        public void IsFullDailySchedule_Returns_True_When_Full()
+        {
+            var dailySchedule = Schedule.FullDay;
+            var result = Schedule.IsFullDailySchedule(dailySchedule);
+            result.ShouldBeTrue();
+        }
     }
 }

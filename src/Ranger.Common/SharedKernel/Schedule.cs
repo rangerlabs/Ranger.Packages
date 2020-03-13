@@ -5,6 +5,10 @@ namespace Ranger.Common
 {
     public class Schedule
     {
+        private static DailySchedule fullDailySchedule = Schedule.FullDay;
+        private static Schedule fullSchedule = Schedule.FullUtcSchedule;
+        private static IDateTimeZoneProvider zoneProvider = DateTimeZoneProviders.Tzdb;
+
         public Schedule(
             DailySchedule sunday,
             DailySchedule monday,
@@ -44,7 +48,33 @@ namespace Ranger.Common
             {
                 throw new ArgumentException($"{nameof(timeZoneId)} was null or whitespace.");
             }
+            if (zoneProvider.GetZoneOrNull(timeZoneId) is null)
+            {
+                throw new ArgumentException($"{nameof(timeZoneId)} was not a valid zone within the zone provider.");
+            }
             return new Schedule(FullDay, FullDay, FullDay, FullDay, FullDay, FullDay, FullDay, timeZoneId);
+        }
+
+        public static Schedule FullUtcSchedule => new Schedule(FullDay, FullDay, FullDay, FullDay, FullDay, FullDay, FullDay, "UTC");
+
+        public static bool IsUtcFullSchedule(Schedule schedule)
+        {
+            if (schedule.TimeZoneId == "UTC")
+            {
+                return IsFullDailySchedule(schedule.Sunday) &&
+                IsFullDailySchedule(schedule.Monday) &&
+                IsFullDailySchedule(schedule.Tuesday) &&
+                IsFullDailySchedule(schedule.Wednesday) &&
+                IsFullDailySchedule(schedule.Thursday) &&
+                IsFullDailySchedule(schedule.Friday) &&
+                IsFullDailySchedule(schedule.Saturday);
+            }
+            return false;
+        }
+
+        public static bool IsFullDailySchedule(DailySchedule dailySchedule)
+        {
+            return dailySchedule.StartTime.Equals(fullDailySchedule.StartTime) && dailySchedule.EndTime.Equals(fullDailySchedule.EndTime);
         }
 
         public bool IsWithinSchedule(DateTime eventDateTime)
