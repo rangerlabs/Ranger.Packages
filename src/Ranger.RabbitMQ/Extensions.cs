@@ -4,6 +4,10 @@ using Autofac;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using NodaTime;
+using NodaTime.Serialization.JsonNet;
 using RabbitMQ.Client;
 using Ranger.Common;
 
@@ -28,6 +32,12 @@ namespace Ranger.RabbitMQ
                 .InstancePerDependency();
             builder.RegisterType<BusPublisher>().As<IBusPublisher>()
                 .SingleInstance();
+
+            JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+            {
+                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+            }.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
 
             RegisterConnectionFactory(builder);
         }
