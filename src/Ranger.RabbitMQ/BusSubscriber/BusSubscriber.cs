@@ -7,12 +7,15 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using RabbitMQ.Client.Exceptions;
 using Ranger.Common;
 
 namespace Ranger.RabbitMQ
 {
     public class BusSubscriber : IBusSubscriber
     {
+        private const int ConnectionRetryDuration = 10000;
+        private const int ConnectionMaxRetrys = 9;
         private readonly ILogger<BusSubscriber> logger;
         private readonly IBusPublisher publisher;
         private readonly IConnection connection;
@@ -25,8 +28,29 @@ namespace Ranger.RabbitMQ
         {
             serviceProvider = app.ApplicationServices.GetService<IServiceProvider>();
             logger = serviceProvider.GetService<ILogger<BusSubscriber>>();
-            connection = serviceProvider.GetService<IConnectionFactory>().CreateConnection();
-            logger.LogInformation("Subscriber connected.");
+            bool connected = false;
+            int connectionAttempt = 0;
+            while (!connected && connectionAttempt <= ConnectionMaxRetrys)
+            {
+                try
+                {
+                    connection = serviceProvider.GetService<IConnectionFactory>().CreateConnection();
+                }
+                catch (BrokerUnreachableException ex)
+                {
+                    logger.LogCritical(ex, $"Failed to connect to RabbitMQ broker. Retrying in {ConnectionRetryDuration / 1000} seconds. Connection attempt: {connectionAttempt}.");
+                    if (connectionAttempt == ConnectionMaxRetrys)
+                    {
+                        logger.LogCritical("Abandoning RabbitMQ Connection.");
+                        throw;
+                    }
+                    connectionAttempt++;
+                    Thread.Sleep(ConnectionRetryDuration);
+                    continue;
+                }
+                connected = true;
+                logger.LogInformation("Subscriber connected.");
+            }
             publisher = serviceProvider.GetService<IBusPublisher>();
             options = serviceProvider.GetService<RabbitMQOptions>();
             retryInterval = new TimeSpan(0, 0, options.RetryInterval > 0 ? options.RetryInterval : 2);

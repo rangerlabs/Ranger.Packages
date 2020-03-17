@@ -35,7 +35,6 @@ namespace Ranger.RabbitMQ
 
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings
             {
-                ContractResolver = new CamelCasePropertyNamesContractResolver(),
                 ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
             }.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
 
