@@ -2,8 +2,9 @@ namespace Ranger.Common
 {
     public enum GeofenceEventEnum
     {
-        ENTERED = 0,
-        DWELLING = 1,
-        EXITED = 2
+        NONE = 0,
+        ENTERED = 1,
+        DWELLING = 2,
+        EXITED = 3
     }
 }
