@@ -39,10 +39,8 @@ namespace Ranger.InternalHttpClient
                 return new HttpRequestMessage()
                 {
                     Method = HttpMethod.Delete,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"user/{email}/account"),
+                    RequestUri = new Uri(httpClient.BaseAddress, $"{domain}/users/{email}/account"),
                     Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
-                    Headers = { { "x-ranger-domain", domain },
-                }
                 };
             });
             apiResponse = await SendAsync(httpRequestMessageFactory);
@@ -74,10 +72,8 @@ namespace Ranger.InternalHttpClient
                 return new HttpRequestMessage()
                 {
                     Method = HttpMethod.Delete,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"user/{email}"),
+                    RequestUri = new Uri(httpClient.BaseAddress, $"{domain}/users/{email}"),
                     Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
-                    Headers = { { "x-ranger-domain", domain },
-                }
                 };
             });
             apiResponse = await SendAsync(httpRequestMessageFactory);
@@ -109,10 +105,8 @@ namespace Ranger.InternalHttpClient
                 return new HttpRequestMessage()
                 {
                     Method = HttpMethod.Put,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"user/{username}"),
+                    RequestUri = new Uri(httpClient.BaseAddress, $"{domain}/users/{username}"),
                     Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
-                    Headers = { { "x-ranger-domain", domain },
-                }
                 };
             });
             apiResponse = await SendAsync(httpRequestMessageFactory);
@@ -141,9 +135,7 @@ namespace Ranger.InternalHttpClient
                 return new HttpRequestMessage()
                 {
                     Method = HttpMethod.Get,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"user/{username}"),
-                    Headers = { { "x-ranger-domain", domain },
-                }
+                    RequestUri = new Uri(httpClient.BaseAddress, $"{domain}/users/{username}"),
                 };
             });
             apiResponse = await SendAsync<T>(httpRequestMessageFactory);
@@ -163,29 +155,7 @@ namespace Ranger.InternalHttpClient
                 return new HttpRequestMessage()
                 {
                     Method = HttpMethod.Get,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"user/all"),
-                    Headers = { { "x-ranger-domain", domain },
-                }
-                };
-            });
-            apiResponse = await SendAsync<T>(httpRequestMessageFactory);
-            return apiResponse.IsSuccessStatusCode ? apiResponse.ResponseObject : throw new HttpClientException<T>(apiResponse);
-        }
-
-        public async Task<T> GetRoleAsync<T>(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                throw new ArgumentException($"{nameof(name)} cannot be null or whitespace.");
-            }
-
-            var apiResponse = new InternalApiResponse<T>();
-            Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
-            {
-                return new HttpRequestMessage()
-                {
-                    Method = HttpMethod.Get,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"role/{name}")
+                    RequestUri = new Uri(httpClient.BaseAddress, $"{domain}/users"),
                 };
             });
             apiResponse = await SendAsync<T>(httpRequestMessageFactory);
@@ -209,8 +179,7 @@ namespace Ranger.InternalHttpClient
                 return new HttpRequestMessage()
                 {
                     Method = HttpMethod.Get,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"user/{email}/role"),
-                    Headers = { { "x-ranger-domain", domain } }
+                    RequestUri = new Uri(httpClient.BaseAddress, $"{domain}/users/{email}/role"),
                 };
             });
             apiResponse = await SendAsync<T>(httpRequestMessageFactory);
@@ -239,9 +208,8 @@ namespace Ranger.InternalHttpClient
                 return new HttpRequestMessage()
                 {
                     Method = HttpMethod.Put,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"user/{email}/password-reset"),
+                    RequestUri = new Uri(httpClient.BaseAddress, $"{domain}/users/{email}/password-reset"),
                     Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
-                    Headers = { { "x-ranger-domain", domain } }
                 };
             });
             apiResponse = await SendAsync(httpRequestMessageFactory);
@@ -278,9 +246,8 @@ namespace Ranger.InternalHttpClient
                 return new HttpRequestMessage()
                 {
                     Method = HttpMethod.Put,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"user/{email}/email-change"),
+                    RequestUri = new Uri(httpClient.BaseAddress, $"{domain}/users/{email}/email-change"),
                     Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
-                    Headers = { { "x-ranger-domain", domain } }
                 };
             });
             apiResponse = await SendAsync(httpRequestMessageFactory);
@@ -318,9 +285,8 @@ namespace Ranger.InternalHttpClient
                 return new HttpRequestMessage()
                 {
                     Method = HttpMethod.Put,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"user/{userId}/confirm"),
+                    RequestUri = new Uri(httpClient.BaseAddress, $"{domain}/users/{userId}/confirm"),
                     Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
-                    Headers = { { "x-ranger-domain", domain } }
                 };
             });
             apiResponse = await SendAsync(httpRequestMessageFactory);
@@ -356,9 +322,8 @@ namespace Ranger.InternalHttpClient
                 return new HttpRequestMessage()
                 {
                     Method = HttpMethod.Post,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"user/{userId}/password-reset"),
+                    RequestUri = new Uri(httpClient.BaseAddress, $"{domain}/users/{userId}/password-reset"),
                     Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
-                    Headers = { { "x-ranger-domain", domain } }
                 };
             });
             apiResponse = await SendAsync(httpRequestMessageFactory);
@@ -394,9 +359,8 @@ namespace Ranger.InternalHttpClient
                 return new HttpRequestMessage()
                 {
                     Method = HttpMethod.Post,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"user/{userId}/email-change"),
+                    RequestUri = new Uri(httpClient.BaseAddress, $"{domain}/users/{userId}/email-change"),
                     Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
-                    Headers = { { "x-ranger-domain", domain } }
                 };
             });
             apiResponse = await SendAsync(httpRequestMessageFactory);

@@ -6,7 +6,7 @@ namespace Ranger.Common
     public class User
     {
         [JsonConstructor]
-        internal User(string domain, string email, string firstName, string lastName, string phoneNumber, string role, IEnumerable<string> authorizedProjects)
+        public User(string domain, string email, string firstName, string lastName, string phoneNumber, string role, IEnumerable<string> authorizedProjects)
         {
             this.Domain = domain;
             this.Email = email;
