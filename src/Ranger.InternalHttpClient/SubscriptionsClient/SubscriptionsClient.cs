@@ -17,7 +17,33 @@ namespace Ranger.InternalHttpClient
             this.logger = logger;
         }
 
-        public async Task<T> GenerateCheckoutExistingUrl<T>(string domain)
+        public async Task<T> GenerateCheckoutExistingUrl<T>(string domain, string planId)
+        {
+            if (String.IsNullOrWhiteSpace(domain))
+            {
+                throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
+            }
+            if (String.IsNullOrWhiteSpace(planId))
+            {
+                throw new ArgumentException($"{nameof(planId)} cannot be null or whitespace.");
+            }
+            Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
+            {
+                return new HttpRequestMessage()
+                {
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri(httpClient.BaseAddress, $"{domain}/subscriptions/checkout-existing-hosted-page-url?planId={planId}")
+                };
+            });
+            var apiResponse = await SendAsync<T>(httpRequestMessageFactory);
+            if (apiResponse.IsSuccessStatusCode)
+            {
+                return apiResponse.ResponseObject;
+            }
+            throw new HttpClientException<T>(apiResponse);
+        }
+
+        public async Task<T> GetLimitDetails<T>(string domain)
         {
             if (String.IsNullOrWhiteSpace(domain))
             {
@@ -28,7 +54,29 @@ namespace Ranger.InternalHttpClient
                 return new HttpRequestMessage()
                 {
                     Method = HttpMethod.Get,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"{domain}/subscriptions/checkout-existing-hosted-page-url")
+                    RequestUri = new Uri(httpClient.BaseAddress, $"{domain}/subscriptions/limit-details")
+                };
+            });
+            var apiResponse = await SendAsync<T>(httpRequestMessageFactory);
+            if (apiResponse.IsSuccessStatusCode)
+            {
+                return apiResponse.ResponseObject;
+            }
+            throw new HttpClientException<T>(apiResponse);
+        }
+
+        public async Task<T> GetSubscription<T>(string domain)
+        {
+            if (String.IsNullOrWhiteSpace(domain))
+            {
+                throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
+            }
+            Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
+            {
+                return new HttpRequestMessage()
+                {
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri(httpClient.BaseAddress, $"{domain}/subscriptions")
                 };
             });
             var apiResponse = await SendAsync<T>(httpRequestMessageFactory);
