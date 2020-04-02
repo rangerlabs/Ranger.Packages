@@ -65,7 +65,7 @@ namespace Ranger.InternalHttpClient
             throw new HttpClientException<T>(apiResponse);
         }
 
-        public async Task<T> GetSubscription<T>(string domain)
+        public async Task<T> GetSubscriptionPlanId<T>(string domain)
         {
             if (String.IsNullOrWhiteSpace(domain))
             {
@@ -76,7 +76,7 @@ namespace Ranger.InternalHttpClient
                 return new HttpRequestMessage()
                 {
                     Method = HttpMethod.Get,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"{domain}/subscriptions")
+                    RequestUri = new Uri(httpClient.BaseAddress, $"{domain}/subscriptions/plan-id")
                 };
             });
             var apiResponse = await SendAsync<T>(httpRequestMessageFactory);

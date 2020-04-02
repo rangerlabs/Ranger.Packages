@@ -6,6 +6,6 @@ namespace Ranger.InternalHttpClient
     {
         Task<T> GenerateCheckoutExistingUrl<T>(string domain, string planId);
         Task<T> GetLimitDetails<T>(string domain);
-        Task<T> GetSubscription<T>(string domain);
+        Task<T> GetSubscriptionPlanId<T>(string domain);
     }
 }
