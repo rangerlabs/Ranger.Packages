@@ -4,7 +4,7 @@ namespace Ranger.Common
     {
         Project = 0,
         Integration = 1,
-        Goefence = 2,
+        Geofence = 2,
         Account = 3
     }
 }
