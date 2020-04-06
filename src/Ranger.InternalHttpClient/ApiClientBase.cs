@@ -35,6 +35,7 @@ namespace Ranger.InternalHttpClient
             DiscoveryDocumentRequest discoveryDocument = null;
             if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == Environments.Development)
             {
+                logger.LogDebug("Requesting discovery document for Development Environment");
                 discoveryDocument = new DiscoveryDocumentRequest()
                 {
                     Address = "http://identity:5000",
@@ -47,6 +48,7 @@ namespace Ranger.InternalHttpClient
             }
             else
             {
+                logger.LogDebug("Requesting discovery document for Production Environment");
                 discoveryDocument = new DiscoveryDocumentRequest()
                 {
                     Address = "http://identity:5000",
@@ -63,6 +65,7 @@ namespace Ranger.InternalHttpClient
             {
                 throw new Exception(disco.Error);
             }
+            logger.LogDebug("Retrieved discovery document from Identity Server");
 
             //TODO: The client secret should be on a per client basis, for now just using a single one and this works because the this Identity Client has this and the other tokens approved.
             var tokenResponse = await httpClient.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
@@ -91,6 +94,7 @@ namespace Ranger.InternalHttpClient
             {
                 logger.LogInformation("Recieved a 401 Unauthorized from requested service. Attempting to set new client token.");
                 await SetClientToken();
+                logger.LogDebug("New client token set. Resending request.");
                 response = await httpClient.SendAsync(httpRequestMessageFactory());
             }
             if (response.IsSuccessStatusCode)

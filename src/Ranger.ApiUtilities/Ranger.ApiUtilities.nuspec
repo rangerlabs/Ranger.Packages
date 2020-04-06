@@ -6,17 +6,20 @@
     <title>$title$</title>
     <authors>$author$</authors>
     <owners>$author$</owners>
-    <projectUrl>https://github.com/rangerlabs/Ranger.InternalHttpClient</projectUrl>
+    <projectUrl>https://github.com/rangerlabs/Ranger.Packages</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Ranger internal http client package</description>
+    <description>Ranger API utilities package</description>
     <!-- <releaseNotes>Summary of changes made in this release of the package.</releaseNotes> -->
     <copyright>Copyright 2019</copyright>
-    <tags>Ranger Internal Http Client</tags>
+    <tags>Ranger ApiUtilities</tags>
     <packageTypes>
       <packageType name="Dependency" />
     </packageTypes>
     <dependencies>
-      <dependency id="IdentityModel" version="4.1.1" />
+      <dependency id="Microsoft.AspNetCore.Hosting.Abstractions" version="2.2.0" />
+      <dependency id="Swashbuckle.AspNetCore" version="5.0.0" />
+      <dependency id="AutoWrapper.Core" version="4.0.1" />
+      <dependency id="Ranger.Common" version="2.0.0" />
     </dependencies>
   </metadata>
   <files>
