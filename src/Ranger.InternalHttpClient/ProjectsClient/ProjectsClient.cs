@@ -8,16 +8,12 @@ using Newtonsoft.Json;
 
 namespace Ranger.InternalHttpClient
 {
-    public class ProjectsClient : ApiClientBase, IProjectsClient
+    public class ProjectsClient : ApiClientBase
     {
-        private readonly ILogger<ProjectsClient> logger;
+        public ProjectsClient(HttpClient httpClient, ILogger<ProjectsClient> logger) : base(httpClient, logger)
+        { }
 
-        public ProjectsClient(string uri, ILogger<ProjectsClient> logger) : base(uri, logger, "projectsApi")
-        {
-            this.logger = logger;
-        }
-
-        public async Task<IEnumerable<string>> GetProjectIdsForUser(string domain, string email)
+        public async Task<ApiResponse<IEnumerable<string>>> GetProjectIdsForUser(string domain, string email)
         {
             if (string.IsNullOrWhiteSpace(domain))
             {
@@ -28,39 +24,28 @@ namespace Ranger.InternalHttpClient
                 throw new ArgumentException($"{nameof(email)} cannot be null or whitespace.");
             }
 
-            Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
+            return await SendAsync<IEnumerable<string>>(new HttpRequestMessage()
             {
-                return new HttpRequestMessage()
-                {
-                    Method = HttpMethod.Get,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"/{domain}/project/authorized/{email}")
-                };
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/{domain}/project/authorized/{email}")
             });
-            var apiResponse = await SendAsync<IEnumerable<string>>(httpRequestMessageFactory);
-            return apiResponse.IsSuccessStatusCode ? apiResponse.ResponseObject : throw new HttpClientException<IEnumerable<string>>(apiResponse);
         }
 
-        public async Task<T> GetDatabaseUsernameByApiKeyAsync<T>(string apiKey)
+        public async Task<ApiResponse<T>> GetDatabaseUsernameByApiKeyAsync<T>(string apiKey)
         {
             if (string.IsNullOrWhiteSpace(apiKey))
             {
                 throw new ArgumentException($"{nameof(apiKey)} cannot be null or whitespace.");
             }
 
-            Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
+            return await SendAsync<T>(new HttpRequestMessage()
             {
-                return new HttpRequestMessage()
-                {
-                    Method = HttpMethod.Get,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"/project/{apiKey}/databaseusername"),
-                };
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/project/{apiKey}/databaseusername"),
             });
-
-            var apiResponse = await SendAsync<T>(httpRequestMessageFactory);
-            return apiResponse.IsSuccessStatusCode ? apiResponse.ResponseObject : throw new HttpClientException<T>(apiResponse);
         }
 
-        public async Task<T> GetProjectByApiKeyAsync<T>(string domain, string apiKey)
+        public async Task<ApiResponse<T>> GetProjectByApiKeyAsync<T>(string domain, string apiKey)
         {
             if (string.IsNullOrWhiteSpace(domain))
             {
@@ -72,20 +57,14 @@ namespace Ranger.InternalHttpClient
                 throw new ArgumentException($"{nameof(apiKey)} cannot be null or whitespace.");
             }
 
-            Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
+            return await SendAsync<T>(new HttpRequestMessage()
             {
-                return new HttpRequestMessage()
-                {
-                    Method = HttpMethod.Get,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"/{domain}/project?apiKey={apiKey}"),
-                };
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/{domain}/project?apiKey={apiKey}"),
             });
-
-            var apiResponse = await SendAsync<T>(httpRequestMessageFactory);
-            return apiResponse.IsSuccessStatusCode ? apiResponse.ResponseObject : throw new HttpClientException<T>(apiResponse);
         }
 
-        public async Task<T> GetAllProjectsForUserAsync<T>(string domain, string email)
+        public async Task<ApiResponse<T>> GetAllProjectsForUserAsync<T>(string domain, string email)
         {
             if (String.IsNullOrWhiteSpace(domain))
             {
@@ -96,20 +75,14 @@ namespace Ranger.InternalHttpClient
                 throw new ArgumentException($"{nameof(email)} cannot be null or whitespace.");
             }
 
-            Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
+            return await SendAsync<T>(new HttpRequestMessage()
             {
-                return new HttpRequestMessage()
-                {
-                    Method = HttpMethod.Get,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"/{domain}/project/{email}"),
-                };
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/{domain}/project/{email}"),
             });
-
-            var apiResponse = await SendAsync<T>(httpRequestMessageFactory);
-            return apiResponse.IsSuccessStatusCode ? apiResponse.ResponseObject : throw new HttpClientException<T>(apiResponse);
         }
 
-        public async Task<T> PutProjectAsync<T>(string domain, Guid projectId, string jsonContent)
+        public async Task<ApiResponse<T>> PutProjectAsync<T>(string domain, Guid projectId, string jsonContent)
         {
             if (String.IsNullOrWhiteSpace(domain))
             {
@@ -119,21 +92,15 @@ namespace Ranger.InternalHttpClient
             {
                 throw new ArgumentException($"{nameof(jsonContent)} cannot be null or whitespace.");
             }
-
-            Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
+            return await SendAsync<T>(new HttpRequestMessage()
             {
-                return new HttpRequestMessage()
-                {
-                    Method = HttpMethod.Put,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"/{domain}/project/{projectId}"),
-                    Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
-                };
+                Method = HttpMethod.Put,
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/{domain}/project/{projectId}"),
+                Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
             });
-            var apiResponse = await SendAsync<T>(httpRequestMessageFactory);
-            return apiResponse.IsSuccessStatusCode ? apiResponse.ResponseObject : throw new HttpClientException<T>(apiResponse);
         }
 
-        public async Task<T> ApiKeyResetAsync<T>(string domain, Guid projectId, string environment, string jsonContent)
+        public async Task<ApiResponse<T>> ApiKeyResetAsync<T>(string domain, Guid projectId, string environment, string jsonContent)
         {
             if (String.IsNullOrWhiteSpace(domain))
             {
@@ -147,44 +114,30 @@ namespace Ranger.InternalHttpClient
             {
                 throw new ArgumentException($"{nameof(jsonContent)} cannot be null or whitespace.");
             }
-            Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
+            return await SendAsync<T>(new HttpRequestMessage()
             {
-                return new HttpRequestMessage()
-                {
-                    Method = HttpMethod.Put,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"/{domain}/project/{projectId}/{environment}/reset"),
-                    Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
-                };
+                Method = HttpMethod.Put,
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/{domain}/project/{projectId}/{environment}/reset"),
+                Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
             });
-            var apiResponse = await SendAsync<T>(httpRequestMessageFactory);
-            return apiResponse.IsSuccessStatusCode ? apiResponse.ResponseObject : throw new HttpClientException<T>(apiResponse);
         }
 
-        public async Task SoftDeleteProjectAsync(string domain, Guid projectId, string userEmail)
+        public async Task<ApiResponse<T>> SoftDeleteProjectAsync<T>(string domain, Guid projectId, string userEmail)
         {
             if (String.IsNullOrWhiteSpace(domain))
             {
                 throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
             }
 
-            Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
+            return await SendAsync<T>(new HttpRequestMessage()
             {
-                return new HttpRequestMessage()
-                {
-                    Method = HttpMethod.Delete,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"/{domain}/project/{projectId}"),
-                    Content = new StringContent(JsonConvert.SerializeObject(new { UserEmail = userEmail }), Encoding.UTF8, "application/json")
-                };
+                Method = HttpMethod.Delete,
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/{domain}/project/{projectId}"),
+                Content = new StringContent(JsonConvert.SerializeObject(new { UserEmail = userEmail }), Encoding.UTF8, "application/json")
             });
-            var apiResponse = await SendAsync(httpRequestMessageFactory);
-            if (apiResponse.IsSuccessStatusCode)
-            {
-                return;
-            }
-            throw new HttpClientException(apiResponse);
         }
 
-        public async Task<T> PostProjectAsync<T>(string domain, string jsonContent)
+        public async Task<ApiResponse<T>> PostProjectAsync<T>(string domain, string jsonContent)
         {
             if (String.IsNullOrWhiteSpace(domain))
             {
@@ -195,17 +148,12 @@ namespace Ranger.InternalHttpClient
                 throw new ArgumentException($"{nameof(jsonContent)} cannot be null or whitespace.");
             }
 
-            Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
+            return await SendAsync<T>(new HttpRequestMessage()
             {
-                return new HttpRequestMessage()
-                {
-                    Method = HttpMethod.Post,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"/{domain}/project"),
-                    Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
-                };
+                Method = HttpMethod.Post,
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/{domain}/project"),
+                Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
             });
-            var apiResponse = await SendAsync<T>(httpRequestMessageFactory);
-            return apiResponse.IsSuccessStatusCode ? apiResponse.ResponseObject : throw new HttpClientException<T>(apiResponse);
         }
     }
 }

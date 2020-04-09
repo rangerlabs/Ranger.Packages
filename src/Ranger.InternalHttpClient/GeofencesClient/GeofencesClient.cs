@@ -5,32 +5,23 @@ using Microsoft.Extensions.Logging;
 
 namespace Ranger.InternalHttpClient
 {
-    public class GeofencesClient : ApiClientBase, IGeofencesClient
+    public class GeofencesClient : ApiClientBase
     {
-        private readonly ILogger<GeofencesClient> logger;
+        public GeofencesClient(HttpClient httpClient, ILogger<GeofencesClient> logger) : base(httpClient, logger)
+        { }
 
-        public GeofencesClient(string uri, ILogger<GeofencesClient> logger) : base(uri, logger, "geofencesApi")
-        {
-            this.logger = logger;
-        }
-
-        public async Task<T> GetAllGeofencesByProjectId<T>(string domain, Guid projectId)
+        public async Task<ApiResponse<T>> GetAllGeofencesByProjectId<T>(string domain, Guid projectId)
         {
             if (string.IsNullOrWhiteSpace(domain))
             {
                 throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
             }
 
-            Func<HttpRequestMessage> httpRequestMessageFactory = (() =>
+            return await SendAsync<T>(new HttpRequestMessage()
             {
-                return new HttpRequestMessage()
-                {
-                    Method = HttpMethod.Get,
-                    RequestUri = new Uri(httpClient.BaseAddress, $"/{domain}/geofences?projectId={projectId}")
-                };
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/{domain}/geofences?projectId={projectId}")
             });
-            var apiResponse = await SendAsync<T>(httpRequestMessageFactory);
-            return apiResponse.IsSuccessStatusCode ? apiResponse.ResponseObject : throw new HttpClientException<T>(apiResponse);
         }
     }
 }

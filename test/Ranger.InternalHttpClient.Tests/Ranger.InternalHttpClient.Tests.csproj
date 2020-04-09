@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Ranger.Common\Ranger.Common.csproj" />
+    <ProjectReference Include="..\..\src\Ranger.InternalHttpClient\Ranger.InternalHttpClient.csproj" />
   </ItemGroup>
 
 </Project>

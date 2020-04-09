@@ -10,11 +10,11 @@ using System.Reflection;
 using System.IO;
 using Microsoft.OpenApi.Models;
 
-namespace Ranger.Logging
+namespace Ranger.AutoWrapper
 {
     public static class Extensions
     {
-        public static IServiceCollection AddAutoWrapper(this IServiceCollection services, string applicationName = null)
+        public static IServiceCollection AddAutoWrapper(this IServiceCollection services)
         {
             services.Configure<ApiBehaviorOptions>(options =>
             {
@@ -62,7 +62,7 @@ namespace Ranger.Logging
                     Version = version,
                     Title = title
                 });
-                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlFile = $"{Assembly.GetEntryAssembly().GetName().Name}.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
                 c.IncludeXmlComments(xmlPath);
             });
