@@ -61,7 +61,7 @@ namespace Ranger.InternalHttpClient
             {
                 throw new System.ArgumentException($"{nameof(clientSecret)} was null or whitespace");
             }
-            services.AddHttpClient<TenantsHttpClient>(client =>
+            services.AddHttpClient<T>(client =>
             {
                 client.BaseAddress = new Uri(baseAddress);
             })

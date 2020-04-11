@@ -1,6 +1,4 @@
 ﻿using System;
-using Microsoft.AspNetCore.Hosting;
-using Ranger.Common;
 using AutoWrapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,8 +7,9 @@ using Microsoft.Extensions.Hosting;
 using System.Reflection;
 using System.IO;
 using Microsoft.OpenApi.Models;
+using System.Collections.Generic;
 
-namespace Ranger.AutoWrapper
+namespace Ranger.ApiUtilities
 {
     public static class Extensions
     {
@@ -34,7 +33,6 @@ namespace Ranger.AutoWrapper
             }
 
             autoWrapperOptions.ShowStatusCode = true;
-            autoWrapperOptions.ShowApiVersion = true;
             autoWrapperOptions.IsApiOnly = true;
             autoWrapperOptions.WrapWhenApiPathStartsWith = wrapWhenApiPathStartsWith;
 
@@ -61,6 +59,7 @@ namespace Ranger.AutoWrapper
                     Version = version,
                     Title = title
                 });
+
                 var xmlFile = $"{Assembly.GetEntryAssembly().GetName().Name}.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
                 c.IncludeXmlComments(xmlPath);
