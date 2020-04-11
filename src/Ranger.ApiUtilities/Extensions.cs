@@ -33,7 +33,6 @@ namespace Ranger.AutoWrapper
                 autoWrapperOptions.EnableExceptionLogging = true;
             }
 
-            autoWrapperOptions.UseApiProblemDetailsException = true;
             autoWrapperOptions.ShowStatusCode = true;
             autoWrapperOptions.ShowApiVersion = true;
             autoWrapperOptions.IsApiOnly = true;

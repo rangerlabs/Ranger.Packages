@@ -5,6 +5,6 @@ namespace Ranger.Common
     public interface IRowLevelSecurityDbSet
     {
         [Required]
-        string DatabaseUsername { get; set; }
+        string TenantId { get; set; }
     }
 }

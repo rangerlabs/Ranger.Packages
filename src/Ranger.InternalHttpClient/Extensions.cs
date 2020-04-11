@@ -13,6 +13,13 @@ namespace Ranger.InternalHttpClient
 {
     public static class Extensions
     {
+        public static IServiceCollection AddTenantsHttpClient(this IServiceCollection services, string baseAddress, string scope, string clientSecret)
+            => AddHttpClient<TenantsHttpClient>(services, baseAddress, scope, clientSecret);
+        public static IServiceCollection AddProjectsHttpClient(this IServiceCollection services, string baseAddress, string scope, string clientSecret)
+            => AddHttpClient<ProjectsHttpClient>(services, baseAddress, scope, clientSecret);
+        public static IServiceCollection AddSubscriptionsHttpClient(this IServiceCollection services, string baseAddress, string scope, string clientSecret)
+            => AddHttpClient<SubscriptionsHttpClient>(services, baseAddress, scope, clientSecret);
+
         static IAsyncPolicy<HttpResponseMessage> ExponentialBackoffWithJitterPolicy()
         {
             Random jitterer = new Random();
@@ -37,10 +44,10 @@ namespace Ranger.InternalHttpClient
             });
         }
 
-
         static IAsyncPolicy<HttpResponseMessage> NoOpPolicy => Policy.NoOpAsync().AsAsyncPolicy<HttpResponseMessage>();
 
-        public static IServiceCollection AddTenantHttpClient(this IServiceCollection services, string baseAddress, string scope, string clientSecret)
+        static IServiceCollection AddHttpClient<T>(IServiceCollection services, string baseAddress, string scope, string clientSecret)
+            where T : ApiClientBase
         {
             if (string.IsNullOrWhiteSpace(baseAddress))
             {
@@ -61,7 +68,7 @@ namespace Ranger.InternalHttpClient
                 .SetHandlerLifetime(TimeSpan.FromMinutes(5))  //Set lifetime to five minutes
                 .AddPolicyHandler((serviceProvider, request) =>
                     RetryUnauthorizedPolicy(
-                        serviceProvider.GetService<TenantsHttpClient>().HttpClient,
+                        serviceProvider.GetService<T>().HttpClient,
                         serviceProvider.GetService<LoggerFactory>().CreateLogger("Ranger.InternalHttpClient.Extensions"),
                         scope,
                         clientSecret

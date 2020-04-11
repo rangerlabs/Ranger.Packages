@@ -11,32 +11,41 @@ namespace Ranger.InternalHttpClient
         public TenantsHttpClient(HttpClient httpClient, ILogger<TenantsHttpClient> logger) : base(httpClient, logger)
         { }
 
-        public async Task<ApiResponse<T>> ExistsAsync<T>(string domain)
+        /// <summary>
+        /// Produces 200
+        /// </summary>
+        public async Task<ApiResponse<bool>> DoesExistAsync(string domain)
         {
             if (String.IsNullOrWhiteSpace(domain))
             {
                 throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
             }
-            return await SendAsync<T>(new HttpRequestMessage
+            return await SendAsync<bool>(new HttpRequestMessage
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri(HttpClient.BaseAddress, $"tenant/{domain}/exists")
+                RequestUri = new Uri(HttpClient.BaseAddress, $"tenants/{domain}/exists")
             });
         }
 
-        public async Task<ApiResponse<T>> EnabledAsync<T>(string domain)
+        /// <summary>
+        /// Produces 200, 404
+        /// </summary>
+        public async Task<ApiResponse<bool>> IsConfirmedAsync(string domain)
         {
             if (String.IsNullOrWhiteSpace(domain))
             {
                 throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
             }
-            return await SendAsync<T>(new HttpRequestMessage
+            return await SendAsync<bool>(new HttpRequestMessage
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri(HttpClient.BaseAddress, $"tenant/{domain}/enabled")
+                RequestUri = new Uri(HttpClient.BaseAddress, $"tenants/{domain}/confirmed")
             });
         }
 
+        /// <summary>
+        /// Produces 200, 404
+        /// </summary>
         public async Task<ApiResponse<T>> GetPrimaryOwnerTransferByDomain<T>(string domain)
         {
             if (String.IsNullOrWhiteSpace(domain))
@@ -46,38 +55,44 @@ namespace Ranger.InternalHttpClient
             return await SendAsync<T>(new HttpRequestMessage
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri(HttpClient.BaseAddress, $"/tenant/{domain}/primary-owner-transfer"),
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/tenants/{domain}/primary-owner-transfer"),
             });
         }
-
-        public async Task<ApiResponse<T>> GetTenantByDatabaseUsernameAsync<T>(string databaseUsername)
+        /// <summary>
+        /// Produces 200, 404
+        /// </summary>
+        public async Task<ApiResponse<T>> GetTenantByIdAsync<T>(string tenantId)
         {
-            if (String.IsNullOrWhiteSpace(databaseUsername))
+            if (String.IsNullOrWhiteSpace(tenantId))
             {
-                throw new ArgumentException($"{nameof(databaseUsername)} cannot be null or whitespace.");
+                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace.");
             }
-
             return await SendAsync<T>(new HttpRequestMessage
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri(HttpClient.BaseAddress, $"/tenant?databaseUsername={databaseUsername}"),
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/tenants/{tenantId}"),
             });
         }
 
-        public async Task<ApiResponse<T>> GetTenantAsync<T>(string domain)
+        /// <summary>
+        /// Produces 200, 404
+        /// </summary>
+        public async Task<ApiResponse<T>> GetTenantByDomainAsync<T>(string domain)
         {
             if (String.IsNullOrWhiteSpace(domain))
             {
                 throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
             }
-
             return await SendAsync<T>(new HttpRequestMessage
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri(HttpClient.BaseAddress, $"/tenant/{domain}"),
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/tenants/{domain}"),
             });
         }
 
+        /// <summary>
+        /// Produces 200, 404
+        /// </summary>
         public async Task<ApiResponse<T>> ConfirmTenantAsync<T>(string domain, string jsonContent)
         {
             if (String.IsNullOrWhiteSpace(domain))
@@ -88,11 +103,10 @@ namespace Ranger.InternalHttpClient
             {
                 throw new ArgumentException($"{nameof(jsonContent)} cannot be null or whitespace.");
             }
-
             return await SendAsync<T>(new HttpRequestMessage
             {
                 Method = HttpMethod.Put,
-                RequestUri = new Uri(HttpClient.BaseAddress, $"/tenant/{domain}/confirm"),
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/tenants/{domain}/confirm"),
                 Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
             });
         }

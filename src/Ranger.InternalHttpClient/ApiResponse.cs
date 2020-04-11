@@ -16,13 +16,7 @@ namespace Ranger.InternalHttpClient
 
     public class ResponseException
     {
-        public bool IsError { get; set; }
-        public string Type { get; set; }
-        public string Title { get; set; }
-        public int Status { get; set; }
-        public string Detail { get; set; }
-        public object Instance { get; set; }
-        public object Extensions { get; set; }
+        public ExceptionMessage ExceptionMessage { get; set; }
         public ValidationError[] ValidationErrors { get; set; }
 
         public struct ValidationError
@@ -30,5 +24,17 @@ namespace Ranger.InternalHttpClient
             public string Name { get; set; }
             public string Reason { get; set; }
         }
+    }
+
+    public class ExceptionMessage
+    {
+        public Error Error { get; set; }
+    }
+
+    public class Error
+    {
+        public string Code { get; set; }
+        public string Message { get; set; }
+        public Error InnerError { get; set; }
     }
 }
