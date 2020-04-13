@@ -39,7 +39,7 @@ namespace Ranger.InternalHttpClient.Tests
         [Fact]
         public async Task GetTenantByDomainAsync_Does_NOT_Throw_When_Missing_Reference_Type_Properties_Result_In_Response()
         {
-            var expected = new ApiResponse<ResultClass>
+            var expected = new RangerApiResponse<ResultClass>
             {
                 Version = "1.0",
                 StatusCode = 200,
@@ -66,7 +66,7 @@ namespace Ranger.InternalHttpClient.Tests
         [Fact]
         public async Task GetTenantByDomainAsync_Deserializes_On_ApiException_Response()
         {
-            var expected = new ApiResponse<ResultClass>
+            var expected = new RangerApiResponse<ResultClass>
             {
                 Version = "1.0",
                 StatusCode = 500,
@@ -101,7 +101,7 @@ namespace Ranger.InternalHttpClient.Tests
         [Fact]
         public async Task GetTenantByDomainAsync_Returns_Value_For_Reference_Type_Result_In_Response()
         {
-            var expected = new ApiResponse<ResultClass>
+            var expected = new RangerApiResponse<ResultClass>
             {
                 Version = "1.0",
                 StatusCode = 200,
@@ -129,7 +129,7 @@ namespace Ranger.InternalHttpClient.Tests
         [Fact]
         public async Task IsConfirmedAsync_Returns_Value_For_Value_Type_Result_In_Response()
         {
-            var expected = new ApiResponse<bool>
+            var expected = new RangerApiResponse<bool>
             {
                 Version = "1.0",
                 StatusCode = 200,
@@ -153,7 +153,7 @@ namespace Ranger.InternalHttpClient.Tests
         [Fact]
         public async Task IsConfirmedAsync_Returns_Default_Result_For_400_Response()
         {
-            var expected = new ApiResponse<bool>
+            var expected = new RangerApiResponse<bool>
             {
                 Version = "1.0",
                 StatusCode = 400,
@@ -177,7 +177,7 @@ namespace Ranger.InternalHttpClient.Tests
         [Fact]
         public void IsConfirmedAsync_Throws_When_Json_Response_Is_Not_Valid_Json()
         {
-            var expected = new ApiResponse<bool>
+            var expected = new RangerApiResponse<bool>
             {
                 Version = "1.0",
                 StatusCode = 400,

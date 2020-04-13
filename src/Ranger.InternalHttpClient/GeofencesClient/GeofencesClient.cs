@@ -10,7 +10,7 @@ namespace Ranger.InternalHttpClient
         public GeofencesClient(HttpClient httpClient, ILogger<GeofencesClient> logger) : base(httpClient, logger)
         { }
 
-        public async Task<ApiResponse<T>> GetAllGeofencesByProjectId<T>(string domain, Guid projectId)
+        public async Task<RangerApiResponse<T>> GetAllGeofencesByProjectId<T>(string domain, Guid projectId)
         {
             if (string.IsNullOrWhiteSpace(domain))
             {

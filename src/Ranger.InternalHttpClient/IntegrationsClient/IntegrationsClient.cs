@@ -10,7 +10,7 @@ namespace Ranger.InternalHttpClient
         public IntegrationsClient(HttpClient httpClient, ILogger<IntegrationsClient> logger) : base(httpClient, logger)
         { }
 
-        public async Task<ApiResponse<T>> GetAllIntegrationsByProjectId<T>(string domain, Guid projectId)
+        public async Task<RangerApiResponse<T>> GetAllIntegrationsByProjectId<T>(string domain, Guid projectId)
         {
             if (string.IsNullOrWhiteSpace(domain))
             {

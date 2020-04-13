@@ -14,7 +14,7 @@ namespace Ranger.InternalHttpClient
         /// <summary>
         /// Produces 200
         /// </summary>
-        public async Task<ApiResponse<bool>> DoesExistAsync(string domain)
+        public async Task<RangerApiResponse<bool>> DoesExistAsync(string domain)
         {
             if (String.IsNullOrWhiteSpace(domain))
             {
@@ -30,7 +30,7 @@ namespace Ranger.InternalHttpClient
         /// <summary>
         /// Produces 200, 404
         /// </summary>
-        public async Task<ApiResponse<bool>> IsConfirmedAsync(string domain)
+        public async Task<RangerApiResponse<bool>> IsConfirmedAsync(string domain)
         {
             if (String.IsNullOrWhiteSpace(domain))
             {
@@ -46,7 +46,7 @@ namespace Ranger.InternalHttpClient
         /// <summary>
         /// Produces 200, 404
         /// </summary>
-        public async Task<ApiResponse<T>> GetPrimaryOwnerTransferByDomain<T>(string domain)
+        public async Task<RangerApiResponse<T>> GetPrimaryOwnerTransferByDomain<T>(string domain)
         {
             if (String.IsNullOrWhiteSpace(domain))
             {
@@ -61,7 +61,7 @@ namespace Ranger.InternalHttpClient
         /// <summary>
         /// Produces 200, 404
         /// </summary>
-        public async Task<ApiResponse<T>> GetTenantByIdAsync<T>(string tenantId)
+        public async Task<RangerApiResponse<T>> GetTenantByIdAsync<T>(string tenantId)
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -77,7 +77,7 @@ namespace Ranger.InternalHttpClient
         /// <summary>
         /// Produces 200, 404
         /// </summary>
-        public async Task<ApiResponse<T>> GetTenantByDomainAsync<T>(string domain)
+        public async Task<RangerApiResponse<T>> GetTenantByDomainAsync<T>(string domain)
         {
             if (String.IsNullOrWhiteSpace(domain))
             {
@@ -93,7 +93,7 @@ namespace Ranger.InternalHttpClient
         /// <summary>
         /// Produces 200, 404
         /// </summary>
-        public async Task<ApiResponse<T>> ConfirmTenantAsync<T>(string domain, string jsonContent)
+        public async Task<RangerApiResponse<T>> ConfirmTenantAsync<T>(string domain, string jsonContent)
         {
             if (String.IsNullOrWhiteSpace(domain))
             {

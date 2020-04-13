@@ -11,7 +11,7 @@ namespace Ranger.InternalHttpClient
         public OperationsClient(HttpClient httpClient, ILogger<OperationsClient> logger) : base(httpClient, logger)
         { }
 
-        public async Task<ApiResponse<T>> GetOperationStateById<T>(string domain, Guid id)
+        public async Task<RangerApiResponse<T>> GetOperationStateById<T>(string domain, Guid id)
         {
             if (string.IsNullOrWhiteSpace(domain))
             {

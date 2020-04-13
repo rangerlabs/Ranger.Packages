@@ -16,7 +16,7 @@ namespace Ranger.InternalHttpClient
         ///<summary>
         /// Produces 200
         ///</summary>
-        public async Task<ApiResponse<IEnumerable<string>>> GetProjectIdsForUser(string tenantId, string email)
+        public async Task<RangerApiResponse<IEnumerable<string>>> GetProjectIdsForUser(string tenantId, string email)
         {
             if (string.IsNullOrWhiteSpace(tenantId))
             {
@@ -37,7 +37,7 @@ namespace Ranger.InternalHttpClient
         ///<summary>
         /// Produces 200, 400, 404
         ///</summary>
-        public async Task<ApiResponse<string>> GetTenantIdByApiKeyAsync(string apiKey)
+        public async Task<RangerApiResponse<string>> GetTenantIdByApiKeyAsync(string apiKey)
         {
             if (string.IsNullOrWhiteSpace(apiKey))
             {
@@ -54,7 +54,7 @@ namespace Ranger.InternalHttpClient
         ///<summary>
         /// Produces 200
         ///</summary>
-        public async Task<ApiResponse<T>> GetProjectByApiKeyAsync<T>(string tenantId, string apiKey)
+        public async Task<RangerApiResponse<T>> GetProjectByApiKeyAsync<T>(string tenantId, string apiKey)
         {
             if (string.IsNullOrWhiteSpace(tenantId))
             {
@@ -76,7 +76,7 @@ namespace Ranger.InternalHttpClient
         ///<summary>
         /// Produces 200
         ///</summary>
-        public async Task<ApiResponse<T>> GetAllProjectsForUserAsync<T>(string tenantId, string email)
+        public async Task<RangerApiResponse<T>> GetAllProjectsForUserAsync<T>(string tenantId, string email)
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -97,7 +97,7 @@ namespace Ranger.InternalHttpClient
         ///<summary>
         /// Produces 200, 304, 400, 409
         ///</summary>
-        public async Task<ApiResponse<T>> PutProjectAsync<T>(string tenantId, Guid projectId, string jsonContent)
+        public async Task<RangerApiResponse<T>> PutProjectAsync<T>(string tenantId, Guid projectId, string jsonContent)
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -118,7 +118,7 @@ namespace Ranger.InternalHttpClient
         ///<summary>
         /// Produces 200, 400, 409
         ///</summary>
-        public async Task<ApiResponse<T>> ApiKeyResetAsync<T>(string tenantId, Guid projectId, string environment, string jsonContent)
+        public async Task<RangerApiResponse<T>> ApiKeyResetAsync<T>(string tenantId, Guid projectId, string environment, string jsonContent)
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -143,14 +143,14 @@ namespace Ranger.InternalHttpClient
         ///<summary>
         /// Produces 200, 400, 409
         ///</summary>
-        public async Task<ApiResponse<T>> SoftDeleteProjectAsync<T>(string tenantId, Guid projectId, string userEmail)
+        public async Task<RangerApiResponse> SoftDeleteProjectAsync(string tenantId, Guid projectId, string userEmail)
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
                 throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace.");
             }
 
-            return await SendAsync<T>(new HttpRequestMessage()
+            return await SendAsync(new HttpRequestMessage()
             {
                 Method = HttpMethod.Delete,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/projects/{tenantId}/{projectId}"),
@@ -161,7 +161,7 @@ namespace Ranger.InternalHttpClient
         ///<summary>
         /// Produces 201
         ///</summary>
-        public async Task<ApiResponse<T>> PostProjectAsync<T>(string tenantId, string jsonContent)
+        public async Task<RangerApiResponse<T>> PostProjectAsync<T>(string tenantId, string jsonContent)
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {

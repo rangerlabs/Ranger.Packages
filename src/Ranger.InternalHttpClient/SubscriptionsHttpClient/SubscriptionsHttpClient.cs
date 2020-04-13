@@ -16,8 +16,8 @@ namespace Ranger.InternalHttpClient
 
         ///<summary>
         /// Produces 200
-        ///<summary>
-        public async Task<ApiResponse<string>> GenerateCheckoutExistingUrl(string tenantId, string planId)
+        ///</summary>
+        public async Task<RangerApiResponse<string>> GenerateCheckoutExistingUrl(string tenantId, string planId)
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -33,8 +33,10 @@ namespace Ranger.InternalHttpClient
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/subscriptions/{tenantId}/{planId}/checkout-existing-hosted-page-url")
             });
         }
-
-        public async Task<ApiResponse<T>> GetLimitDetails<T>(string tenantId)
+        ///<summary>
+        /// Produces 200
+        ///</summary>
+        public async Task<RangerApiResponse<T>> GetLimitDetails<T>(string tenantId)
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -46,8 +48,10 @@ namespace Ranger.InternalHttpClient
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/subscriptions/{tenantId}/limit-details")
             });
         }
-
-        public async Task<ApiResponse<string>> GetSubscriptionPlanId(string tenantId)
+        ///<summary>
+        /// Produces 200
+        ///</summary>
+        public async Task<RangerApiResponse<string>> GetSubscriptionPlanId(string tenantId)
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -59,8 +63,10 @@ namespace Ranger.InternalHttpClient
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/subscriptions/{tenantId}/plan-id")
             });
         }
-
-        public async Task<ApiResponse<int>> IncrementResource(string tenantId, ResourceEnum resource)
+        ///<summary>
+        /// Produces 200, 402
+        ///</summary>
+        public async Task<RangerApiResponse<int>> IncrementResource(string tenantId, ResourceEnum resource)
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -74,7 +80,10 @@ namespace Ranger.InternalHttpClient
             });
         }
 
-        public async Task<ApiResponse<int>> DecrementResource(string tenantId, ResourceEnum resource)
+        ///<summary>
+        /// Produces 200, 304
+        ///</summary>
+        public async Task<RangerApiResponse<int>> DecrementResource(string tenantId, ResourceEnum resource)
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {

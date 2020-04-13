@@ -17,6 +17,8 @@ namespace Ranger.InternalHttpClient
             => AddHttpClient<TenantsHttpClient>(services, baseAddress, scope, clientSecret);
         public static IServiceCollection AddProjectsHttpClient(this IServiceCollection services, string baseAddress, string scope, string clientSecret)
             => AddHttpClient<ProjectsHttpClient>(services, baseAddress, scope, clientSecret);
+        public static IServiceCollection AddIdentityHttpClient(this IServiceCollection services, string baseAddress, string scope, string clientSecret)
+            => AddHttpClient<IdentityHttpClient>(services, baseAddress, scope, clientSecret);
         public static IServiceCollection AddSubscriptionsHttpClient(this IServiceCollection services, string baseAddress, string scope, string clientSecret)
             => AddHttpClient<SubscriptionsHttpClient>(services, baseAddress, scope, clientSecret);
 

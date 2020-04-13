@@ -22,8 +22,7 @@ namespace Ranger.InternalHttpClient
             this.logger = logger;
         }
 
-
-        protected async Task<ApiResponse<TResponseObject>> SendAsync<TResponseObject>(HttpRequestMessage httpRequestMessage)
+        protected async Task<RangerApiResponse> SendAsync(HttpRequestMessage httpRequestMessage)
         {
             var response = await HttpClient.SendAsync(httpRequestMessage);
             logger.LogDebug("Received status code {StatusCode}", response.StatusCode);
@@ -33,10 +32,29 @@ namespace Ranger.InternalHttpClient
             {
                 throw new HttpClientException($"The response body was empty");
             }
-
             try
             {
-                return JsonConvert.DeserializeObject<ApiResponse<TResponseObject>>(content, new JsonSerializerSettings { MissingMemberHandling = MissingMemberHandling.Ignore });
+                return JsonConvert.DeserializeObject<RangerApiResponse>(content, new JsonSerializerSettings { MissingMemberHandling = MissingMemberHandling.Ignore });
+            }
+            catch (JsonSerializationException ex)
+            {
+                throw new HttpClientException($"Failed to deserialize response body", ex);
+            }
+        }
+
+        protected async Task<RangerApiResponse<TResponseObject>> SendAsync<TResponseObject>(HttpRequestMessage httpRequestMessage)
+        {
+            var response = await HttpClient.SendAsync(httpRequestMessage);
+            logger.LogDebug("Received status code {StatusCode}", response.StatusCode);
+            var content = await response.Content?.ReadAsStringAsync() ?? "";
+
+            if (String.IsNullOrWhiteSpace(content))
+            {
+                throw new HttpClientException($"The response body was empty");
+            }
+            try
+            {
+                return JsonConvert.DeserializeObject<RangerApiResponse<TResponseObject>>(content, new JsonSerializerSettings { MissingMemberHandling = MissingMemberHandling.Ignore });
             }
             catch (JsonSerializationException ex)
             {

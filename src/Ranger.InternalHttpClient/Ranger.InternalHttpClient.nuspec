@@ -22,5 +22,6 @@
   </metadata>
   <files>
     <file src="bin\$configuration$\netcoreapp3.1\$id$.pdb" target="lib\netcoreapp3.1\" />
+    <file src="bin\$configuration$\netcoreapp3.1\$id$.xml" target="lib\netcoreapp3.1\" />
   </files>
 </package>
