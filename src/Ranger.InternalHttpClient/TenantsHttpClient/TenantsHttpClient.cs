@@ -91,9 +91,9 @@ namespace Ranger.InternalHttpClient
         }
 
         /// <summary>
-        /// Produces 200, 404
+        /// Produces 200, 400, 404
         /// </summary>
-        public async Task<RangerApiResponse<T>> ConfirmTenantAsync<T>(string domain, string jsonContent)
+        public async Task<RangerApiResponse> ConfirmTenantAsync(string domain, string jsonContent)
         {
             if (String.IsNullOrWhiteSpace(domain))
             {
@@ -103,7 +103,7 @@ namespace Ranger.InternalHttpClient
             {
                 throw new ArgumentException($"{nameof(jsonContent)} cannot be null or whitespace.");
             }
-            return await SendAsync<T>(new HttpRequestMessage
+            return await SendAsync(new HttpRequestMessage
             {
                 Method = HttpMethod.Put,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/tenants/{domain}/confirm"),

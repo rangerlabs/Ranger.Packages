@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Ranger.Common;
 
 namespace Ranger.InternalHttpClient
 {
@@ -118,15 +119,11 @@ namespace Ranger.InternalHttpClient
         ///<summary>
         /// Produces 200, 400, 409
         ///</summary>
-        public async Task<RangerApiResponse<T>> ApiKeyResetAsync<T>(string tenantId, Guid projectId, string environment, string jsonContent)
+        public async Task<RangerApiResponse<T>> ApiKeyResetAsync<T>(string tenantId, Guid projectId, EnvironmentEnum environment, string jsonContent)
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
                 throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace.");
-            }
-            if (String.IsNullOrWhiteSpace(environment))
-            {
-                throw new ArgumentException($"{nameof(environment)} cannot be null or whitespace.");
             }
             if (String.IsNullOrWhiteSpace(jsonContent))
             {

@@ -15,7 +15,7 @@ namespace Ranger.InternalHttpClient
         { }
 
         ///<summary>
-        /// Produces 200
+        /// Produces 200, 404
         ///</summary>
         public async Task<RangerApiResponse<string>> GenerateCheckoutExistingUrl(string tenantId, string planId)
         {
@@ -34,7 +34,7 @@ namespace Ranger.InternalHttpClient
             });
         }
         ///<summary>
-        /// Produces 200
+        /// Produces 200, 404
         ///</summary>
         public async Task<RangerApiResponse<T>> GetLimitDetails<T>(string tenantId)
         {
@@ -49,7 +49,7 @@ namespace Ranger.InternalHttpClient
             });
         }
         ///<summary>
-        /// Produces 200
+        /// Produces 200, 404
         ///</summary>
         public async Task<RangerApiResponse<string>> GetSubscriptionPlanId(string tenantId)
         {
@@ -64,7 +64,7 @@ namespace Ranger.InternalHttpClient
             });
         }
         ///<summary>
-        /// Produces 200, 402
+        /// Produces 200, 402, 404
         ///</summary>
         public async Task<RangerApiResponse<int>> IncrementResource(string tenantId, ResourceEnum resource)
         {
@@ -81,7 +81,7 @@ namespace Ranger.InternalHttpClient
         }
 
         ///<summary>
-        /// Produces 200, 304
+        /// Produces 200, 304, 404
         ///</summary>
         public async Task<RangerApiResponse<int>> DecrementResource(string tenantId, ResourceEnum resource)
         {
