@@ -16,10 +16,8 @@
       <packageType name="Dependency" />
     </packageTypes>
     <dependencies>
-      <dependency id="MongoDB.Driver" version="2.10.0" />
-      <dependency id="Microsoft.Extensions.Logging" version="3.1.0" />
-      <dependency id="Ranger.Common" version="2.0.4" />
-      <dependency id="Ranger.Monitoring" version="2.0.1" />
+      <dependency id="MongoDB.Driver" version="2.10.1" />
+      <dependency id="Microsoft.Extensions.Logging" version="3.1.1" />
       <dependency id="Autofac" version="4.9.4" />
       <dependency id="Autofac.Extensions.DependencyInjection" version="5.0.1" />
       <dependency id="Newtonsoft.Json" version="12.0.3" />

@@ -14,24 +14,32 @@ namespace Ranger.InternalHttpClient
     public static class Extensions
     {
         public static IServiceCollection AddTenantsHttpClient(this IServiceCollection services, string baseAddress, string scope, string clientSecret)
-            => AddHttpClient<TenantsHttpClient>(services, baseAddress, scope, clientSecret);
+            => AddHttpClient<TenantsHttpClient>(services, "TenantsHttpClient", baseAddress, scope, clientSecret);
         public static IServiceCollection AddProjectsHttpClient(this IServiceCollection services, string baseAddress, string scope, string clientSecret)
-            => AddHttpClient<ProjectsHttpClient>(services, baseAddress, scope, clientSecret);
+            => AddHttpClient<ProjectsHttpClient>(services, "ProjectsHttpClient", baseAddress, scope, clientSecret);
         public static IServiceCollection AddIdentityHttpClient(this IServiceCollection services, string baseAddress, string scope, string clientSecret)
-            => AddHttpClient<IdentityHttpClient>(services, baseAddress, scope, clientSecret);
+            => AddHttpClient<IdentityHttpClient>(services, "IdentityHttpClient", baseAddress, scope, clientSecret);
         public static IServiceCollection AddSubscriptionsHttpClient(this IServiceCollection services, string baseAddress, string scope, string clientSecret)
-            => AddHttpClient<SubscriptionsHttpClient>(services, baseAddress, scope, clientSecret);
+            => AddHttpClient<SubscriptionsHttpClient>(services, "SubscriptionsHttpClient", baseAddress, scope, clientSecret);
+        public static IServiceCollection AddGeofencesHttpClient(this IServiceCollection services, string baseAddress, string scope, string clientSecret)
+            => AddHttpClient<GeofencesHttpClient>(services, "GeofencesHttpClient", baseAddress, scope, clientSecret);
+        public static IServiceCollection AddIntegrationsHttpClient(this IServiceCollection services, string baseAddress, string scope, string clientSecret)
+            => AddHttpClient<IntegrationsHttpClient>(services, "IntegrationsHttpClient", baseAddress, scope, clientSecret);
 
-        static IAsyncPolicy<HttpResponseMessage> ExponentialBackoffWithJitterPolicy()
+        static IAsyncPolicy<HttpResponseMessage> ExponentialBackoffWithJitterPolicy(ILogger logger)
         {
             Random jitterer = new Random();
             return HttpPolicyExtensions
                 .HandleTransientHttpError()
                 .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
-                .WaitAndRetryAsync(6, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)) + TimeSpan.FromMilliseconds(jitterer.Next(0, 100)));
+                .WaitAndRetryAsync(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)) + TimeSpan.FromMilliseconds(jitterer.Next(0, 100)),
+                    onRetry: (outcome, timespan, retryAttempt, context) =>
+                    {
+                        logger.LogWarning("Delaying for {delay}ms before making retry {retry}", timespan.TotalMilliseconds, retryAttempt);
+                    });
         }
 
-        static IAsyncPolicy<HttpResponseMessage> RetryUnauthorizedPolicy(HttpClient httpClient, ILogger logger, string scope, string clientSecret)
+        static IAsyncPolicy<HttpResponseMessage> RetryUnauthorizedPolicy(HttpClient httpClient, ILogger logger, string scope, string clientId, string clientSecret)
         {
             if (string.IsNullOrWhiteSpace(scope))
             {
@@ -39,18 +47,24 @@ namespace Ranger.InternalHttpClient
             }
 
             return Policy
-            .HandleResult<HttpResponseMessage>(r => r.StatusCode == HttpStatusCode.Unauthorized)
-            .RetryAsync(1, async (exception, retryCount) =>
-            {
-                await httpClient.SetClientToken(logger, scope, clientSecret);
-            });
+                .HandleResult<HttpResponseMessage>(r => r.StatusCode == HttpStatusCode.Unauthorized)
+                .RetryAsync(1, async (exception, retryCount, context) =>
+                {
+                    logger.LogInformation("Requesting new access token");
+                    await httpClient.SetClientToken(logger, scope, clientId, clientSecret);
+                    logger.LogInformation("New access token acquired");
+                });
         }
 
         static IAsyncPolicy<HttpResponseMessage> NoOpPolicy => Policy.NoOpAsync().AsAsyncPolicy<HttpResponseMessage>();
 
-        static IServiceCollection AddHttpClient<T>(IServiceCollection services, string baseAddress, string scope, string clientSecret)
+        static IServiceCollection AddHttpClient<T>(IServiceCollection services, string clientId, string baseAddress, string scope, string clientSecret)
             where T : ApiClientBase
         {
+            if (string.IsNullOrWhiteSpace(clientId))
+            {
+                throw new System.ArgumentException($"{nameof(clientId)} was null or whitespace");
+            }
             if (string.IsNullOrWhiteSpace(baseAddress))
             {
                 throw new System.ArgumentException($"{nameof(baseAddress)} was null or whitespace");
@@ -66,21 +80,21 @@ namespace Ranger.InternalHttpClient
             services.AddHttpClient<T>(client =>
             {
                 client.BaseAddress = new Uri(baseAddress);
-            })
-                .SetHandlerLifetime(TimeSpan.FromMinutes(5))  //Set lifetime to five minutes
-                .AddPolicyHandler((serviceProvider, request) =>
-                    RetryUnauthorizedPolicy(
-                        serviceProvider.GetService<T>().HttpClient,
-                        serviceProvider.GetService<LoggerFactory>().CreateLogger("Ranger.InternalHttpClient.Extensions"),
-                        scope,
-                        clientSecret
-                    ))
-                .AddPolicyHandler(request => request.Method == HttpMethod.Get ? ExponentialBackoffWithJitterPolicy() : NoOpPolicy);
-
+                client.DefaultRequestHeaders.Add("api-version", "1.0");
+            }).SetHandlerLifetime(TimeSpan.FromMinutes(5))  //Set lifetime to five minutes
+              .AddPolicyHandler((serviceProvider, request) =>
+                  RetryUnauthorizedPolicy(
+                      serviceProvider.GetRequiredService<T>().HttpClient,
+                      serviceProvider.GetRequiredService<ILogger<T>>(),
+                      scope,
+                      clientId,
+                      clientSecret
+                  ))
+              .AddPolicyHandler((serviceProvider, request) => request.Method == HttpMethod.Get ? ExponentialBackoffWithJitterPolicy(serviceProvider.GetRequiredService<ILogger<T>>()) : NoOpPolicy);
             return services;
         }
 
-        static async Task SetClientToken(this HttpClient httpClient, ILogger logger, string scope, string clientSecret)
+        static async Task SetClientToken(this HttpClient httpClient, ILogger logger, string scope, string clientId, string clientSecret)
         {
             if (string.IsNullOrWhiteSpace(scope))
             {
@@ -129,7 +143,7 @@ namespace Ranger.InternalHttpClient
             var tokenResponse = await httpClient.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
             {
                 Address = disco.TokenEndpoint,
-                ClientId = "internal",
+                ClientId = clientId,
                 ClientSecret = clientSecret,
                 Scope = scope
             });
