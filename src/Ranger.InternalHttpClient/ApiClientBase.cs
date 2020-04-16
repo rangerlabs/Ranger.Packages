@@ -24,7 +24,33 @@ namespace Ranger.InternalHttpClient
 
         protected async Task<RangerApiResponse> SendAsync(HttpRequestMessage httpRequestMessage)
         {
-            var response = await HttpClient.SendAsync(httpRequestMessage);
+            HttpResponseMessage response = null;
+            try
+            {
+                response = await HttpClient.SendAsync(httpRequestMessage);
+            }
+            catch (HttpRequestException ex)
+            {
+                var message = "The request failed after executing all policies";
+                logger.LogError(ex, message);
+                return new RangerApiResponse
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError,
+                    IsError = true,
+                    Message = ex.Message,
+                    ResponseException = new ResponseException
+                    {
+                        ExceptionMessage = new ExceptionMessage
+                        {
+                            Error = new Error
+                            {
+                                Message = "An Internal Server Error occurred",
+                            }
+                        }
+                    }
+
+                };
+            }
             logger.LogDebug("Received status code {StatusCode}", response.StatusCode);
             var content = await response.Content?.ReadAsStringAsync() ?? "";
 
@@ -34,7 +60,10 @@ namespace Ranger.InternalHttpClient
             }
             try
             {
-                return JsonConvert.DeserializeObject<RangerApiResponse>(content, new JsonSerializerSettings { MissingMemberHandling = MissingMemberHandling.Ignore });
+                return JsonConvert.DeserializeObject<RangerApiResponse>(content, new JsonSerializerSettings
+                {
+                    MissingMemberHandling = MissingMemberHandling.Ignore
+                });
             }
             catch (JsonSerializationException ex)
             {
@@ -44,7 +73,32 @@ namespace Ranger.InternalHttpClient
 
         protected async Task<RangerApiResponse<TResponseObject>> SendAsync<TResponseObject>(HttpRequestMessage httpRequestMessage)
         {
-            var response = await HttpClient.SendAsync(httpRequestMessage);
+            HttpResponseMessage response = null;
+            try
+            {
+                response = await HttpClient.SendAsync(httpRequestMessage);
+            }
+            catch (HttpRequestException ex)
+            {
+                var message = "The request failed after executing all policies";
+                logger.LogError(ex, message);
+                return new RangerApiResponse<TResponseObject>
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError,
+                    IsError = true,
+                    Message = ex.Message,
+                    ResponseException = new ResponseException
+                    {
+                        ExceptionMessage = new ExceptionMessage
+                        {
+                            Error = new Error
+                            {
+                                Message = "An Internal Server Error occurred",
+                            }
+                        }
+                    }
+                };
+            }
             logger.LogDebug("Received status code {StatusCode}", response.StatusCode);
             var content = await response.Content?.ReadAsStringAsync() ?? "";
 

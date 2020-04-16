@@ -32,7 +32,7 @@ namespace Ranger.InternalHttpClient
             return HttpPolicyExtensions
                 .HandleTransientHttpError()
                 .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
-                .WaitAndRetryAsync(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)) + TimeSpan.FromMilliseconds(jitterer.Next(0, 100)),
+                .WaitAndRetryAsync(4, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)) + TimeSpan.FromMilliseconds(jitterer.Next(0, 100)),
                     onRetry: (outcome, timespan, retryAttempt, context) =>
                     {
                         logger.LogWarning("Delaying for {delay}ms before making retry {retry}", timespan.TotalMilliseconds, retryAttempt);
