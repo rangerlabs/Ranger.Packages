@@ -9,7 +9,7 @@ namespace Ranger.InternalHttpClient
 {
     public class IdentityHttpClient : ApiClientBase
     {
-        public IdentityHttpClient(HttpClient httpClient, ILogger<IdentityHttpClient> logger) : base(httpClient, logger)
+        public IdentityHttpClient(HttpClient httpClient, HttpClientOptions<IdentityHttpClient> clientOptions, ILogger<IdentityHttpClient> logger) : base(httpClient, clientOptions, logger)
         { }
 
         ///<summary>

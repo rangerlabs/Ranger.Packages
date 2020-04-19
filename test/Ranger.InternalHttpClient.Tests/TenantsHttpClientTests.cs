@@ -1,9 +1,12 @@
+using System;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using AutoWrapper.Wrappers;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Newtonsoft.Json;
+using Ranger.Common;
 using Shouldly;
 using Xunit;
 
@@ -45,7 +48,7 @@ namespace Ranger.InternalHttpClient.Tests
                 StatusCode = 200,
                 Message = "Some message.",
                 IsError = false,
-                ResponseException = null,
+                Error = null,
                 Result = new ResultClass
                 {
                     Property1 = "value1",
@@ -66,36 +69,14 @@ namespace Ranger.InternalHttpClient.Tests
         [Fact]
         public async Task GetTenantByDomainAsync_Deserializes_On_ApiException_Response()
         {
-            var expected = new RangerApiResponse<ResultClass>
-            {
-                Version = "1.0",
-                StatusCode = 500,
-                Message = "Some message.",
-                IsError = false,
-                ResponseException = new ResponseException
-                {
-                    ExceptionMessage = new ExceptionMessage
-                    {
-                        Error = new Error
-                        {
-                            Code = "Some code",
-                            Message = "Some message",
-                            InnerError = null
-                        }
-                    }
-                },
-                Result = null
-            };
-
             mockHttpMessageHandler.SetupMockHandler(
                 HttpStatusCode.OK,
-                new StringContent(@"{""version"":""1.0"",""statusCode"":400,""isError"":true,""responseException"":{""exceptionMessage"":{""error"":{""code"":""Some code"",""message"":""Some message"",""innerError"":null}}}}")
+                new StringContent(@"{""version"":""1.0"",""statusCode"":500,""isError"":true,""Error"":{""message"":""Some message""}}")
             );
             var client = mockHttpMessageHandler.GetClientForHandler();
             var tenantsClient = new TenantsHttpClient(client, fixture.logger);
 
-            var result = await tenantsClient.GetTenantByDomainAsync<ResultClass>("domain");
-            result.ResponseException.Equals(expected.ResponseException);
+            await Should.ThrowAsync<ApiException>(tenantsClient.GetTenantByDomainAsync<ResultClass>("domain"));
         }
 
         [Fact]
@@ -107,7 +88,7 @@ namespace Ranger.InternalHttpClient.Tests
                 StatusCode = 200,
                 Message = "Some message.",
                 IsError = false,
-                ResponseException = null,
+                Error = null,
                 Result = new ResultClass
                 {
                     Property1 = "value1",
@@ -135,7 +116,7 @@ namespace Ranger.InternalHttpClient.Tests
                 StatusCode = 200,
                 Message = "Some message.",
                 IsError = false,
-                ResponseException = null,
+                Error = null,
                 Result = true
             };
 
@@ -159,7 +140,7 @@ namespace Ranger.InternalHttpClient.Tests
                 StatusCode = 400,
                 Message = "Some message.",
                 IsError = false,
-                ResponseException = null,
+                Error = null,
                 Result = true
             };
 
@@ -175,18 +156,8 @@ namespace Ranger.InternalHttpClient.Tests
         }
 
         [Fact]
-        public void IsConfirmedAsync_Throws_When_Json_Response_Is_Not_Valid_Json()
+        public async Task IsConfirmedAsync_Throws_When_Json_Response_Is_Not_Valid_Json()
         {
-            var expected = new RangerApiResponse<bool>
-            {
-                Version = "1.0",
-                StatusCode = 400,
-                Message = "Some message.",
-                IsError = false,
-                ResponseException = null,
-                Result = true
-            };
-
             mockHttpMessageHandler.SetupMockHandler(
                 HttpStatusCode.OK,
                 new StringContent(@"{")
@@ -194,12 +165,11 @@ namespace Ranger.InternalHttpClient.Tests
             var client = mockHttpMessageHandler.GetClientForHandler();
             var tenantsClient = new TenantsHttpClient(client, fixture.logger);
 
-            Should.ThrowAsync<JsonSerializationException>(tenantsClient.IsConfirmedAsync("domain"));
+            await Should.ThrowAsync<ApiException>(tenantsClient.IsConfirmedAsync("domain"));
         }
 
-
         [Fact]
-        public void IsConfirmedAsync_Throws_Contnet_IsNullOrWhitespace()
+        public async Task IsConfirmedAsync_Throws_Contnet_IsNullOrWhitespace()
         {
             mockHttpMessageHandler.SetupMockHandler(
                 HttpStatusCode.OK,
@@ -208,7 +178,7 @@ namespace Ranger.InternalHttpClient.Tests
             var client = mockHttpMessageHandler.GetClientForHandler();
             var tenantsClient = new TenantsHttpClient(client, fixture.logger);
 
-            Should.ThrowAsync<HttpClientException>(tenantsClient.DoesExistAsync("domain"));
+            await Should.ThrowAsync<ApiException>(tenantsClient.DoesExistAsync("domain"));
         }
     }
 }

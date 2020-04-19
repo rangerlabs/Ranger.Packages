@@ -25,7 +25,13 @@ namespace Ranger.ApiUtilities
         public static IApplicationBuilder UseAutoWrapper(this IApplicationBuilder app, string wrapWhenApiPathStartsWith = "")
         {
             var autoWrapperOptions = new AutoWrapperOptions();
-            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == Environments.Development)
+            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != Environments.Development)
+            {
+                autoWrapperOptions.IsDebug = false;
+                autoWrapperOptions.EnableResponseLogging = false;
+                autoWrapperOptions.EnableExceptionLogging = false;
+            }
+            else
             {
                 autoWrapperOptions.IsDebug = true;
                 autoWrapperOptions.EnableResponseLogging = true;
@@ -36,7 +42,7 @@ namespace Ranger.ApiUtilities
             autoWrapperOptions.IsApiOnly = true;
             autoWrapperOptions.WrapWhenApiPathStartsWith = wrapWhenApiPathStartsWith;
 
-            app.UseApiResponseAndExceptionWrapper(autoWrapperOptions);
+            app.UseApiResponseAndExceptionWrapper<MapResponseObject>(autoWrapperOptions);
             return app;
         }
 

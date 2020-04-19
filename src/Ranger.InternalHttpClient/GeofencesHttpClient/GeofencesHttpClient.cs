@@ -7,7 +7,7 @@ namespace Ranger.InternalHttpClient
 {
     public class GeofencesHttpClient : ApiClientBase
     {
-        public GeofencesHttpClient(HttpClient httpClient, ILogger<GeofencesHttpClient> logger) : base(httpClient, logger)
+        public GeofencesHttpClient(HttpClient httpClient, HttpClientOptions<GeofencesHttpClient> clientOptions, ILogger<GeofencesHttpClient> logger) : base(httpClient, clientOptions, logger)
         { }
 
         ///<summary>

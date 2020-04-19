@@ -8,7 +8,7 @@ namespace Ranger.InternalHttpClient
 {
     public class TenantsHttpClient : ApiClientBase
     {
-        public TenantsHttpClient(HttpClient httpClient, ILogger<TenantsHttpClient> logger) : base(httpClient, logger)
+        public TenantsHttpClient(HttpClient httpClient, HttpClientOptions<TenantsHttpClient> clientOptions, ILogger<TenantsHttpClient> logger) : base(httpClient, clientOptions, logger)
         { }
 
         /// <summary>
@@ -59,7 +59,7 @@ namespace Ranger.InternalHttpClient
             });
         }
         /// <summary>
-        /// Produces 200, 404
+        /// Produces 200, 400, 404
         /// </summary>
         public async Task<RangerApiResponse<T>> GetTenantByIdAsync<T>(string tenantId)
         {
@@ -70,12 +70,12 @@ namespace Ranger.InternalHttpClient
             return await SendAsync<T>(new HttpRequestMessage
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri(HttpClient.BaseAddress, $"/tenants/{tenantId}"),
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/tenants?tenantId={tenantId}"),
             });
         }
 
         /// <summary>
-        /// Produces 200, 404
+        /// Produces 200, 400, 404
         /// </summary>
         public async Task<RangerApiResponse<T>> GetTenantByDomainAsync<T>(string domain)
         {
@@ -86,7 +86,7 @@ namespace Ranger.InternalHttpClient
             return await SendAsync<T>(new HttpRequestMessage
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri(HttpClient.BaseAddress, $"/tenants/{domain}"),
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/tenants?domain={domain}"),
             });
         }
 

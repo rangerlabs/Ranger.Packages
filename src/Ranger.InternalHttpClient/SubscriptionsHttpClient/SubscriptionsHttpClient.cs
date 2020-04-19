@@ -11,7 +11,7 @@ namespace Ranger.InternalHttpClient
 {
     public class SubscriptionsHttpClient : ApiClientBase
     {
-        public SubscriptionsHttpClient(HttpClient httpClient, ILogger<SubscriptionsHttpClient> logger) : base(httpClient, logger)
+        public SubscriptionsHttpClient(HttpClient httpClient, HttpClientOptions<SubscriptionsHttpClient> clientOptions, ILogger<SubscriptionsHttpClient> logger) : base(httpClient, clientOptions, logger)
         { }
 
         ///<summary>

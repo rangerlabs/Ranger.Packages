@@ -8,7 +8,7 @@ namespace Ranger.InternalHttpClient
 {
     public class OperationsClient : ApiClientBase
     {
-        public OperationsClient(HttpClient httpClient, ILogger<OperationsClient> logger) : base(httpClient, logger)
+        public OperationsClient(HttpClient httpClient, HttpClientOptions<OperationsClient> clientOptions, ILogger<OperationsClient> logger) : base(httpClient, clientOptions, logger)
         { }
 
         public async Task<RangerApiResponse<T>> GetOperationStateById<T>(string domain, Guid id)
