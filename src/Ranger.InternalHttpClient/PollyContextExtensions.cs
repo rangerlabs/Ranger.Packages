@@ -9,6 +9,7 @@ namespace Ranger.InternalHttpClient
         private static readonly string LoggerKey = "ILogger";
         private static readonly string HttpClientOptionsKey = "HttpClientOptions";
         private static readonly string HttpClientKey = "HttpClient";
+        private static readonly string HttpRequestMessageKey = "HttpRequestMessageKey";
 
         public static Context WithLogger(this Context context, ILogger logger)
         {
@@ -52,6 +53,21 @@ namespace Ranger.InternalHttpClient
             if (context.TryGetValue(HttpClientKey, out var httpClient))
             {
                 return httpClient as HttpClient;
+            }
+            return null;
+        }
+
+        public static Context WithHttpRequestMessage(this Context context, HttpRequestMessage httpRequestMessage)
+        {
+            context[HttpRequestMessageKey] = httpRequestMessage;
+            return context;
+        }
+
+        public static HttpRequestMessage GetHttpRequestMessage(this Context context)
+        {
+            if (context.TryGetValue(HttpRequestMessageKey, out var httpRequestMessage))
+            {
+                return httpRequestMessage as HttpRequestMessage;
             }
             return null;
         }

@@ -1,4 +1,5 @@
 using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -31,10 +32,34 @@ namespace Ranger.InternalHttpClient
         ///<summary>
         /// Initialize the httpClient from the factory and wrap it with the necessary policies
         ///</summary>
-        private void InitializeHttpRequest(HttpRequestMessage httpRequestMessage)
+        private async Task InitializeHttpRequest(HttpRequestMessage httpRequestMessage)
         {
-            var context = new Polly.Context().WithLogger(logger).WithHttpClientOptions(clientOptions).WithHttpClient(HttpClient);
+            var context = new Polly.Context().WithLogger(logger).WithHttpClientOptions(clientOptions).WithHttpClient(HttpClient).WithHttpRequestMessage(httpRequestMessage);
             httpRequestMessage.SetPolicyExecutionContext(context);
+            if (!String.IsNullOrWhiteSpace(clientOptions.Token) && !tokenIsExpired())
+            {
+                logger.LogDebug("The existing access token is not expired, reusing existing access token");
+                httpRequestMessage.SetBearerToken(clientOptions.Token);
+            }
+            else
+            {
+                logger.LogDebug("No token was found or the existing access token is expired, requesting a new access token");
+                await httpRequestMessage.SetNewClientToken(HttpClient, this.clientOptions, this.logger);
+            }
+        }
+
+        ///<summary>
+        ///This isn't meant to be perfect but will reduce unnecessary token requests significantly, let Polly handle the inbetweens
+        ///</summary>
+        private bool tokenIsExpired()
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = tokenHandler.ReadJwtToken(clientOptions.Token);
+            if (token.ValidTo > DateTime.UtcNow)
+            {
+                return false;
+            }
+            return true;
         }
 
         ///<summary>
@@ -43,8 +68,17 @@ namespace Ranger.InternalHttpClient
         ///</summary>
         protected async Task<RangerApiResponse> SendAsync(HttpRequestMessage httpRequestMessage)
         {
-            InitializeHttpRequest(httpRequestMessage);
+            await InitializeHttpRequest(httpRequestMessage);
             HttpResponseMessage response = null;
+            if (!String.IsNullOrWhiteSpace(clientOptions.Token) && !tokenIsExpired())
+            {
+                httpRequestMessage.SetBearerToken(clientOptions.Token);
+            }
+            else
+            {
+                await httpRequestMessage.SetNewClientToken(HttpClient, this.clientOptions, this.logger);
+            }
+
             try
             {
                 response = await HttpClient.SendAsync(httpRequestMessage);
@@ -63,12 +97,15 @@ namespace Ranger.InternalHttpClient
                 logger.LogCritical("The response body was empty when a response was intended");
                 throw new ApiException($"An internal server error occurred");
             }
+
             try
             {
-                return JsonConvert.DeserializeObject<RangerApiResponse>(content, new JsonSerializerSettings
+                var rangerApiResponse = JsonConvert.DeserializeObject<RangerApiResponse>(content, new JsonSerializerSettings { MissingMemberHandling = MissingMemberHandling.Ignore });
+                if (rangerApiResponse.IsError)
                 {
-                    MissingMemberHandling = MissingMemberHandling.Ignore
-                });
+                    throw new ApiException(rangerApiResponse.Error, statusCode: rangerApiResponse.StatusCode);
+                }
+                return rangerApiResponse;
             }
             catch (JsonSerializationException ex)
             {
@@ -77,13 +114,15 @@ namespace Ranger.InternalHttpClient
             }
         }
 
+
+
         ///<summary>
         /// Makes an HTTP request and deserializes the result to the specified type
         /// Throws an ApiException on 5XX responses
         ///</summary>
         protected async Task<RangerApiResponse<TResponseObject>> SendAsync<TResponseObject>(HttpRequestMessage httpRequestMessage)
         {
-            InitializeHttpRequest(httpRequestMessage);
+            await InitializeHttpRequest(httpRequestMessage);
             HttpResponseMessage response = null;
             try
             {
@@ -106,7 +145,7 @@ namespace Ranger.InternalHttpClient
             try
             {
                 var rangerApiResponse = JsonConvert.DeserializeObject<RangerApiResponse<TResponseObject>>(content, new JsonSerializerSettings { MissingMemberHandling = MissingMemberHandling.Ignore });
-                if (rangerApiResponse.Is5XXStatusCode())
+                if (rangerApiResponse.IsError)
                 {
                     throw new ApiException(rangerApiResponse.Error, statusCode: rangerApiResponse.StatusCode);
                 }

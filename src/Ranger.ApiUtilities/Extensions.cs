@@ -22,24 +22,24 @@ namespace Ranger.ApiUtilities
             return services;
         }
 
-        public static IApplicationBuilder UseAutoWrapper(this IApplicationBuilder app, string wrapWhenApiPathStartsWith = "")
+        public static IApplicationBuilder UseAutoWrapper(this IApplicationBuilder app, bool isApiOnly = true, string wrapWhenApiPathStartsWith = "")
         {
             var autoWrapperOptions = new AutoWrapperOptions();
-            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != Environments.Development)
-            {
-                autoWrapperOptions.IsDebug = false;
-                autoWrapperOptions.EnableResponseLogging = false;
-                autoWrapperOptions.EnableExceptionLogging = false;
-            }
-            else
+            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == Environments.Development)
             {
                 autoWrapperOptions.IsDebug = true;
                 autoWrapperOptions.EnableResponseLogging = true;
                 autoWrapperOptions.EnableExceptionLogging = true;
             }
+            else
+            {
+                autoWrapperOptions.IsDebug = false;
+                autoWrapperOptions.EnableResponseLogging = false;
+                autoWrapperOptions.EnableExceptionLogging = false;
+            }
 
             autoWrapperOptions.ShowStatusCode = true;
-            autoWrapperOptions.IsApiOnly = true;
+            autoWrapperOptions.IsApiOnly = isApiOnly;
             autoWrapperOptions.WrapWhenApiPathStartsWith = wrapWhenApiPathStartsWith;
 
             app.UseApiResponseAndExceptionWrapper<MapResponseObject>(autoWrapperOptions);

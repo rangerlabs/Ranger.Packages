@@ -1,6 +1,10 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using AutoWrapper.Wrappers;
+using IdentityModel.Client;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.Extensions.Http;
@@ -14,13 +18,12 @@ namespace Ranger.InternalHttpClient
             .HandleResult<HttpResponseMessage>(r => r.StatusCode == HttpStatusCode.Unauthorized)
             .RetryAsync(1, async (exception, retryCount, context) =>
             {
-                var logger = context.GetLogger();
                 var httpClient = context.GetHttpClient();
+                var requestMessage = context.GetHttpRequestMessage();
+                var logger = context.GetLogger();
                 var options = context.GetHttpClientOptions();
 
-                logger.LogInformation("Requesting new access token");
-                await httpClient.SetClientToken(logger, options.Scope, options.ClientId, options.ClientSecret);
-                logger.LogInformation("New access token acquired");
+                await requestMessage.SetNewClientToken(httpClient, options, logger);
             });
 
         public static IAsyncPolicy<HttpResponseMessage> ExponentialBackoffWithJitterPolicy()

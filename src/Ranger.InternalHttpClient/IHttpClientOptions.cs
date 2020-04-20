@@ -6,5 +6,6 @@ namespace Ranger.InternalHttpClient
         string Scope { get; }
         string ClientId { get; }
         string ClientSecret { get; }
+        string Token { get; set; }
     }
 }

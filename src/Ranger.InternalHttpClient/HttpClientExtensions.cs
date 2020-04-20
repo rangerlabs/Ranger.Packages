@@ -1,25 +1,19 @@
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using AutoWrapper.Wrappers;
 using IdentityModel.Client;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Polly;
 
 namespace Ranger.InternalHttpClient
 {
     public static class HttpClientExtensions
     {
-        public static async Task SetClientToken(this HttpClient httpClient, ILogger logger, string scope, string clientId, string clientSecret)
+        public static async Task SetNewClientToken(this HttpRequestMessage httpRequestMessage, HttpClient httpClient, IHttpClientOptions options, ILogger logger)
         {
-            if (string.IsNullOrWhiteSpace(scope))
-            {
-                throw new ArgumentException($"{nameof(scope)} was null or whitespace");
-            }
-            if (string.IsNullOrWhiteSpace(clientSecret))
-            {
-                throw new ArgumentException($"{nameof(clientSecret)} was null or whitespace");
-            }
-
             DiscoveryDocumentRequest discoveryDocument = null;
             if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == Environments.Development)
             {
@@ -28,10 +22,10 @@ namespace Ranger.InternalHttpClient
                 {
                     Address = "http://identity:5000",
                     Policy = {
-                        RequireHttps = false,
-                        Authority = "http://localhost.io:5000",
-                        ValidateEndpoints = false
-                    },
+                            RequireHttps = false,
+                            Authority = "http://localhost.io:5000",
+                            ValidateEndpoints = false
+                        },
                 };
             }
             else
@@ -41,35 +35,36 @@ namespace Ranger.InternalHttpClient
                 {
                     Address = "http://identity:5000",
                     Policy = {
-                        RequireHttps = false,
-                        Authority = "https://rangerlabs.io",
-                        ValidateEndpoints = false
-                    },
+                            RequireHttps = false,
+                            Authority = "https://rangerlabs.io",
+                            ValidateEndpoints = false
+                        },
                 };
-
             }
             var disco = await httpClient.GetDiscoveryDocumentAsync(discoveryDocument);
             if (disco.IsError)
             {
-                throw new Exception(disco.Error);
+                logger.LogCritical(disco.Exception, "Error with the discovery document response");
+                throw new ApiException("An internal server error occurred", StatusCodes.Status500InternalServerError);
             }
             logger.LogDebug("Retrieved discovery document from Identity Server");
 
             var tokenResponse = await httpClient.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
             {
                 Address = disco.TokenEndpoint,
-                ClientId = clientId,
-                ClientSecret = clientSecret,
-                Scope = scope
+                ClientId = options.ClientId,
+                ClientSecret = options.ClientSecret,
+                Scope = options.Scope
             });
-
             if (tokenResponse.IsError)
             {
-                throw new Exception("Error with the token response.", tokenResponse.Exception);
+                logger.LogCritical(tokenResponse.Exception, "Error with the token response");
+                throw new ApiException("An internal server error occurred", StatusCodes.Status500InternalServerError);
             }
 
-            logger.LogDebug("Recieved token from identity server.");
-            httpClient.SetBearerToken(tokenResponse.AccessToken);
+            httpRequestMessage.SetBearerToken(tokenResponse.AccessToken);
+            options.Token = tokenResponse.AccessToken;
+            logger.LogDebug("Received new access token from Identity Server");
         }
     }
 }
