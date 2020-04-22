@@ -45,7 +45,7 @@ namespace Ranger.InternalHttpClient
             if (disco.IsError)
             {
                 logger.LogCritical(disco.Exception, "Error with the discovery document response");
-                throw new ApiException("An internal server error occurred", StatusCodes.Status500InternalServerError);
+                throw new ApiException(Constants.ExceptionMessage, StatusCodes.Status500InternalServerError);
             }
             logger.LogDebug("Retrieved discovery document from Identity Server");
 
@@ -59,7 +59,7 @@ namespace Ranger.InternalHttpClient
             if (tokenResponse.IsError)
             {
                 logger.LogCritical(tokenResponse.Exception, "Error with the token response");
-                throw new ApiException("An internal server error occurred", StatusCodes.Status500InternalServerError);
+                throw new ApiException(Constants.ExceptionMessage, StatusCodes.Status500InternalServerError);
             }
 
             httpRequestMessage.SetBearerToken(tokenResponse.AccessToken);

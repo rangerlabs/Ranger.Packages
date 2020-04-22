@@ -87,7 +87,7 @@ namespace Ranger.InternalHttpClient
             {
                 var message = "The request failed after executing all policies";
                 logger.LogError(ex, message);
-                throw new ApiException(new RangerApiError("An internal server error occurred"));
+                throw new ApiException(Constants.ExceptionMessage, statusCode: StatusCodes.Status500InternalServerError);
             }
             logger.LogDebug("Received status code {StatusCode}", response.StatusCode);
             var content = await response.Content?.ReadAsStringAsync() ?? "";
@@ -95,7 +95,7 @@ namespace Ranger.InternalHttpClient
             if (String.IsNullOrWhiteSpace(content))
             {
                 logger.LogCritical("The response body was empty when a response was intended");
-                throw new ApiException($"An internal server error occurred");
+                throw new ApiException(Constants.ExceptionMessage, statusCode: StatusCodes.Status500InternalServerError);
             }
 
             try
@@ -103,14 +103,14 @@ namespace Ranger.InternalHttpClient
                 var rangerApiResponse = JsonConvert.DeserializeObject<RangerApiResponse>(content, new JsonSerializerSettings { MissingMemberHandling = MissingMemberHandling.Ignore });
                 if (rangerApiResponse.IsError)
                 {
-                    throw new ApiException(rangerApiResponse.Error, statusCode: rangerApiResponse.StatusCode);
+                    throw new ApiException(rangerApiResponse.Error.Message, statusCode: rangerApiResponse.StatusCode) { Errors = rangerApiResponse.Error.ValidationErrors ?? default };
                 }
                 return rangerApiResponse;
             }
             catch (JsonSerializationException ex)
             {
                 logger.LogCritical(ex, "The http client failed to deserialize an APIs response");
-                throw new ApiException($"An internal server error occurred");
+                throw new ApiException(Constants.ExceptionMessage, statusCode: StatusCodes.Status500InternalServerError);
             }
         }
 
@@ -132,7 +132,7 @@ namespace Ranger.InternalHttpClient
             {
                 var message = "The request failed after executing all policies";
                 logger.LogError(ex, message);
-                throw new ApiException(new RangerApiError("An internal server error occurred"));
+                throw new ApiException(Constants.ExceptionMessage, statusCode: StatusCodes.Status500InternalServerError);
             }
             logger.LogDebug("Received status code {StatusCode}", response.StatusCode);
             var content = await response.Content?.ReadAsStringAsync() ?? "";
@@ -140,21 +140,21 @@ namespace Ranger.InternalHttpClient
             if (String.IsNullOrWhiteSpace(content))
             {
                 logger.LogCritical("The response body was empty when a response was intended");
-                throw new ApiException($"An internal server error occurred");
+                throw new ApiException(Constants.ExceptionMessage, statusCode: StatusCodes.Status500InternalServerError);
             }
             try
             {
                 var rangerApiResponse = JsonConvert.DeserializeObject<RangerApiResponse<TResponseObject>>(content, new JsonSerializerSettings { MissingMemberHandling = MissingMemberHandling.Ignore });
                 if (rangerApiResponse.IsError)
                 {
-                    throw new ApiException(rangerApiResponse.Error, statusCode: rangerApiResponse.StatusCode);
+                    throw new ApiException(rangerApiResponse.Error.Message, statusCode: rangerApiResponse.StatusCode) { Errors = rangerApiResponse.Error.ValidationErrors ?? default };
                 }
                 return rangerApiResponse;
             }
             catch (JsonSerializationException ex)
             {
                 logger.LogCritical(ex, "The http client failed to deserialize an APIs response");
-                throw new ApiException($"An internal server error occurred");
+                throw new ApiException(Constants.ExceptionMessage, statusCode: StatusCodes.Status500InternalServerError);
             }
         }
     }

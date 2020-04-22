@@ -15,27 +15,6 @@ namespace Ranger.InternalHttpClient
         { }
 
         ///<summary>
-        /// Produces 200
-        ///</summary>
-        public async Task<RangerApiResponse<IEnumerable<string>>> GetProjectIdsForUser(string tenantId, string email)
-        {
-            if (string.IsNullOrWhiteSpace(tenantId))
-            {
-                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace.");
-            }
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                throw new ArgumentException($"{nameof(email)} cannot be null or whitespace.");
-            }
-
-            return await SendAsync<IEnumerable<string>>(new HttpRequestMessage()
-            {
-                Method = HttpMethod.Get,
-                RequestUri = new Uri(HttpClient.BaseAddress, $"/projects/{tenantId}/authorized/{email}")
-            });
-        }
-
-        ///<summary>
         /// Produces 200, 400, 404
         ///</summary>
         public async Task<RangerApiResponse<string>> GetTenantIdByApiKeyAsync(string apiKey)
@@ -53,7 +32,29 @@ namespace Ranger.InternalHttpClient
         }
 
         ///<summary>
-        /// Produces 200
+        /// Produces 200, 400, 404
+        ///</summary>
+        public async Task<RangerApiResponse<T>> GetProjectByNameAsync<T>(string tenantId, string projectName)
+        {
+            if (string.IsNullOrWhiteSpace(tenantId))
+            {
+                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace.");
+            }
+
+            if (string.IsNullOrWhiteSpace(projectName))
+            {
+                throw new ArgumentException($"{nameof(projectName)} cannot be null or whitespace.");
+            }
+
+            return await SendAsync<T>(new HttpRequestMessage()
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/projects/{tenantId}?projectName={projectName}"),
+            });
+        }
+
+        ///<summary>
+        /// Produces 200, 400, 404
         ///</summary>
         public async Task<RangerApiResponse<T>> GetProjectByApiKeyAsync<T>(string tenantId, string apiKey)
         {
@@ -70,12 +71,12 @@ namespace Ranger.InternalHttpClient
             return await SendAsync<T>(new HttpRequestMessage()
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri(HttpClient.BaseAddress, $"/projects/{tenantId}/{apiKey}"),
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/projects/{tenantId}?apiKey={apiKey}"),
             });
         }
 
         ///<summary>
-        /// Produces 200
+        /// Produces 200, 400, 404
         ///</summary>
         public async Task<RangerApiResponse<T>> GetAllProjectsForUserAsync<T>(string tenantId, string email)
         {
@@ -91,7 +92,7 @@ namespace Ranger.InternalHttpClient
             return await SendAsync<T>(new HttpRequestMessage()
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri(HttpClient.BaseAddress, $"/projects/{tenantId}/{email}"),
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/projects/{tenantId}?email={email}"),
             });
         }
 
