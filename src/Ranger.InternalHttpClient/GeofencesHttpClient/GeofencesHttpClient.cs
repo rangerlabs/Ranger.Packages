@@ -23,7 +23,7 @@ namespace Ranger.InternalHttpClient
             return await SendAsync<T>(new HttpRequestMessage()
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri(HttpClient.BaseAddress, $"/{tenantId}/geofences/{projectId}")
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/geofences/{tenantId}/{projectId}")
             });
         }
     }

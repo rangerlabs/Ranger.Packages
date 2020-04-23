@@ -72,7 +72,10 @@ namespace Ranger.InternalHttpClient
             services.AddHttpClient<T>(clientId)
                 .SetHandlerLifetime(TimeSpan.FromMinutes(30)) //same lifetime of access tokens
                 .AddPolicyHandlerFromRegistry("AuthorizationRetryPolicy")
-                .AddPolicyHandlerFromRegistry((a, r) => r.Method == HttpMethod.Get ? a.Get<IAsyncPolicy<HttpResponseMessage>>("ExponentialBackoffWithJitterPolicy") : a.Get<IAsyncPolicy<HttpResponseMessage>>("NoOpPolicy"));
+                .AddPolicyHandlerFromRegistry((a, r) =>
+                    r.Method == HttpMethod.Get ?
+                    a.Get<IAsyncPolicy<HttpResponseMessage>>("ExponentialBackoffWithJitterPolicy") :
+                    a.Get<IAsyncPolicy<HttpResponseMessage>>("NoOpPolicy"));
             return services;
         }
     }
