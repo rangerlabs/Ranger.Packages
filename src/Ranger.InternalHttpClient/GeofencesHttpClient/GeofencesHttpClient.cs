@@ -17,7 +17,7 @@ namespace Ranger.InternalHttpClient
         {
             if (string.IsNullOrWhiteSpace(tenantId))
             {
-                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace.");
+                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace");
             }
 
             return await SendAsync<T>(new HttpRequestMessage()

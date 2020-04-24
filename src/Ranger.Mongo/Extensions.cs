@@ -35,7 +35,7 @@ namespace Ranger.Mongo
                     var logger = loggerFactory.CreateLogger("Ranger.Mongo.Extensions");
                     var options = context.Resolve<MongoDbOptions>();
                     var client = context.Resolve<MongoClient>();
-                    logger.LogInformation($"Creating new MongoDatabase '{options.DefaultDatabase}'.");
+                    logger.LogInformation($"Creating new MongoDatabase '{options.DefaultDatabase}'");
                     return client.GetDatabase(options.DefaultDatabase);
                 }).InstancePerLifetimeScope();
 

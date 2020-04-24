@@ -61,7 +61,7 @@ namespace Ranger.Common
                 }
                 if (String.IsNullOrWhiteSpace(sql))
                 {
-                    throw new Exception($"The file '{name}.sql' was empty.");
+                    throw new Exception($"The file '{name}.sql' was empty");
                 }
             }
             return sql;

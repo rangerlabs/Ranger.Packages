@@ -21,7 +21,7 @@ namespace Ranger.InternalHttpClient
         {
             if (string.IsNullOrWhiteSpace(apiKey))
             {
-                throw new ArgumentException($"{nameof(apiKey)} cannot be null or whitespace.");
+                throw new ArgumentException($"{nameof(apiKey)} cannot be null or whitespace");
             }
 
             return await SendAsync<string>(new HttpRequestMessage()
@@ -38,12 +38,12 @@ namespace Ranger.InternalHttpClient
         {
             if (string.IsNullOrWhiteSpace(tenantId))
             {
-                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace.");
+                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace");
             }
 
             if (string.IsNullOrWhiteSpace(projectName))
             {
-                throw new ArgumentException($"{nameof(projectName)} cannot be null or whitespace.");
+                throw new ArgumentException($"{nameof(projectName)} cannot be null or whitespace");
             }
 
             return await SendAsync<T>(new HttpRequestMessage()
@@ -60,12 +60,12 @@ namespace Ranger.InternalHttpClient
         {
             if (string.IsNullOrWhiteSpace(tenantId))
             {
-                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace.");
+                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace");
             }
 
             if (string.IsNullOrWhiteSpace(apiKey))
             {
-                throw new ArgumentException($"{nameof(apiKey)} cannot be null or whitespace.");
+                throw new ArgumentException($"{nameof(apiKey)} cannot be null or whitespace");
             }
 
             return await SendAsync<T>(new HttpRequestMessage()
@@ -82,11 +82,11 @@ namespace Ranger.InternalHttpClient
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
-                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace.");
+                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace");
             }
             if (String.IsNullOrWhiteSpace(email))
             {
-                throw new ArgumentException($"{nameof(email)} cannot be null or whitespace.");
+                throw new ArgumentException($"{nameof(email)} cannot be null or whitespace");
             }
 
             return await SendAsync<T>(new HttpRequestMessage()
@@ -103,11 +103,11 @@ namespace Ranger.InternalHttpClient
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
-                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace.");
+                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace");
             }
             if (String.IsNullOrWhiteSpace(jsonContent))
             {
-                throw new ArgumentException($"{nameof(jsonContent)} cannot be null or whitespace.");
+                throw new ArgumentException($"{nameof(jsonContent)} cannot be null or whitespace");
             }
             return await SendAsync<T>(new HttpRequestMessage()
             {
@@ -124,11 +124,11 @@ namespace Ranger.InternalHttpClient
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
-                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace.");
+                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace");
             }
             if (String.IsNullOrWhiteSpace(jsonContent))
             {
-                throw new ArgumentException($"{nameof(jsonContent)} cannot be null or whitespace.");
+                throw new ArgumentException($"{nameof(jsonContent)} cannot be null or whitespace");
             }
             return await SendAsync<T>(new HttpRequestMessage()
             {
@@ -145,7 +145,7 @@ namespace Ranger.InternalHttpClient
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
-                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace.");
+                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace");
             }
 
             return await SendAsync(new HttpRequestMessage()
@@ -163,11 +163,11 @@ namespace Ranger.InternalHttpClient
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
-                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace.");
+                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace");
             }
             if (String.IsNullOrWhiteSpace(jsonContent))
             {
-                throw new ArgumentException($"{nameof(jsonContent)} cannot be null or whitespace.");
+                throw new ArgumentException($"{nameof(jsonContent)} cannot be null or whitespace");
             }
 
             return await SendAsync<T>(new HttpRequestMessage()

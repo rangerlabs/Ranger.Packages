@@ -15,7 +15,7 @@ namespace Ranger.InternalHttpClient
         {
             if (string.IsNullOrWhiteSpace(domain))
             {
-                throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace.");
+                throw new ArgumentException($"{nameof(domain)} cannot be null or whitespace");
             }
 
             return await SendAsync<T>(new HttpRequestMessage()

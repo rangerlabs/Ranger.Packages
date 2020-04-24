@@ -111,7 +111,7 @@ namespace Ranger.RabbitMQ
                 CorrelationContext context = default(CorrelationContext);
                 try
                 {
-                    message = JsonConvert.DeserializeObject<TMessage>(System.Text.Encoding.Default.GetString(ea.Body), new JsonSerializerSettings { MissingMemberHandling = MissingMemberHandling.Ignore });
+                    message = JsonConvert.DeserializeObject<TMessage>(System.Text.Encoding.Default.GetString(ea.Body));
                     context = CorrelationContext.FromBasicDeliverEventArgs(ea);
                 }
                 catch (Exception ex)
@@ -143,6 +143,7 @@ namespace Ranger.RabbitMQ
             var messageName = message.GetType().Name;
             var success = false;
 
+            //TODO: Add Polly retry policy
             while (currentRetry <= options.Retries && !success)
             {
                 try
@@ -150,9 +151,7 @@ namespace Ranger.RabbitMQ
                     var retryMessage = currentRetry == 0 ?
                         string.Empty :
                         $"Retry: {currentRetry}'.";
-                    var preLogMessage = $"Handling message: '{messageName}' " +
-                        $"with correlation id: '{context.CorrelationContextId}'. {retryMessage}";
-                    logger.LogInformation(preLogMessage);
+                    logger.LogInformation($"Handling message: '{messageName}' " + $"with correlation id: '{context.CorrelationContextId}'. {retryMessage}");
 
                     var messageHandler = serviceProvider.GetService<IMessageHandler<TMessage>>();
                     //TODO: This would be better handled if on startup we could determine a misconfiguration

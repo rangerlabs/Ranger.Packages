@@ -13,7 +13,7 @@ namespace Ranger.Mongo
         {
             if (string.IsNullOrWhiteSpace(tenantId))
             {
-                throw new ArgumentException($"{nameof(tenantId)} was null or whitespace.");
+                throw new ArgumentException($"{nameof(tenantId)} was null or whitespace");
             }
 
             Id = id;
