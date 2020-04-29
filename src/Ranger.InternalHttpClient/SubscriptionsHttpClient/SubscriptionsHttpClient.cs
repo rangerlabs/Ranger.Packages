@@ -17,7 +17,7 @@ namespace Ranger.InternalHttpClient
         ///<summary>
         /// Produces 200, 404
         ///</summary>
-        public async Task<RangerApiResponse<string>> GenerateCheckoutExistingUrl(string tenantId, string planId)
+        public async Task<RangerApiResponse<T>> GenerateCheckoutExistingUrl<T>(string tenantId, string planId)
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -27,7 +27,7 @@ namespace Ranger.InternalHttpClient
             {
                 throw new ArgumentException($"{nameof(planId)} cannot be null or whitespace");
             }
-            return await SendAsync<string>(new HttpRequestMessage()
+            return await SendAsync<T>(new HttpRequestMessage()
             {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/subscriptions/{tenantId}/{planId}/checkout-existing-hosted-page-url")
