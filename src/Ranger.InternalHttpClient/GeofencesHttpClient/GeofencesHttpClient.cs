@@ -26,5 +26,17 @@ namespace Ranger.InternalHttpClient
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/geofences/{tenantId}/{projectId}")
             });
         }
+
+        ///<summary>
+        /// Produces 200
+        ///</summary>
+        public async Task<RangerApiResponse<long>> GetAllActiveGeofencesCount(string tenantId)
+        {
+            return await SendAsync<long>(new HttpRequestMessage()
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/geofences/{tenantId}/count")
+            });
+        }
     }
 }

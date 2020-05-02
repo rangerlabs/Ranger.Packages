@@ -58,8 +58,21 @@ namespace Ranger.InternalHttpClient
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/tenants/{domain}/primary-owner-transfer"),
             });
         }
+
         /// <summary>
-        /// Produces 200, 400, 404
+        /// Produces 200, 404
+        /// </summary>
+        public async Task<RangerApiResponse<T>> GetAllTenantsAsync<T>()
+        {
+            return await SendAsync<T>(new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/tenants"),
+            });
+        }
+
+        /// <summary>
+        /// Produces 200, 404
         /// </summary>
         public async Task<RangerApiResponse<T>> GetTenantByIdAsync<T>(string tenantId)
         {
@@ -75,7 +88,7 @@ namespace Ranger.InternalHttpClient
         }
 
         /// <summary>
-        /// Produces 200, 400, 404
+        /// Produces 200, 404
         /// </summary>
         public async Task<RangerApiResponse<T>> GetTenantByDomainAsync<T>(string domain)
         {

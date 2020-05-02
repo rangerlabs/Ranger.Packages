@@ -26,5 +26,17 @@ namespace Ranger.InternalHttpClient
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/integrations/{tenantId}/{projectId}")
             });
         }
+
+        ///<summary>
+        /// Produces 200
+        ///</summary>
+        public async Task<RangerApiResponse<int>> GetAllActiveIntegrationsCount(string tenantId)
+        {
+            return await SendAsync<int>(new HttpRequestMessage()
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/integrations/{tenantId}/count")
+            });
+        }
     }
 }

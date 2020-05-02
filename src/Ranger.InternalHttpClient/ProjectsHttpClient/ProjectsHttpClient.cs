@@ -34,6 +34,23 @@ namespace Ranger.InternalHttpClient
         ///<summary>
         /// Produces 200, 400, 404
         ///</summary>
+        public async Task<RangerApiResponse<T>> GetAllProjects<T>(string tenantId)
+        {
+            if (string.IsNullOrWhiteSpace(tenantId))
+            {
+                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace");
+            }
+
+            return await SendAsync<T>(new HttpRequestMessage()
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/projects/{tenantId}"),
+            });
+        }
+
+        ///<summary>
+        /// Produces 200, 400, 404
+        ///</summary>
         public async Task<RangerApiResponse<T>> GetProjectByNameAsync<T>(string tenantId, string projectName)
         {
             if (string.IsNullOrWhiteSpace(tenantId))

@@ -17,7 +17,7 @@
     </packageTypes>
     <dependencies>
       <dependency id="Microsoft.AspNetCore.Hosting.Abstractions" version="2.2.0" />
-      <dependency id="Autofac" version="4.9.2" />
+      <dependency id="Autofac" version="4.9.4" />
       <dependency id="Autofac.Extensions.DependencyInjection" version="4.4.0" />
       <dependency id="Newtonsoft.Json" version="12.0.2" />
       <dependency id="RabbitMQ.Client" version="5.1.0" />
