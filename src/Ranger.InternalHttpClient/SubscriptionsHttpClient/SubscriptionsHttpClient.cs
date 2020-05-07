@@ -33,10 +33,11 @@ namespace Ranger.InternalHttpClient
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/subscriptions/{tenantId}/{planId}/checkout-existing-hosted-page-url")
             });
         }
+
         ///<summary>
         /// Produces 200, 404
         ///</summary>
-        public async Task<RangerApiResponse<T>> GetLimitDetails<T>(string tenantId)
+        public async Task<RangerApiResponse<T>> GetSubscription<T>(string tenantId)
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -45,9 +46,10 @@ namespace Ranger.InternalHttpClient
             return await SendAsync<T>(new HttpRequestMessage()
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri(HttpClient.BaseAddress, $"/subscriptions/{tenantId}/limit-details")
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/subscriptions/{tenantId}")
             });
         }
+
         ///<summary>
         /// Produces 200, 404
         ///</summary>
@@ -63,5 +65,38 @@ namespace Ranger.InternalHttpClient
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/subscriptions/{tenantId}/plan-id")
             });
         }
+
+        ///<summary>
+        /// Produces 200, 404
+        ///</summary>
+        public async Task<RangerApiResponse<string>> GetTenantIdForSubscriptionId(string subscriptionId)
+        {
+            if (String.IsNullOrWhiteSpace(subscriptionId))
+            {
+                throw new ArgumentException($"{nameof(subscriptionId)} cannot be null or whitespace");
+            }
+            return await SendAsync<string>(new HttpRequestMessage()
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/subscriptions/{subscriptionId}/tenant-id")
+            });
+        }
+
+        ///<summary>
+        /// Produces 200, 404
+        ///</summary>
+        public async Task<RangerApiResponse<bool>> IsSubscriptionActive(string tenantId)
+        {
+            if (String.IsNullOrWhiteSpace(tenantId))
+            {
+                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace");
+            }
+            return await SendAsync<bool>(new HttpRequestMessage()
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/subscriptions/{tenantId}/active")
+            });
+        }
+
     }
 }
