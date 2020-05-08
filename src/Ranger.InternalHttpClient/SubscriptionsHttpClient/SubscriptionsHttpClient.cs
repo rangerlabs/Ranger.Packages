@@ -37,6 +37,22 @@ namespace Ranger.InternalHttpClient
         ///<summary>
         /// Produces 200, 404
         ///</summary>
+        public async Task<RangerApiResponse<T>> GetPortalSession<T>(string tenantId)
+        {
+            if (String.IsNullOrWhiteSpace(tenantId))
+            {
+                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace");
+            }
+            return await SendAsync<T>(new HttpRequestMessage()
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/subscriptions/{tenantId}/portal-session")
+            });
+        }
+
+        ///<summary>
+        /// Produces 200, 404
+        ///</summary>
         public async Task<RangerApiResponse<T>> GetSubscription<T>(string tenantId)
         {
             if (String.IsNullOrWhiteSpace(tenantId))
