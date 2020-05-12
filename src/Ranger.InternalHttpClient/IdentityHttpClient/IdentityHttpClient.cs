@@ -260,15 +260,11 @@ namespace Ranger.InternalHttpClient
         ///<summary>
         /// Produces 200, 404
         ///</summary>
-        public async Task<RangerApiResponse> UserConfirmEmailChangeAsync(string tenantId, string userId, string jsonContent)
+        public async Task<RangerApiResponse> UserConfirmEmailChangeAsync(string tenantId, string jsonContent)
         {
             if (string.IsNullOrWhiteSpace(tenantId))
             {
                 throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace");
-            }
-            if (string.IsNullOrWhiteSpace(userId))
-            {
-                throw new ArgumentException($"{nameof(userId)} cannot be null or whitespace");
             }
             if (string.IsNullOrWhiteSpace(jsonContent))
             {
@@ -278,7 +274,7 @@ namespace Ranger.InternalHttpClient
             return await SendAsync(new HttpRequestMessage()
             {
                 Method = HttpMethod.Post,
-                RequestUri = new Uri(HttpClient.BaseAddress, $"/users/{tenantId}/{userId}/email-change"),
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/users/{tenantId}/email-change"),
                 Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
             });
         }
