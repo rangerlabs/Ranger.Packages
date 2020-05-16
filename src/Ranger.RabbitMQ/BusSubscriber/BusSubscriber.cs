@@ -34,7 +34,7 @@ namespace Ranger.RabbitMQ
             {
                 try
                 {
-                    connection = serviceProvider.GetService<IConnectionFactory>().CreateConnection();
+                    connection = serviceProvider.GetService<IConnection>();
                 }
                 catch (BrokerUnreachableException ex)
                 {

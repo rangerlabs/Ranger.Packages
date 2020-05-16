@@ -12,18 +12,16 @@ namespace Ranger.RabbitMQ
     public class BusPublisher : IBusPublisher
     {
         private readonly ILogger<BusPublisher> logger;
-        private readonly IConnectionFactory connectionFactory;
         private readonly IConnection connection;
         private readonly IModel channel;
         private readonly RabbitMQOptions options;
         private readonly Dictionary<Type, TopologyNames> topologyDictionary = new Dictionary<Type, TopologyNames>();
 
-        public BusPublisher(ILogger<BusPublisher> logger, IConnectionFactory connectionFactory, RabbitMQOptions options)
+        public BusPublisher(ILogger<BusPublisher> logger, IConnection connection, RabbitMQOptions options)
         {
             this.logger = logger;
-            this.connectionFactory = connectionFactory;
             this.options = options;
-            connection = connectionFactory.CreateConnection();
+            this.connection = connection;
             logger.LogInformation("Publisher connected.");
             channel = connection.CreateModel();
 

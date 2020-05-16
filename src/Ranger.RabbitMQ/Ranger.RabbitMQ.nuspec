@@ -16,11 +16,13 @@
       <packageType name="Dependency" />
     </packageTypes>
     <dependencies>
-      <dependency id="Microsoft.AspNetCore.Hosting.Abstractions" version="2.2.0" />
+      <dependency id="AspNetCore.HealthChecks.RabbitMQ" version="3.1.1" />
       <dependency id="Autofac" version="4.9.4" />
-      <dependency id="Autofac.Extensions.DependencyInjection" version="4.4.0" />
-      <dependency id="Newtonsoft.Json" version="12.0.2" />
-      <dependency id="RabbitMQ.Client" version="5.1.0" />
+      <dependency id="Autofac.Extensions.DependencyInjection" version="5.0.1" />
+      <dependency id="Newtonsoft.Json" version="12.0.3" />
+      <dependency id="RabbitMQ.Client" version="5.1.2" />
+      <dependency id="Ranger.Common" version="2.5.3" />
+      <dependency id="Ranger.Monitoring" version="3.1.0" />
     </dependencies>
   </metadata>
   <files>

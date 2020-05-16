@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Reflection;
 using Autofac;
+using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -43,7 +47,7 @@ namespace Ranger.RabbitMQ
 
         private static void RegisterConnectionFactory(ContainerBuilder builder)
         {
-            builder.Register<IConnectionFactory>(context =>
+            builder.Register<IConnection>(context =>
             {
                 var options = context.Resolve<RabbitMQOptions>();
                 var connectionFactory = new ConnectionFactory() { DispatchConsumersAsync = true };
@@ -52,8 +56,23 @@ namespace Ranger.RabbitMQ
                 connectionFactory.HostName = options.Host;
                 connectionFactory.Port = options.Port;
                 connectionFactory.VirtualHost = options.VirtualHost;
-                return connectionFactory;
+                connectionFactory.AutomaticRecoveryEnabled = true;
+                return connectionFactory.CreateConnection();
             }).SingleInstance();
+        }
+
+        public static IServiceCollection AddRabbitMQHealthCheck(this IServiceCollection services)
+        {
+            services.AddHealthChecks().AddRabbitMQ(sp => sp.GetService<IConnection>(), "rabbit-mq", tags: new string[] { "rabbit-mq" });
+            return services;
+        }
+        public static void MapRabbitMQHealthCheck(this IEndpointRouteBuilder endpoints)
+        {
+            endpoints.MapHealthChecks("/health-checks/rabbit-mq", new HealthCheckOptions
+            {
+                Predicate = (check) => check.Tags.Contains("rabbit-mq"),
+                ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+            });
         }
     }
 }
