@@ -1,5 +1,7 @@
-namespace Ranger.RabbitMQ {
-    public interface IResource {
+namespace Ranger.RabbitMQ
+{
+    public interface IResource
+    {
         Resource Resource { get; }
     }
 }

@@ -15,8 +15,12 @@
     <packageTypes>
       <packageType name="Dependency" />
     </packageTypes>
+    <dependencies>
+      <dependency id="NodaTime" version="2.4.7" />
+      <dependency id="NodaTime.Serialization.JsonNet" version="2.2.0" />
+    </dependencies>
   </metadata>
   <files>
-    <file src="bin\$configuration$\netstandard2.0\$id$.pdb" target="lib\netstandard\" />
+    <file src="bin\$configuration$\netstandard2.1\$id$.pdb" target="lib\netstandard2.1\" />
   </files>
 </package>

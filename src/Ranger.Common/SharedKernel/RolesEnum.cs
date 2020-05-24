@@ -1,7 +1,10 @@
-namespace Ranger.Common {
-    public enum RolesEnum {
-        Owner = 0,
-        Admin = 1,
-        User = 2,
+namespace Ranger.Common
+{
+    public enum RolesEnum
+    {
+        PrimaryOwner = 0,
+        Owner = 1,
+        Admin = 2,
+        User = 3
     }
 }

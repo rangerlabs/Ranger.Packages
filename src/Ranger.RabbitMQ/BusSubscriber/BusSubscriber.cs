@@ -7,12 +7,15 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using RabbitMQ.Client.Exceptions;
 using Ranger.Common;
 
 namespace Ranger.RabbitMQ
 {
     public class BusSubscriber : IBusSubscriber
     {
+        private const int ConnectionRetryDuration = 10000;
+        private const int ConnectionMaxRetrys = 9;
         private readonly ILogger<BusSubscriber> logger;
         private readonly IBusPublisher publisher;
         private readonly IConnection connection;
@@ -25,8 +28,29 @@ namespace Ranger.RabbitMQ
         {
             serviceProvider = app.ApplicationServices.GetService<IServiceProvider>();
             logger = serviceProvider.GetService<ILogger<BusSubscriber>>();
-            connection = serviceProvider.GetService<IConnectionFactory>().CreateConnection();
-            logger.LogInformation("Subscriber connected.");
+            bool connected = false;
+            int connectionAttempt = 0;
+            while (!connected && connectionAttempt <= ConnectionMaxRetrys)
+            {
+                try
+                {
+                    connection = serviceProvider.GetService<IConnectionFactory>().CreateConnection();
+                }
+                catch (BrokerUnreachableException ex)
+                {
+                    logger.LogCritical(ex, $"Failed to connect to RabbitMQ broker. Retrying in {ConnectionRetryDuration / 1000} seconds. Connection attempt: {connectionAttempt}.");
+                    if (connectionAttempt == ConnectionMaxRetrys)
+                    {
+                        logger.LogCritical("Abandoning RabbitMQ Connection.");
+                        throw;
+                    }
+                    connectionAttempt++;
+                    Thread.Sleep(ConnectionRetryDuration);
+                    continue;
+                }
+                connected = true;
+                logger.LogInformation("Subscriber connected.");
+            }
             publisher = serviceProvider.GetService<IBusPublisher>();
             options = serviceProvider.GetService<RabbitMQOptions>();
             retryInterval = new TimeSpan(0, 0, options.RetryInterval > 0 ? options.RetryInterval : 2);
@@ -130,17 +154,14 @@ namespace Ranger.RabbitMQ
                         $"with correlation id: '{context.CorrelationContextId}'. {retryMessage}";
                     logger.LogInformation(preLogMessage);
 
-                    try
+                    var messageHandler = serviceProvider.GetService<IMessageHandler<TMessage>>();
+                    //TODO: This would be better handled if on startup we could determine a misconfiguration
+                    if (messageHandler is null)
                     {
-                        var messageHandler = serviceProvider.GetService<IMessageHandler<TMessage>>();
-                        await messageHandler.HandleAsync(message, context);
+                        throw new NullReferenceException($"Unable to locate message handler in service collection for message: '{messageName}'");
                     }
-                    catch (NullReferenceException)
-                    {
-                        //TODO: This would be better handled if on startup we could determine a misconfiguration
-                        logger.LogError($"Unable to locate message handler in service collection for message: '{messageName}'");
-                        throw;
-                    }
+                    await messageHandler.HandleAsync(message, context);
+
                     success = true;
                     logger.LogInformation($"Handled message: '{messageName}' " +
                         $"with correlation id: '{context.CorrelationContextId}'. {retryMessage}");

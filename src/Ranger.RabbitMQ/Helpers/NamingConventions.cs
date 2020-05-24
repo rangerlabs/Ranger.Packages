@@ -44,7 +44,6 @@ namespace Ranger.RabbitMQ
             }
 
             return $"{consumerName}.{messageType}.{separatedNamespace}.{type.Name.Underscore()}".ToLowerInvariant();
-            // return $"{separatedNamespace}{type.Name.Underscore()}".ToLowerInvariant();
         }
 
         private static string GetRoutingKeyNamespace(Type type, string defaultNamespace)

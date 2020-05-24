@@ -1,13 +1,12 @@
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using IdentityModel.Client;
-using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Ranger.Common;
 
 namespace Ranger.InternalHttpClient
@@ -34,8 +33,9 @@ namespace Ranger.InternalHttpClient
         public async Task SetClientToken()
         {
             DiscoveryDocumentRequest discoveryDocument = null;
-            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == EnvironmentName.Development)
+            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == Environments.Development)
             {
+                logger.LogDebug("Requesting discovery document for Development Environment");
                 discoveryDocument = new DiscoveryDocumentRequest()
                 {
                     Address = "http://identity:5000",
@@ -48,6 +48,7 @@ namespace Ranger.InternalHttpClient
             }
             else
             {
+                logger.LogDebug("Requesting discovery document for Production Environment");
                 discoveryDocument = new DiscoveryDocumentRequest()
                 {
                     Address = "http://identity:5000",
@@ -64,6 +65,7 @@ namespace Ranger.InternalHttpClient
             {
                 throw new Exception(disco.Error);
             }
+            logger.LogDebug("Retrieved discovery document from Identity Server");
 
             //TODO: The client secret should be on a per client basis, for now just using a single one and this works because the this Identity Client has this and the other tokens approved.
             var tokenResponse = await httpClient.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
@@ -92,6 +94,7 @@ namespace Ranger.InternalHttpClient
             {
                 logger.LogInformation("Recieved a 401 Unauthorized from requested service. Attempting to set new client token.");
                 await SetClientToken();
+                logger.LogDebug("New client token set. Resending request.");
                 response = await httpClient.SendAsync(httpRequestMessageFactory());
             }
             if (response.IsSuccessStatusCode)
@@ -131,43 +134,53 @@ namespace Ranger.InternalHttpClient
                 logger.LogDebug("New client token set. Resending request.");
                 response = await httpClient.SendAsync(httpRequestMessageFactory());
             }
-            if (response.IsSuccessStatusCode)
+            apiResponse.IsSuccessStatusCode = true;
+            apiResponse.StatusCode = response.StatusCode;
+            var content = await response.Content?.ReadAsStringAsync() ?? "";
+            switch (response.StatusCode)
             {
-                logger.LogDebug("Request was successful.");
-                apiResponse.IsSuccessStatusCode = true;
-                apiResponse.StatusCode = response.StatusCode;
-                var content = await response.Content?.ReadAsStringAsync() ?? "";
-                if (!String.IsNullOrWhiteSpace(content))
-                {
-                    try
+                case HttpStatusCode.NoContent:
                     {
-                        apiResponse.ResponseObject = JsonConvert.DeserializeObject<TResponseObject>(content);
+
+                        logger.LogDebug("Request was successful.");
+                        apiResponse.ResponseObject = default;
+                        break;
                     }
-                    catch (JsonSerializationException ex)
+                case HttpStatusCode.OK:
                     {
-                        throw new Exception($"Failed to deserialize object to type '{typeof(TResponseObject)}'.", ex);
+                        logger.LogDebug("Request was successful.");
+                        if (!String.IsNullOrWhiteSpace(content))
+                        {
+                            try
+                            {
+                                apiResponse.ResponseObject = JsonConvert.DeserializeObject<TResponseObject>(content);
+                            }
+                            catch (JsonSerializationException ex)
+                            {
+                                throw new Exception($"Failed to deserialize object to type '{typeof(TResponseObject)}'.", ex);
+                            }
+                        }
+                        else
+                        {
+                            throw new Exception($"The response body was empty. Verify the requested method returns a response body. Did you intend to use the non-generic 'SendAsync(HttpRequestMessage)'?");
+                        }
+                        break;
                     }
-                }
-                else
-                {
-                    throw new Exception($"The response body was empty. Verify the requested method returns a response body. Did you intend to use the non-generic 'SendAsync(HttpRequestMessage)'?");
-                }
-            }
-            else
-            {
-                logger.LogDebug("Request was unsuccessful.");
-                apiResponse.IsSuccessStatusCode = false;
-                apiResponse.StatusCode = response.StatusCode;
-                var errorContent = await response.Content?.ReadAsStringAsync() ?? "";
-                try
-                {
-                    apiResponse.Errors = JsonConvert.DeserializeObject<ApiErrorContent>(errorContent);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Failed to deserialize the content of an error response. The response content may not have been a valid ApiErrorContent object.");
-                    apiResponse.Errors = new ApiErrorContent();
-                }
+                default:
+                    {
+                        logger.LogDebug("Request was unsuccessful.");
+                        apiResponse.IsSuccessStatusCode = false;
+                        try
+                        {
+                            apiResponse.Errors = JsonConvert.DeserializeObject<ApiErrorContent>(content);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogError(ex, "Failed to deserialize the content of an error response. The response content may not have been a valid ApiErrorContent object.");
+                            apiResponse.Errors = new ApiErrorContent();
+                        }
+                        break;
+                    }
             }
             return apiResponse;
         }

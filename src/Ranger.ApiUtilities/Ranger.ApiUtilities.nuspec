@@ -6,17 +6,23 @@
     <title>$title$</title>
     <authors>$author$</authors>
     <owners>$author$</owners>
-    <projectUrl>https://github.com/rangerlabs/Ranger.ApiUtilities</projectUrl>
+    <projectUrl>https://github.com/rangerlabs/Ranger.Packages</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Ranger api utilities package</description>
+    <description>Ranger API utilities package</description>
     <!-- <releaseNotes>Summary of changes made in this release of the package.</releaseNotes> -->
     <copyright>Copyright 2019</copyright>
-    <tags>Ranger Common</tags>
+    <tags>Ranger ApiUtilities</tags>
     <packageTypes>
       <packageType name="Dependency" />
     </packageTypes>
+    <dependencies>
+      <dependency id="Microsoft.AspNetCore.Hosting.Abstractions" version="2.2.0" />
+      <dependency id="Swashbuckle.AspNetCore" version="5.0.0" />
+      <dependency id="AutoWrapper.Core" version="4.0.1" />
+      <dependency id="Ranger.Common" version="2.0.0" />
+    </dependencies>
   </metadata>
   <files>
-    <file src="bin\$configuration$\netstandard2.0\$id$.pdb" target="lib\netstandard\" />
+    <file src="bin\$configuration$\netcoreapp3.1\$id$.pdb" target="lib\netcoreapp3.1\" />
   </files>
 </package>

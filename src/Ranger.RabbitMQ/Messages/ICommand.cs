@@ -1,3 +1,4 @@
-namespace Ranger.RabbitMQ {
+namespace Ranger.RabbitMQ
+{
     public interface ICommand : IMessage { }
 }
