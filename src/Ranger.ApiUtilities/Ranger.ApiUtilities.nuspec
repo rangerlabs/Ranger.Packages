@@ -18,8 +18,9 @@
     <dependencies>
       <dependency id="Microsoft.AspNetCore.Hosting.Abstractions" version="2.2.0" />
       <dependency id="Swashbuckle.AspNetCore" version="5.0.0" />
-      <dependency id="AutoWrapper.Core" version="4.0.1" />
-      <dependency id="Ranger.Common" version="2.0.0" />
+      <dependency id="Swashbuckle.AspNetCore.Swagger" version="5.3.1" />
+      <dependency id="AutoWrapper.Core" version="4.1.0" />
+      <dependency id="Ranger.Common" version="2.5.2" />
     </dependencies>
   </metadata>
   <files>

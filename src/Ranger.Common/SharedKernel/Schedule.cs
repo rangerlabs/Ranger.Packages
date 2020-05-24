@@ -46,11 +46,11 @@ namespace Ranger.Common
         {
             if (string.IsNullOrWhiteSpace(timeZoneId))
             {
-                throw new ArgumentException($"{nameof(timeZoneId)} was null or whitespace.");
+                throw new ArgumentException($"{nameof(timeZoneId)} was null or whitespace");
             }
             if (zoneProvider.GetZoneOrNull(timeZoneId) is null)
             {
-                throw new ArgumentException($"{nameof(timeZoneId)} was not a valid zone within the zone provider.");
+                throw new ArgumentException($"{nameof(timeZoneId)} was not a valid zone within the zone provider");
             }
             return new Schedule(FullDay, FullDay, FullDay, FullDay, FullDay, FullDay, FullDay, timeZoneId);
         }
@@ -81,7 +81,7 @@ namespace Ranger.Common
         {
             if (eventDateTime.Kind != DateTimeKind.Utc)
             {
-                throw new ArgumentException($"{nameof(eventDateTime)} is not a UTC DateTime.");
+                throw new ArgumentException($"{nameof(eventDateTime)} is not a UTC DateTime");
             }
             var eventInstance = LocalDateTime.FromDateTime(eventDateTime).InUtc().ToInstant().InZone(DateTimeZoneProviders.Tzdb[this.TimeZoneId]).ToDateTimeUnspecified();
 

@@ -32,7 +32,7 @@ namespace Ranger.Redis
             });
             if (logger != null)
             {
-                logger.LogInformation($"Connected to redis instance {options.Instance}:{options.ConnectionString}.");
+                logger.LogInformation($"Connected to redis instance {options.Instance}:{options.ConnectionString}");
             }
         }
     }

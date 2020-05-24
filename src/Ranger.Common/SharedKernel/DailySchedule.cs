@@ -9,7 +9,7 @@ namespace Ranger.Common
         {
             if (startTime > endTime)
             {
-                throw new ArgumentException($"{nameof(startTime)} must be before or equal to ${nameof(endTime)}.");
+                throw new ArgumentException($"{nameof(startTime)} must be before or equal to ${nameof(endTime)}");
             }
             StartTime = startTime;
             EndTime = endTime;

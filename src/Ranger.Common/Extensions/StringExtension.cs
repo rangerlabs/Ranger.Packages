@@ -22,7 +22,7 @@ namespace Ranger.Common
         {
             List<string> fullAddress = host.ToString().Split('.').ToList();
             if (fullAddress.Count < 3)
-                throw new DomainNotFoundException("No domain was found in the request.");
+                throw new DomainNotFoundException("No domain was found in the request");
             return fullAddress[0];
         }
 

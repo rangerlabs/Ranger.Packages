@@ -1,188 +1,161 @@
 using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using AutoWrapper.Wrappers;
 using IdentityModel.Client;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Polly;
 using Ranger.Common;
 
 namespace Ranger.InternalHttpClient
 {
-    public class ApiClientBase : IApiClient
+    public class ApiClientBase
     {
+        private readonly IHttpClientOptions clientOptions;
         private readonly ILogger logger;
-        private readonly string scope;
-        protected readonly HttpClient httpClient;
+        protected readonly HttpClient HttpClient;
 
-        public ApiClientBase(string uri, ILogger logger, string scope)
+        public ApiClientBase(HttpClient httpClient, IHttpClientOptions clientOptions, ILogger logger)
         {
-            if (string.IsNullOrWhiteSpace(scope))
-            {
-                throw new ArgumentException($"{nameof(scope)} cannot be null or whitespace");
-            }
-
-            httpClient = new HttpClient();
-            httpClient.BaseAddress = new Uri(uri);
+            this.HttpClient = httpClient;
+            this.HttpClient.BaseAddress = new Uri(clientOptions.BaseUrl);
+            this.HttpClient.DefaultRequestHeaders.Add("api-version", "1.0");
+            this.clientOptions = clientOptions;
             this.logger = logger;
-            this.scope = scope;
         }
 
-        public async Task SetClientToken()
+        ///<summary>
+        /// Initialize the httpClient from the factory and wrap it with the necessary policies
+        ///</summary>
+        private async Task InitializeHttpRequest(HttpRequestMessage httpRequestMessage)
         {
-            DiscoveryDocumentRequest discoveryDocument = null;
-            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == Environments.Development)
+            var context = new Polly.Context().WithLogger(logger).WithHttpClientOptions(clientOptions).WithHttpClient(HttpClient).WithHttpRequestMessage(httpRequestMessage);
+            httpRequestMessage.SetPolicyExecutionContext(context);
+            if (!String.IsNullOrWhiteSpace(clientOptions.Token) && !tokenIsExpired())
             {
-                logger.LogDebug("Requesting discovery document for Development Environment");
-                discoveryDocument = new DiscoveryDocumentRequest()
-                {
-                    Address = "http://identity:5000",
-                    Policy = {
-                        RequireHttps = false,
-                        Authority = "http://localhost.io:5000",
-                        ValidateEndpoints = false
-                    },
-                };
+                logger.LogDebug("The existing access token is not expired, reusing existing access token");
+                httpRequestMessage.SetBearerToken(clientOptions.Token);
             }
             else
             {
-                logger.LogDebug("Requesting discovery document for Production Environment");
-                discoveryDocument = new DiscoveryDocumentRequest()
-                {
-                    Address = "http://identity:5000",
-                    Policy = {
-                        RequireHttps = false,
-                        Authority = "https://rangerlabs.io",
-                        ValidateEndpoints = false
-                    },
-                };
-
+                logger.LogDebug("No token was found or the existing access token is expired, requesting a new access token");
+                await httpRequestMessage.SetNewClientToken(HttpClient, this.clientOptions, this.logger);
             }
-            var disco = await httpClient.GetDiscoveryDocumentAsync(discoveryDocument);
-            if (disco.IsError)
-            {
-                throw new Exception(disco.Error);
-            }
-            logger.LogDebug("Retrieved discovery document from Identity Server");
-
-            //TODO: The client secret should be on a per client basis, for now just using a single one and this works because the this Identity Client has this and the other tokens approved.
-            var tokenResponse = await httpClient.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
-            {
-                Address = disco.TokenEndpoint,
-                ClientId = "internal",
-                ClientSecret = "cKprgh9wYKWcsm",
-                Scope = scope
-            });
-
-            if (tokenResponse.IsError)
-            {
-                throw new Exception("Error with the token response.", tokenResponse.Exception);
-            }
-
-            logger.LogDebug("Recieved token from identity server.");
-            httpClient.SetBearerToken(tokenResponse.AccessToken);
         }
 
-        protected async Task<InternalApiResponse> SendAsync(Func<HttpRequestMessage> httpRequestMessageFactory)
+        ///<summary>
+        ///This isn't meant to be perfect but will reduce unnecessary token requests significantly, let Polly handle the inbetweens
+        ///</summary>
+        private bool tokenIsExpired()
         {
-            logger.LogDebug("Executing SendAsync().");
-            var apiResponse = new InternalApiResponse();
-            var response = await httpClient.SendAsync(httpRequestMessageFactory());
-            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = tokenHandler.ReadJwtToken(clientOptions.Token);
+            if (token.ValidTo > DateTime.UtcNow)
             {
-                logger.LogInformation("Recieved a 401 Unauthorized from requested service. Attempting to set new client token.");
-                await SetClientToken();
-                logger.LogDebug("New client token set. Resending request.");
-                response = await httpClient.SendAsync(httpRequestMessageFactory());
+                return false;
             }
-            if (response.IsSuccessStatusCode)
+            return true;
+        }
+
+        ///<summary>
+        /// Makes an HTTP request with no expected result
+        /// Throws an ApiException on 5XX responses
+        ///</summary>
+        protected async Task<RangerApiResponse> SendAsync(HttpRequestMessage httpRequestMessage)
+        {
+            await InitializeHttpRequest(httpRequestMessage);
+            HttpResponseMessage response = null;
+            if (!String.IsNullOrWhiteSpace(clientOptions.Token) && !tokenIsExpired())
             {
-                logger.LogDebug("Request was successful.");
-                apiResponse.IsSuccessStatusCode = true;
-                apiResponse.StatusCode = response.StatusCode;
+                httpRequestMessage.SetBearerToken(clientOptions.Token);
             }
             else
             {
-                logger.LogDebug("Request was unsuccessful.");
-                apiResponse.IsSuccessStatusCode = false;
-                apiResponse.StatusCode = response.StatusCode;
-                var errorContent = await response.Content?.ReadAsStringAsync() ?? "";
-                try
-                {
-                    apiResponse.Errors = JsonConvert.DeserializeObject<ApiErrorContent>(errorContent);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Failed to deserialize the content of an error response. The response content may not have been a valid ApiErrorContent object.");
-                    apiResponse.Errors = new ApiErrorContent();
-                }
+                await httpRequestMessage.SetNewClientToken(HttpClient, this.clientOptions, this.logger);
             }
-            return apiResponse;
 
-        }
-
-        protected async Task<InternalApiResponse<TResponseObject>> SendAsync<TResponseObject>(Func<HttpRequestMessage> httpRequestMessageFactory)
-        {
-            var apiResponse = new InternalApiResponse<TResponseObject>();
-            var response = await httpClient.SendAsync(httpRequestMessageFactory());
-            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            try
             {
-                logger.LogDebug("Recieved a 401 Unauthorized from requested service. Attempting to set new client token.");
-                await SetClientToken();
-                logger.LogDebug("New client token set. Resending request.");
-                response = await httpClient.SendAsync(httpRequestMessageFactory());
+                response = await HttpClient.SendAsync(httpRequestMessage);
             }
-            apiResponse.IsSuccessStatusCode = true;
-            apiResponse.StatusCode = response.StatusCode;
+            catch (HttpRequestException ex)
+            {
+                var message = "The request failed after executing all policies";
+                logger.LogError(ex, message);
+                throw new ApiException(Constants.ExceptionMessage, statusCode: StatusCodes.Status500InternalServerError);
+            }
+            logger.LogDebug("Received status code {StatusCode}", response.StatusCode);
             var content = await response.Content?.ReadAsStringAsync() ?? "";
-            switch (response.StatusCode)
-            {
-                case HttpStatusCode.NoContent:
-                    {
 
-                        logger.LogDebug("Request was successful.");
-                        apiResponse.ResponseObject = default;
-                        break;
-                    }
-                case HttpStatusCode.OK:
-                    {
-                        logger.LogDebug("Request was successful.");
-                        if (!String.IsNullOrWhiteSpace(content))
-                        {
-                            try
-                            {
-                                apiResponse.ResponseObject = JsonConvert.DeserializeObject<TResponseObject>(content);
-                            }
-                            catch (JsonSerializationException ex)
-                            {
-                                throw new Exception($"Failed to deserialize object to type '{typeof(TResponseObject)}'.", ex);
-                            }
-                        }
-                        else
-                        {
-                            throw new Exception($"The response body was empty. Verify the requested method returns a response body. Did you intend to use the non-generic 'SendAsync(HttpRequestMessage)'?");
-                        }
-                        break;
-                    }
-                default:
-                    {
-                        logger.LogDebug("Request was unsuccessful.");
-                        apiResponse.IsSuccessStatusCode = false;
-                        try
-                        {
-                            apiResponse.Errors = JsonConvert.DeserializeObject<ApiErrorContent>(content);
-                        }
-                        catch (Exception ex)
-                        {
-                            logger.LogError(ex, "Failed to deserialize the content of an error response. The response content may not have been a valid ApiErrorContent object.");
-                            apiResponse.Errors = new ApiErrorContent();
-                        }
-                        break;
-                    }
+            if (String.IsNullOrWhiteSpace(content))
+            {
+                logger.LogCritical("The response body was empty when a response was intended");
+                throw new ApiException(Constants.ExceptionMessage, statusCode: StatusCodes.Status500InternalServerError);
             }
-            return apiResponse;
+
+            try
+            {
+                var rangerApiResponse = JsonConvert.DeserializeObject<RangerApiResponse>(content, new JsonSerializerSettings { MissingMemberHandling = MissingMemberHandling.Ignore });
+                if (rangerApiResponse.IsError)
+                {
+                    throw new ApiException(rangerApiResponse.Error.Message, statusCode: rangerApiResponse.StatusCode) { Errors = rangerApiResponse.Error.ValidationErrors ?? default };
+                }
+                return rangerApiResponse;
+            }
+            catch (JsonSerializationException ex)
+            {
+                logger.LogCritical(ex, "The http client failed to deserialize an APIs response");
+                throw new ApiException(Constants.ExceptionMessage, statusCode: StatusCodes.Status500InternalServerError);
+            }
+        }
+
+
+
+        ///<summary>
+        /// Makes an HTTP request and deserializes the result to the specified type
+        /// Throws an ApiException on 5XX responses
+        ///</summary>
+        protected async Task<RangerApiResponse<TResponseObject>> SendAsync<TResponseObject>(HttpRequestMessage httpRequestMessage)
+        {
+            await InitializeHttpRequest(httpRequestMessage);
+            HttpResponseMessage response = null;
+            try
+            {
+                response = await HttpClient.SendAsync(httpRequestMessage);
+            }
+            catch (HttpRequestException ex)
+            {
+                var message = "The request failed after executing all policies";
+                logger.LogError(ex, message);
+                throw new ApiException(Constants.ExceptionMessage, statusCode: StatusCodes.Status500InternalServerError);
+            }
+            logger.LogDebug("Received status code {StatusCode}", response.StatusCode);
+            var content = await response.Content?.ReadAsStringAsync() ?? "";
+
+            if (String.IsNullOrWhiteSpace(content))
+            {
+                logger.LogCritical("The response body was empty when a response was intended");
+                throw new ApiException(Constants.ExceptionMessage, statusCode: StatusCodes.Status500InternalServerError);
+            }
+            try
+            {
+                var rangerApiResponse = JsonConvert.DeserializeObject<RangerApiResponse<TResponseObject>>(content, new JsonSerializerSettings { MissingMemberHandling = MissingMemberHandling.Ignore });
+                if (rangerApiResponse.IsError)
+                {
+                    throw new ApiException(rangerApiResponse.Error.Message, statusCode: rangerApiResponse.StatusCode) { Errors = rangerApiResponse.Error.ValidationErrors ?? default };
+                }
+                return rangerApiResponse;
+            }
+            catch (JsonSerializationException ex)
+            {
+                logger.LogCritical(ex, "The http client failed to deserialize an APIs response");
+                throw new ApiException(Constants.ExceptionMessage, statusCode: StatusCodes.Status500InternalServerError);
+            }
         }
     }
 }

@@ -9,15 +9,15 @@ namespace Ranger.Common
         {
             if (string.IsNullOrWhiteSpace(deviceId))
             {
-                throw new ArgumentException($"{nameof(deviceId)} was null or whitespace.");
+                throw new ArgumentException($"{nameof(deviceId)} was null or whitespace");
             }
             if (position is null)
             {
-                throw new ArgumentException($"{nameof(position)} was null or whitespace.");
+                throw new ArgumentException($"{nameof(position)} was null or whitespace");
             }
             if (recordedAt.Equals(DateTime.MinValue) || recordedAt.Equals(DateTime.MaxValue))
             {
-                throw new ArgumentException($"{nameof(recordedAt)} was not in a valid range.");
+                throw new ArgumentException($"{nameof(recordedAt)} was not in a valid range");
             }
 
             this.DeviceId = deviceId;

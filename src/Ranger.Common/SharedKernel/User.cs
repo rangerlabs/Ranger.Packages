@@ -6,7 +6,7 @@ namespace Ranger.Common
     public class User
     {
         [JsonConstructor]
-        public User(string domain, string email, string firstName, string lastName, string phoneNumber, string role, IEnumerable<string> authorizedProjects)
+        public User(string domain, string email, string firstName, string lastName, string phoneNumber, string role)
         {
             this.Domain = domain;
             this.Email = email;
@@ -14,7 +14,6 @@ namespace Ranger.Common
             this.LastName = lastName;
             this.PhoneNumber = phoneNumber;
             this.Role = role;
-            this.AuthorizedProjects = authorizedProjects;
         }
 
         public string Domain { get; }
@@ -23,6 +22,5 @@ namespace Ranger.Common
         public string LastName { get; }
         public string PhoneNumber { get; }
         public string Role { get; }
-        public IEnumerable<string> AuthorizedProjects { get; }
     }
 }

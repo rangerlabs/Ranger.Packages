@@ -5,13 +5,13 @@ namespace Ranger.Common
     public class ContextTenant
     {
         [JsonConstructor]
-        public ContextTenant(string databaseUsername, string databasePassword, bool enabled)
+        public ContextTenant(string tenantId, string databasePassword, bool enabled)
         {
-            this.DatabaseUsername = databaseUsername;
+            this.TenantId = tenantId;
             this.DatabasePassword = databasePassword;
             this.Enabled = enabled;
         }
-        public string DatabaseUsername { get; }
+        public string TenantId { get; }
         public string DatabasePassword { get; }
         public bool Enabled { get; set; }
     }
