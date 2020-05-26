@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection;
+using System.Threading;
 using Autofac;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Builder;
@@ -9,16 +10,18 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using NodaTime;
 using NodaTime.Serialization.JsonNet;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Exceptions;
 using Ranger.Common;
 
 namespace Ranger.RabbitMQ
 {
     public static class Extensions
     {
+        private const int ConnectionRetryDuration = 10000;
+        private const int ConnectionMaxRetrys = 9;
         public static IBusSubscriber UseRabbitMQ(this IApplicationBuilder app) => new BusSubscriber(app);
 
         public static void AddRabbitMq(this ContainerBuilder builder)
@@ -42,14 +45,15 @@ namespace Ranger.RabbitMQ
                 ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
             }.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
 
-            RegisterConnectionFactory(builder);
+            RegisterConnection(builder);
         }
 
-        private static void RegisterConnectionFactory(ContainerBuilder builder)
+        private static void RegisterConnection(ContainerBuilder builder)
         {
             builder.Register<IConnection>(context =>
             {
                 var options = context.Resolve<RabbitMQOptions>();
+                var logger = context.Resolve<ILoggerFactory>().CreateLogger(typeof(Extensions));
                 var connectionFactory = new ConnectionFactory() { DispatchConsumersAsync = true };
                 connectionFactory.UserName = options.Username;
                 connectionFactory.Password = options.Password;
@@ -57,8 +61,37 @@ namespace Ranger.RabbitMQ
                 connectionFactory.Port = options.Port;
                 connectionFactory.VirtualHost = options.VirtualHost;
                 connectionFactory.AutomaticRecoveryEnabled = true;
-                return connectionFactory.CreateConnection();
-            }).SingleInstance();
+                IConnection connection = default;
+
+                bool connected = false;
+                int connectionAttempt = 0;
+                while (!connected && connectionAttempt <= ConnectionMaxRetrys)
+                {
+                    try
+                    {
+                        connection = connectionFactory.CreateConnection();
+                    }
+                    catch (BrokerUnreachableException ex)
+                    {
+                        logger.LogCritical(ex, $"Failed to connect to RabbitMQ broker. Retrying in {ConnectionRetryDuration / 1000} seconds. Connection attempt: {connectionAttempt}");
+                        if (connectionAttempt == ConnectionMaxRetrys)
+                        {
+                            logger.LogCritical("Abandoning RabbitMQ connection");
+                            throw;
+                        }
+                        connectionAttempt++;
+                        Thread.Sleep(ConnectionRetryDuration);
+                        continue;
+                    }
+                    connected = true;
+                }
+                logger.LogInformation("RabbitMQ connection established");
+                return connection;
+            }).SingleInstance().OnRelease(c =>
+            {
+                c.Close();
+                c.Dispose();
+            });
         }
 
         public static IServiceCollection AddRabbitMQHealthCheck(this IServiceCollection services)
@@ -66,6 +99,7 @@ namespace Ranger.RabbitMQ
             services.AddHealthChecks().AddRabbitMQ(sp => sp.GetService<IConnection>(), "rabbit-mq", tags: new string[] { "rabbit-mq" });
             return services;
         }
+
         public static void MapRabbitMQHealthCheck(this IEndpointRouteBuilder endpoints)
         {
             endpoints.MapHealthChecks("/health-checks/rabbit-mq", new HealthCheckOptions

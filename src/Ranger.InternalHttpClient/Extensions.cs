@@ -14,18 +14,18 @@ namespace Ranger.InternalHttpClient
 {
     public static class Extensions
     {
-        public static IServiceCollection AddTenantsHttpClient(this IServiceCollection services, string baseAddress, string scope, string clientSecret)
-            => AddHttpClient<TenantsHttpClient>(services, "TenantsHttpClient", baseAddress, scope, clientSecret);
-        public static IServiceCollection AddProjectsHttpClient(this IServiceCollection services, string baseAddress, string scope, string clientSecret)
-            => AddHttpClient<ProjectsHttpClient>(services, "ProjectsHttpClient", baseAddress, scope, clientSecret);
-        public static IServiceCollection AddIdentityHttpClient(this IServiceCollection services, string baseAddress, string scope, string clientSecret)
-            => AddHttpClient<IdentityHttpClient>(services, "IdentityHttpClient", baseAddress, scope, clientSecret);
-        public static IServiceCollection AddSubscriptionsHttpClient(this IServiceCollection services, string baseAddress, string scope, string clientSecret)
-            => AddHttpClient<SubscriptionsHttpClient>(services, "SubscriptionsHttpClient", baseAddress, scope, clientSecret);
-        public static IServiceCollection AddGeofencesHttpClient(this IServiceCollection services, string baseAddress, string scope, string clientSecret)
-            => AddHttpClient<GeofencesHttpClient>(services, "GeofencesHttpClient", baseAddress, scope, clientSecret);
-        public static IServiceCollection AddIntegrationsHttpClient(this IServiceCollection services, string baseAddress, string scope, string clientSecret)
-            => AddHttpClient<IntegrationsHttpClient>(services, "IntegrationsHttpClient", baseAddress, scope, clientSecret);
+        public static IServiceCollection AddTenantsHttpClient(this IServiceCollection services, string baseAddress, string identityAuthority, string scope, string clientSecret)
+            => AddHttpClient<TenantsHttpClient>(services, "TenantsHttpClient", baseAddress, identityAuthority, scope, clientSecret);
+        public static IServiceCollection AddProjectsHttpClient(this IServiceCollection services, string baseAddress, string identityAuthority, string scope, string clientSecret)
+            => AddHttpClient<ProjectsHttpClient>(services, "ProjectsHttpClient", baseAddress, identityAuthority, scope, clientSecret);
+        public static IServiceCollection AddIdentityHttpClient(this IServiceCollection services, string baseAddress, string identityAuthority, string scope, string clientSecret)
+            => AddHttpClient<IdentityHttpClient>(services, "IdentityHttpClient", baseAddress, identityAuthority, scope, clientSecret);
+        public static IServiceCollection AddSubscriptionsHttpClient(this IServiceCollection services, string baseAddress, string identityAuthority, string scope, string clientSecret)
+            => AddHttpClient<SubscriptionsHttpClient>(services, "SubscriptionsHttpClient", baseAddress, identityAuthority, scope, clientSecret);
+        public static IServiceCollection AddGeofencesHttpClient(this IServiceCollection services, string baseAddress, string identityAuthority, string scope, string clientSecret)
+            => AddHttpClient<GeofencesHttpClient>(services, "GeofencesHttpClient", baseAddress, identityAuthority, scope, clientSecret);
+        public static IServiceCollection AddIntegrationsHttpClient(this IServiceCollection services, string baseAddress, string identityAuthority, string scope, string clientSecret)
+            => AddHttpClient<IntegrationsHttpClient>(services, "IntegrationsHttpClient", baseAddress, identityAuthority, scope, clientSecret);
 
         public static IServiceCollection AddPollyPolicyRegistry(this IServiceCollection services)
         {
@@ -49,7 +49,7 @@ namespace Ranger.InternalHttpClient
         }
 
 
-        static IServiceCollection AddHttpClient<T>(IServiceCollection services, string clientId, string baseAddress, string scope, string clientSecret)
+        static IServiceCollection AddHttpClient<T>(IServiceCollection services, string clientId, string baseAddress, string identityAuthority, string scope, string clientSecret)
             where T : ApiClientBase
         {
             if (string.IsNullOrWhiteSpace(clientId))
@@ -60,6 +60,10 @@ namespace Ranger.InternalHttpClient
             {
                 throw new System.ArgumentException($"{nameof(baseAddress)} was null or whitespace");
             }
+            if (string.IsNullOrWhiteSpace(identityAuthority))
+            {
+                throw new System.ArgumentException($"{nameof(identityAuthority)} was null or whitespace");
+            }
             if (string.IsNullOrWhiteSpace(scope))
             {
                 throw new System.ArgumentException($"{nameof(scope)} was null or whitespace");
@@ -68,7 +72,7 @@ namespace Ranger.InternalHttpClient
             {
                 throw new System.ArgumentException($"{nameof(clientSecret)} was null or whitespace");
             }
-            services.AddSingleton(new HttpClientOptions<T>(baseAddress, scope, clientId, clientSecret));
+            services.AddSingleton(new HttpClientOptions<T>(baseAddress, identityAuthority, scope, clientId, clientSecret));
             services.AddHttpClient<T>(clientId)
                 .SetHandlerLifetime(TimeSpan.FromMinutes(30)) //same lifetime of access tokens
                 .AddPolicyHandlerFromRegistry("AuthorizationRetryPolicy")
