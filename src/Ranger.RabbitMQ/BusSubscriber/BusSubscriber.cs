@@ -97,8 +97,8 @@ namespace Ranger.RabbitMQ
                     logger.LogDebug($"Message from queue '{queueName}' nack'd");
                     return;
                 }
-                var success = await TryHandleAsync(message, context, onError);
-                if (!success)
+                var messageState = await TryHandleAsync(message, context, onError);
+                if (messageState is MessageState.Failed)
                 {
                     logger.LogError($"Sending message: '{message.GetType().Name}' with correlation id: '{context.CorrelationContextId}' to the error queue");
                     publisher.Error<TMessage>(message, ea);
@@ -109,15 +109,15 @@ namespace Ranger.RabbitMQ
             return eventingConsumer;
         }
 
-        private async Task<bool> TryHandleAsync<TMessage>(TMessage message, CorrelationContext context, Func<TMessage, RangerException, IRejectedEvent> onError = null)
+        private async Task<MessageState> TryHandleAsync<TMessage>(TMessage message, CorrelationContext context, Func<TMessage, RangerException, IRejectedEvent> onError = null)
         where TMessage : IMessage
         {
             var currentRetry = 0;
             var messageName = message.GetType().Name;
-            var success = false;
+            var messageState = MessageState.Failed;
 
             //TODO: Add Polly retry policy
-            while (currentRetry <= options.Retries && !success)
+            while (currentRetry <= options.Retries && messageState is MessageState.Failed)
             {
                 try
                 {
@@ -134,17 +134,18 @@ namespace Ranger.RabbitMQ
                     }
                     await messageHandler.HandleAsync(message, context);
 
-                    success = true;
+                    messageState = MessageState.Succeeded;
                     logger.LogInformation($"Handled message: '{messageName}' with correlation id: '{context.CorrelationContextId}'. {retryMessage}");
                 }
                 catch (Exception ex)
                 {
                     logger.LogError(ex, ex.Message);
-                    if (ex is RangerException rangerException && onError != null)
+                    if (ex is RangerException rangerException && !(onError is null))
                     {
                         var rejectedEvent = onError(message, rangerException);
                         publisher.Publish(rejectedEvent, context);
                         logger.LogWarning($"Published a rejected event: '{rejectedEvent.GetType().Name}' for the message: '{messageName}' with correlation id: '{context.CorrelationContextId}'");
+                        messageState = MessageState.Rejected;
                         break;
                     }
 
@@ -155,7 +156,7 @@ namespace Ranger.RabbitMQ
                     await Task.Delay(retryInterval);
                 }
             }
-            return success;
+            return messageState;
         }
 
         private bool disposedValue = false;

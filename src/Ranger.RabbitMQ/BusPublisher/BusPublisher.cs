@@ -108,19 +108,23 @@ namespace Ranger.RabbitMQ
 
         private TopologyNames TopologyForMessageType(Type type)
         {
-            if (!topologyDictionary.ContainsKey(type))
+            var topologyNames = new TopologyNames
             {
-                topologyDictionary.Add(type, new TopologyNames()
-                {
-                    Exchange = NamingConventions.ExchangeNamingConvention(type, options.Namespace),
-                    Queue = NamingConventions.QueueNamingConvention(type, options.Namespace),
-                    RoutingKey = NamingConventions.RoutingKeyConvention(type, options.Namespace),
-                    ErrorExchange = NamingConventions.ErrorExchangeNamingConvention(type, options.Namespace),
-                    ErrorQueue = NamingConventions.ErrorQueueNamingConvention(type, options.Namespace),
-                    ErrorRoutingKey = NamingConventions.ErrorRoutingKeyConvention(type, options.Namespace),
-                });
+                Exchange = NamingConventions.ExchangeNamingConvention(type, options.Namespace),
+                Queue = NamingConventions.QueueNamingConvention(type, options.Namespace),
+                RoutingKey = NamingConventions.RoutingKeyConvention(type, options.Namespace),
+                ErrorExchange = NamingConventions.ErrorExchangeNamingConvention(type, options.Namespace),
+                ErrorQueue = NamingConventions.ErrorQueueNamingConvention(type, options.Namespace),
+                ErrorRoutingKey = NamingConventions.ErrorRoutingKeyConvention(type, options.Namespace),
+            };
+            try
+            {
+                topologyDictionary.Add(type, topologyNames);
             }
-            var topologyNames = topologyDictionary[type];
+            catch (ArgumentException)
+            {
+                logger.LogDebug("The type {Type} is already entered into the topology dictionary", type.FullName);
+            }
             return topologyNames;
         }
 
