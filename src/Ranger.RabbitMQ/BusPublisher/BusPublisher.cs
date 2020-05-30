@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
@@ -12,7 +10,6 @@ namespace Ranger.RabbitMQ
     public class BusPublisher : IBusPublisher
     {
         private readonly ILogger<BusPublisher> logger;
-        private readonly IConnection connection;
         private readonly IModel channel;
         private readonly RabbitMQOptions options;
         private readonly Dictionary<Type, TopologyNames> topologyDictionary = new Dictionary<Type, TopologyNames>();
@@ -21,11 +18,9 @@ namespace Ranger.RabbitMQ
         {
             this.logger = logger;
             this.options = options;
-            this.connection = connection;
-            logger.LogInformation("Publisher connected.");
             channel = connection.CreateModel();
-
             channel.ConfirmSelect();
+            logger.LogInformation("Publisher connected");
         }
 
         public void Publish<TEvent>(TEvent @event, ICorrelationContext context = null) where TEvent : IEvent
@@ -55,8 +50,7 @@ namespace Ranger.RabbitMQ
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Failed to publish message: '{message.GetType()}'" +
-                    $"with correlation id: '{CorrelationContext.IdFromBasicDeliverEventArgsHeader(ea).ToString()}'");
+                logger.LogError(ex, $"Failed to publish message: '{message.GetType()}'with correlation id: '{CorrelationContext.IdFromBasicDeliverEventArgsHeader(ea).ToString()}'");
                 throw;
             }
         }
@@ -77,20 +71,19 @@ namespace Ranger.RabbitMQ
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Failed to serialize object of type: '{message.GetType()}'.");
+                logger.LogError(ex, $"Failed to serialize object of type: '{message.GetType()}'");
                 throw;
             }
             try
             {
                 IBasicProperties messageProperties = CreateMessageHeaders(this.channel, context);
-                logger.LogDebug($"Publishing message to exchange '{topologyNames.Exchange}' with routingkey '{topologyNames.RoutingKey.Replace("#.", "")}'.");
-                this.channel.BasicPublish(topologyNames.Exchange, topologyNames.RoutingKey.Replace("#.", ""), basicProperties: messageProperties, body: System.Text.Encoding.Default.GetBytes(messageContent));
+                logger.LogDebug($"Publishing message to exchange '{topologyNames.Exchange}' with routingkey '{topologyNames.RoutingKey.Replace("#.", "")}'");
+                this.channel.BasicPublish(topologyNames.Exchange, topologyNames.RoutingKey.Replace("#.", ""), basicProperties: messageProperties, body: new ReadOnlyMemory<byte>(System.Text.Encoding.Default.GetBytes(messageContent)));
                 this.channel.WaitForConfirmsOrDie();
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Failed to publish message: '{message.GetType()}'" +
-                    $"with correlation id: '{context.CorrelationContextId}'");
+                logger.LogError(ex, $"Failed to publish message: '{message.GetType()}'with correlation id: '{context.CorrelationContextId}'");
                 throw;
             }
         }
@@ -99,11 +92,11 @@ namespace Ranger.RabbitMQ
         {
             if (channel is null)
             {
-                throw new ArgumentException(nameof(channel) + "was null.");
+                throw new ArgumentException(nameof(channel) + "was null");
             }
             if (context is null)
             {
-                throw new ArgumentException(nameof(context) + "was null.");
+                throw new ArgumentException(nameof(context) + "was null");
             }
 
             var messageProperties = channel.CreateBasicProperties();
@@ -115,19 +108,23 @@ namespace Ranger.RabbitMQ
 
         private TopologyNames TopologyForMessageType(Type type)
         {
-            if (!topologyDictionary.ContainsKey(type))
+            var topologyNames = new TopologyNames
             {
-                topologyDictionary.Add(type, new TopologyNames()
-                {
-                    Exchange = NamingConventions.ExchangeNamingConvention(type, options.Namespace),
-                    Queue = NamingConventions.QueueNamingConvention(type, options.Namespace),
-                    RoutingKey = NamingConventions.RoutingKeyConvention(type, options.Namespace),
-                    ErrorExchange = NamingConventions.ErrorExchangeNamingConvention(type, options.Namespace),
-                    ErrorQueue = NamingConventions.ErrorQueueNamingConvention(type, options.Namespace),
-                    ErrorRoutingKey = NamingConventions.ErrorRoutingKeyConvention(type, options.Namespace),
-                });
+                Exchange = NamingConventions.ExchangeNamingConvention(type, options.Namespace),
+                Queue = NamingConventions.QueueNamingConvention(type, options.Namespace),
+                RoutingKey = NamingConventions.RoutingKeyConvention(type, options.Namespace),
+                ErrorExchange = NamingConventions.ErrorExchangeNamingConvention(type, options.Namespace),
+                ErrorQueue = NamingConventions.ErrorQueueNamingConvention(type, options.Namespace),
+                ErrorRoutingKey = NamingConventions.ErrorRoutingKeyConvention(type, options.Namespace),
+            };
+            try
+            {
+                topologyDictionary.Add(type, topologyNames);
             }
-            var topologyNames = topologyDictionary[type];
+            catch (ArgumentException)
+            {
+                logger.LogDebug("The type {Type} is already entered into the topology dictionary", type.FullName);
+            }
             return topologyNames;
         }
 
@@ -150,8 +147,6 @@ namespace Ranger.RabbitMQ
                 {
                     channel.Close();
                     channel.Dispose();
-                    connection.Close();
-                    connection.Dispose();
                 }
 
                 disposedValue = true;
@@ -160,7 +155,7 @@ namespace Ranger.RabbitMQ
 
         public void Dispose()
         {
-            logger.LogDebug("BusPublisher.Dispose() called.");
+            logger.LogDebug("BusPublisher.Dispose() called");
             Dispose(true);
         }
     }

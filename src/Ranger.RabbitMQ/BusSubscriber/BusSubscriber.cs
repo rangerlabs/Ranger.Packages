@@ -1,5 +1,5 @@
 using System;
-using System.Threading;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,53 +7,27 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using RabbitMQ.Client.Exceptions;
 using Ranger.Common;
 
 namespace Ranger.RabbitMQ
 {
     public class BusSubscriber : IBusSubscriber
     {
-        private const int ConnectionRetryDuration = 10000;
-        private const int ConnectionMaxRetrys = 9;
         private readonly ILogger<BusSubscriber> logger;
         private readonly IBusPublisher publisher;
-        private readonly IConnection connection;
-        private readonly IModel channel;
         private readonly RabbitMQOptions options;
         private readonly TimeSpan retryInterval;
         private readonly IServiceProvider serviceProvider;
+        private readonly IModel channel;
 
         public BusSubscriber(IApplicationBuilder app)
         {
-            serviceProvider = app.ApplicationServices.GetService<IServiceProvider>();
-            logger = serviceProvider.GetService<ILogger<BusSubscriber>>();
-            bool connected = false;
-            int connectionAttempt = 0;
-            while (!connected && connectionAttempt <= ConnectionMaxRetrys)
-            {
-                try
-                {
-                    connection = serviceProvider.GetService<IConnection>();
-                }
-                catch (BrokerUnreachableException ex)
-                {
-                    logger.LogCritical(ex, $"Failed to connect to RabbitMQ broker. Retrying in {ConnectionRetryDuration / 1000} seconds. Connection attempt: {connectionAttempt}.");
-                    if (connectionAttempt == ConnectionMaxRetrys)
-                    {
-                        logger.LogCritical("Abandoning RabbitMQ Connection.");
-                        throw;
-                    }
-                    connectionAttempt++;
-                    Thread.Sleep(ConnectionRetryDuration);
-                    continue;
-                }
-                connected = true;
-                logger.LogInformation("Subscriber connected.");
-            }
-            publisher = serviceProvider.GetService<IBusPublisher>();
-            options = serviceProvider.GetService<RabbitMQOptions>();
+            serviceProvider = app.ApplicationServices;
+            logger = serviceProvider.GetRequiredService<ILogger<BusSubscriber>>();
+            publisher = serviceProvider.GetRequiredService<IBusPublisher>();
+            options = serviceProvider.GetRequiredService<RabbitMQOptions>();
             retryInterval = new TimeSpan(0, 0, options.RetryInterval > 0 ? options.RetryInterval : 2);
+            var connection = serviceProvider.GetRequiredService<IConnection>();
             channel = connection.CreateModel();
         }
 
@@ -64,7 +38,7 @@ namespace Ranger.RabbitMQ
             var routingKey = NamingConventions.RoutingKeyConvention(typeof(TCommand), options.Namespace);
             channel.Bind<TCommand>(exchangeName, queueName, routingKey, options);
 
-            AsyncEventingBasicConsumer eventingConsumer = RegisterConsumerEvents(queueName, onError);
+            var eventingConsumer = RegisterConsumerEvents(queueName, onError);
 
             channel.BasicConsume(
                 queueName,
@@ -72,8 +46,7 @@ namespace Ranger.RabbitMQ
                 eventingConsumer
             );
 
-            logger.LogInformation($"Subscribed to command queue: '{queueName}' " +
-                $"on exchange: '{exchangeName}'.");
+            logger.LogInformation($"Subscribed to command queue: '{queueName}' on exchange: '{exchangeName}'");
             return this;
         }
 
@@ -92,68 +65,68 @@ namespace Ranger.RabbitMQ
                 eventingConsumer
             );
 
-            logger.LogInformation($"Subscribed to event queue: '{queueName}' " +
-                $"on exchange: '{exchangeName}'.");
+            logger.LogInformation($"Subscribed to event queue: '{queueName}' on exchange: '{exchangeName}'");
             return this;
         }
 
         private AsyncEventingBasicConsumer RegisterConsumerEvents<TMessage>(string queueName, Func<TMessage, RangerException, IRejectedEvent> onError = null) where TMessage : IMessage
         {
             var eventingConsumer = new AsyncEventingBasicConsumer(channel);
-            eventingConsumer.ConsumerCancelled += async (ch, ea) => { await Task.Run(() => logger.LogInformation("Subscriber cancelled.")); };
-            eventingConsumer.Registered += async (ch, ea) => { await Task.Run(() => logger.LogInformation($"Subscriber registered.")); };
-            eventingConsumer.Unregistered += async (ch, ea) => { await Task.Run(() => logger.LogInformation($"Subscriber unregistered.")); };
-            eventingConsumer.Shutdown += async (ch, ea) => { await Task.Run(() => logger.LogInformation($"Subscriber shutdown.")); };
+            eventingConsumer.ConsumerCancelled += async (ch, ea) =>
+            {
+                await Task.Run(() =>
+                    {
+                        var closureReason = ((EventingBasicConsumer)ch).Model.CloseReason;
+                        logger.LogInformation("Consumer cancelled, closure reason: {ClosureReason}", closureReason);
+                    });
+            };
             eventingConsumer.Received += async (ch, ea) =>
             {
-                logger.LogDebug($"Received message from queue: '{queueName}'.");
+                logger.LogDebug($"Received message from queue: '{queueName}'");
                 TMessage message = default(TMessage);
                 CorrelationContext context = default(CorrelationContext);
                 try
                 {
-                    message = JsonConvert.DeserializeObject<TMessage>(System.Text.Encoding.Default.GetString(ea.Body));
+                    message = JsonConvert.DeserializeObject<TMessage>(System.Text.Encoding.Default.GetString(ea.Body.Span));
                     context = CorrelationContext.FromBasicDeliverEventArgs(ea);
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, $"Failed to deserialize message of type: '{message.GetType()}' " +
-                        $"with rabbitmq message id: '{ea.BasicProperties.MessageId}'. Sending to dead letter exchange.");
+                    logger.LogError(ex, $"Failed to deserialize message of type: '{message.GetType()}' with rabbitmq message id: '{ea.BasicProperties.MessageId}'. Sending to dead letter exchange");
                     channel.BasicNack(ea.DeliveryTag, false, false);
-                    logger.LogDebug($"Message from queue '{queueName}' nack'd.");
+                    logger.LogDebug($"Message from queue '{queueName}' nack'd");
                     return;
                 }
-                var success = await TryHandleAsync(message, context, onError);
-                if (!success)
+                var messageState = await TryHandleAsync(message, context, onError);
+                if (messageState is MessageState.Failed)
                 {
-                    logger.LogError($"Sending message: '{message.GetType().Name}' " +
-                        $"with correlation id: '{context.CorrelationContextId}', " +
-                        "to the error queue.");
+                    logger.LogError($"Sending message: '{message.GetType().Name}' with correlation id: '{context.CorrelationContextId}' to the error queue");
                     publisher.Error<TMessage>(message, ea);
                 }
                 channel.BasicAck(ea.DeliveryTag, false);
-                logger.LogDebug($"Message from queue '{queueName}' ack'd.");
+                logger.LogDebug($"Message from queue '{queueName}' ack'd");
             };
             return eventingConsumer;
         }
 
-        private async Task<bool> TryHandleAsync<TMessage>(TMessage message, CorrelationContext context, Func<TMessage, RangerException, IRejectedEvent> onError = null)
+        private async Task<MessageState> TryHandleAsync<TMessage>(TMessage message, CorrelationContext context, Func<TMessage, RangerException, IRejectedEvent> onError = null)
         where TMessage : IMessage
         {
             var currentRetry = 0;
             var messageName = message.GetType().Name;
-            var success = false;
+            var messageState = MessageState.Failed;
 
             //TODO: Add Polly retry policy
-            while (currentRetry <= options.Retries && !success)
+            while (currentRetry <= options.Retries && messageState is MessageState.Failed)
             {
                 try
                 {
                     var retryMessage = currentRetry == 0 ?
                         string.Empty :
                         $"Retry: {currentRetry}'.";
-                    logger.LogInformation($"Handling message: '{messageName}' " + $"with correlation id: '{context.CorrelationContextId}'. {retryMessage}");
+                    logger.LogInformation($"Handling message: '{messageName}' with correlation id: '{context.CorrelationContextId}'. {retryMessage}");
 
-                    var messageHandler = serviceProvider.GetService<IMessageHandler<TMessage>>();
+                    var messageHandler = serviceProvider.GetRequiredService<IMessageHandler<TMessage>>();
                     //TODO: This would be better handled if on startup we could determine a misconfiguration
                     if (messageHandler is null)
                     {
@@ -161,33 +134,29 @@ namespace Ranger.RabbitMQ
                     }
                     await messageHandler.HandleAsync(message, context);
 
-                    success = true;
-                    logger.LogInformation($"Handled message: '{messageName}' " +
-                        $"with correlation id: '{context.CorrelationContextId}'. {retryMessage}");
+                    messageState = MessageState.Succeeded;
+                    logger.LogInformation($"Handled message: '{messageName}' with correlation id: '{context.CorrelationContextId}'. {retryMessage}");
                 }
                 catch (Exception ex)
                 {
                     logger.LogError(ex, ex.Message);
-                    if (ex is RangerException rangerException && onError != null)
+                    if (ex is RangerException rangerException && !(onError is null))
                     {
                         var rejectedEvent = onError(message, rangerException);
                         publisher.Publish(rejectedEvent, context);
-                        logger.LogWarning($"Published a rejected event: '{rejectedEvent.GetType().Name}' " +
-                            $"for the message: '{messageName}' with correlation id: '{context.CorrelationContextId}'.");
+                        logger.LogWarning($"Published a rejected event: '{rejectedEvent.GetType().Name}' for the message: '{messageName}' with correlation id: '{context.CorrelationContextId}'");
+                        messageState = MessageState.Rejected;
                         break;
                     }
 
-                    logger.LogError(ex, $"Unable to handle message: '{messageName}' " +
-                        $"with correlation id: '{context.CorrelationContextId}', " +
-                        $"retry {currentRetry}/{options.Retries}...");
+                    logger.LogError(ex, $"Unable to handle message: '{messageName}' with correlation id: '{context.CorrelationContextId}', retry {currentRetry}/{options.Retries}");
 
                     currentRetry++;
                     context.IncrementRetries();
                     await Task.Delay(retryInterval);
-
                 }
             }
-            return success;
+            return messageState;
         }
 
         private bool disposedValue = false;
@@ -199,18 +168,16 @@ namespace Ranger.RabbitMQ
                 {
                     channel.Close();
                     channel.Dispose();
-                    connection.Close();
-                    connection.Dispose();
                 }
 
                 disposedValue = true;
             }
         }
+
         public void Dispose()
         {
-            logger.LogDebug("BusSubscriber.Dispose() called.");
+            logger.LogDebug("BusSubscriber.Dispose() called");
             Dispose(true);
         }
-
     }
 }

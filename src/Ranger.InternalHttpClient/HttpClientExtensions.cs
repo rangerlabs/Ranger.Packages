@@ -15,32 +15,17 @@ namespace Ranger.InternalHttpClient
         public static async Task SetNewClientToken(this HttpRequestMessage httpRequestMessage, HttpClient httpClient, IHttpClientOptions options, ILogger logger)
         {
             DiscoveryDocumentRequest discoveryDocument = null;
-            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == Environments.Development)
+
+            logger.LogDebug("Requesting discovery document for authority {Authority}", options.IdentityAuthority);
+            discoveryDocument = new DiscoveryDocumentRequest()
             {
-                logger.LogDebug("Requesting discovery document for Development Environment");
-                discoveryDocument = new DiscoveryDocumentRequest()
-                {
-                    Address = "http://identity:5000",
-                    Policy = {
+                Address = "http://identity:5000",
+                Policy = {
                             RequireHttps = false,
-                            Authority = "http://localhost.io:5000",
+                            Authority = options.IdentityAuthority,
                             ValidateEndpoints = false
                         },
-                };
-            }
-            else
-            {
-                logger.LogDebug("Requesting discovery document for Production Environment");
-                discoveryDocument = new DiscoveryDocumentRequest()
-                {
-                    Address = "http://identity:5000",
-                    Policy = {
-                            RequireHttps = false,
-                            Authority = "https://rangerlabs.io",
-                            ValidateEndpoints = false
-                        },
-                };
-            }
+            };
             var disco = await httpClient.GetDiscoveryDocumentAsync(discoveryDocument);
             if (disco.IsError)
             {
