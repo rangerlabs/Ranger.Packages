@@ -49,7 +49,7 @@ namespace Ranger.InternalHttpClient
         }
 
         ///<summary>
-        ///This isn't meant to be perfect but will reduce unnecessary token requests significantly, let Polly handle the inbetweens
+        ///This isn't meant to be perfect but will reduce unnecessary token requests significantly, let Polly handle the in-betweens
         ///</summary>
         private bool tokenIsExpired()
         {
@@ -109,7 +109,7 @@ namespace Ranger.InternalHttpClient
             }
             catch (JsonSerializationException ex)
             {
-                logger.LogCritical(ex, "The http client failed to deserialize an APIs response");
+                logger.LogCritical(ex, "The http client failed to deserialize an APIs response. The response body contained the following: {ResponseBody}", content);
                 throw new ApiException(Constants.ExceptionMessage, statusCode: StatusCodes.Status500InternalServerError);
             }
         }
