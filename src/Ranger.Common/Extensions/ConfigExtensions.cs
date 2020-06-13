@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 
@@ -9,6 +10,10 @@ namespace Ranger.Common
 
         public static TModel GetOptions<TModel>(this IConfiguration configuration, string section) where TModel : new()
         {
+            if (String.IsNullOrWhiteSpace(section))
+            {
+                throw new ArgumentNullException(section);
+            }
             var model = new TModel();
             configuration.GetSection(section).Bind(model);
 

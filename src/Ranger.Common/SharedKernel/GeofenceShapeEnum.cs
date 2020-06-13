@@ -3,6 +3,7 @@ namespace Ranger.Common
     public enum GeofenceShapeEnum
     {
         Circle,
-        Polygon
+        Polygon,
+        TestRun
     }
 }
