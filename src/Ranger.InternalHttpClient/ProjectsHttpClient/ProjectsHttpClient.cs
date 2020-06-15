@@ -137,7 +137,7 @@ namespace Ranger.InternalHttpClient
         ///<summary>
         /// Produces 200, 400, 409
         ///</summary>
-        public async Task<RangerApiResponse<T>> ApiKeyResetAsync<T>(string tenantId, Guid projectId, EnvironmentEnum environment, string jsonContent)
+        public async Task<RangerApiResponse<T>> ApiKeyResetAsync<T>(string tenantId, Guid projectId, ApiKeyPurposeEnum purpose, string jsonContent)
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -150,7 +150,7 @@ namespace Ranger.InternalHttpClient
             return await SendAsync<T>(new HttpRequestMessage()
             {
                 Method = HttpMethod.Put,
-                RequestUri = new Uri(HttpClient.BaseAddress, $"/projects/{tenantId}/{projectId}/{environment}/reset"),
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/projects/{tenantId}/{projectId}/{purpose}/reset"),
                 Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
             });
         }

@@ -32,7 +32,7 @@
       <dependency id="Serilog.Formatting.Compact" version="1.1.0" />
       <dependency id="Serilog.Sinks.Datadog.Logs" version="0.3.1" />
       <dependency id="Serilog.Sinks.Seq" version="4.0.0" />
-      <dependency id="Ranger.Common" version="2.5.3" />
+      <dependency id="Ranger.Common" version="2.6.1" />
       <dependency id="System.Text.Json" version="4.7.2" />
     </dependencies>
   </metadata>
