@@ -4,6 +4,6 @@ namespace Ranger.Common
     {
         TEST = 0,
         LIVE = 1,
-        PROJECT = 2
+        PROJ = 2
     }
 }
