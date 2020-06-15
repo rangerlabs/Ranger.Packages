@@ -151,7 +151,7 @@ namespace Ranger.InternalHttpClient
         }
 
         ///<summary>
-        /// Produces 200, 304, 404
+        /// Produces 200, 404
         ///</summary>
         public async Task<RangerApiResponse> RequestPasswordReset(string tenantId, string email, string jsonContent)
         {

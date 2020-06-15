@@ -114,7 +114,7 @@ namespace Ranger.InternalHttpClient
         }
 
         ///<summary>
-        /// Produces 200, 304, 400, 409
+        /// Produces 200, 400, 409
         ///</summary>
         public async Task<RangerApiResponse<T>> PutProjectAsync<T>(string tenantId, Guid projectId, string jsonContent)
         {
