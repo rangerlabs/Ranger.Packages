@@ -39,8 +39,8 @@ namespace Ranger.Common
         public DailySchedule Friday { get; set; }
         public DailySchedule Saturday { get; set; }
 
-        public static DailySchedule FullDay => new DailySchedule(new LocalTime(0, 0, 0, 0), new LocalTime(23, 59, 59, 999));
-        public static DailySchedule EmptyDay => new DailySchedule(new LocalTime(0, 0, 0, 0), new LocalTime(0, 0, 0, 0));
+        public static DailySchedule FullDay => new DailySchedule(new LocalTime(0, 0, 0), new LocalTime(23, 59, 59));
+        public static DailySchedule EmptyDay => new DailySchedule(new LocalTime(0, 0, 0), new LocalTime(0, 0, 0));
 
         public static Schedule FullSchedule(string timeZoneId)
         {
@@ -79,6 +79,9 @@ namespace Ranger.Common
 
         public bool IsWithinSchedule(DateTime eventDateTime)
         {
+            //truncate milliseconds
+            eventDateTime = eventDateTime.Truncate(TimeSpan.FromSeconds(1));
+
             if (eventDateTime.Kind != DateTimeKind.Utc)
             {
                 throw new ArgumentException($"{nameof(eventDateTime)} is not a UTC DateTime");
