@@ -39,8 +39,8 @@ namespace Ranger.Common
         public DailySchedule Friday { get; set; }
         public DailySchedule Saturday { get; set; }
 
-        public static DailySchedule FullDay => new DailySchedule(new LocalTime(0, 0, 0), new LocalTime(23, 59, 59));
-        public static DailySchedule EmptyDay => new DailySchedule(new LocalTime(0, 0, 0), new LocalTime(0, 0, 0));
+        public static DailySchedule FullDay => new DailySchedule(new LocalTime(0, 0, 0, 0), new LocalTime(23, 59, 59, 999));
+        public static DailySchedule EmptyDay => new DailySchedule(new LocalTime(0, 0, 0, 0), new LocalTime(0, 0, 0, 0));
 
         public static Schedule FullSchedule(string timeZoneId)
         {
@@ -79,9 +79,8 @@ namespace Ranger.Common
 
         public bool IsWithinSchedule(DateTime eventDateTime)
         {
-            //truncate milliseconds
-            eventDateTime = eventDateTime.Truncate(TimeSpan.FromSeconds(1));
-
+            //truncate the event to nearest millisecond
+            eventDateTime = eventDateTime.Truncate(TimeSpan.FromMilliseconds(1));
             if (eventDateTime.Kind != DateTimeKind.Utc)
             {
                 throw new ArgumentException($"{nameof(eventDateTime)} is not a UTC DateTime");
@@ -97,6 +96,7 @@ namespace Ranger.Common
                 daySchedule.StartTime.Hour,
                 daySchedule.StartTime.Minute,
                 daySchedule.StartTime.Second,
+                daySchedule.StartTime.Millisecond,
                 DateTimeKind.Unspecified)).InUtc().ToDateTimeUnspecified();
 
             var offsetLocalEndTime = LocalDateTime.FromDateTime(new DateTime(
@@ -106,6 +106,7 @@ namespace Ranger.Common
                 daySchedule.EndTime.Hour,
                 daySchedule.EndTime.Minute,
                 daySchedule.EndTime.Second,
+                daySchedule.EndTime.Millisecond,
                 DateTimeKind.Unspecified)).InUtc().ToDateTimeUnspecified();
 
             return (offseLocalStartTime <= eventInstance && eventInstance <= offsetLocalEndTime) ? true : false;
