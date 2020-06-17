@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 using NodaTime;
 
 namespace Ranger.Common
@@ -7,12 +8,12 @@ namespace Ranger.Common
     {
         public DailySchedule(LocalTime startTime, LocalTime endTime)
         {
-            if (startTime > endTime)
+            StartTime = TimeAdjusters.TruncateToSecond(startTime);
+            EndTime = TimeAdjusters.TruncateToSecond(endTime);
+            if (StartTime > EndTime)
             {
                 throw new ArgumentException($"{nameof(startTime)} must be before or equal to ${nameof(endTime)}");
             }
-            StartTime = startTime;
-            EndTime = endTime;
         }
 
         public LocalTime StartTime { get; }
