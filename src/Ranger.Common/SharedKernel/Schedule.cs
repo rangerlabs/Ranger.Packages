@@ -115,7 +115,10 @@ namespace Ranger.Common
             {
                 logger.LogDebug("Determined the event to be within the daily schedule");
             }
-            logger.LogDebug("Determined the event to NOT be within the daily schedule");
+            else
+            {
+                logger.LogDebug("Determined the event to NOT be within the daily schedule");
+            }
 
             return result;
         }
