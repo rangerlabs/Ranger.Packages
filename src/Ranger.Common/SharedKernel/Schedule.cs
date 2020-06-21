@@ -87,7 +87,7 @@ namespace Ranger.Common
                 throw new ArgumentException($"{nameof(eventDateTime)} is not a UTC DateTime");
             }
             var eventInstance = LocalDateTime.FromDateTime(eventDateTime).InUtc().ToInstant().InZone(DateTimeZoneProviders.Tzdb[this.TimeZoneId]).ToDateTimeUnspecified();
-            logger.LogDebug("The event was converted to TimeZoneId {TimeZoneId}. {OriginalTime} -> {ConvertedTime", this.TimeZoneId, eventDateTime, eventInstance);
+            logger.LogDebug("The event was converted to TimeZoneId {TimeZoneId}. {OriginalTime} -> {ConvertedTime}", this.TimeZoneId, eventDateTime, eventInstance);
 
             var daySchedule = GetScheduleForEventDay(eventInstance.DayOfWeek);
 
@@ -108,7 +108,7 @@ namespace Ranger.Common
                 daySchedule.EndTime.Minute,
                 daySchedule.EndTime.Second,
                 DateTimeKind.Unspecified)).InUtc().ToDateTimeUnspecified();
-            logger.LogDebug("The schedule for {DayOfWeek} was determined to be {StartTime} - {EndTime}", eventInstance.DayOfWeek, offsetLocalEndTime, offsetLocalEndTime);
+            logger.LogDebug("The schedule for {DayOfWeek} was determined to be {StartTime} - {EndTime}", eventInstance.DayOfWeek, offseLocalStartTime, offsetLocalEndTime);
 
             var result = offseLocalStartTime <= eventInstance && eventInstance <= offsetLocalEndTime;
             if (result)
