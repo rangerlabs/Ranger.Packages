@@ -1,4 +1,5 @@
 using System;
+using Microsoft.Extensions.Logging;
 using NodaTime;
 
 namespace Ranger.Common
@@ -77,7 +78,7 @@ namespace Ranger.Common
             return dailySchedule.StartTime.Equals(fullDailySchedule.StartTime) && dailySchedule.EndTime.Equals(fullDailySchedule.EndTime);
         }
 
-        public bool IsWithinSchedule(DateTime eventDateTime)
+        public bool IsWithinSchedule(DateTime eventDateTime, ILogger logger)
         {
             //truncate the event to nearest second
             eventDateTime = eventDateTime.Truncate(TimeSpan.FromSeconds(1));
@@ -86,6 +87,7 @@ namespace Ranger.Common
                 throw new ArgumentException($"{nameof(eventDateTime)} is not a UTC DateTime");
             }
             var eventInstance = LocalDateTime.FromDateTime(eventDateTime).InUtc().ToInstant().InZone(DateTimeZoneProviders.Tzdb[this.TimeZoneId]).ToDateTimeUnspecified();
+            logger.LogDebug("The event was converted to TimeZoneId {TimeZoneId}. {OriginalTime} -> {ConvertedTime", this.TimeZoneId, eventDateTime, eventInstance);
 
             var daySchedule = GetScheduleForEventDay(eventInstance.DayOfWeek);
 
@@ -106,8 +108,16 @@ namespace Ranger.Common
                 daySchedule.EndTime.Minute,
                 daySchedule.EndTime.Second,
                 DateTimeKind.Unspecified)).InUtc().ToDateTimeUnspecified();
+            logger.LogDebug("The schedule for {DayOfWeek} was determined to be {StartTime} - {EndTime}", eventInstance.DayOfWeek, offsetLocalEndTime, offsetLocalEndTime);
 
-            return (offseLocalStartTime <= eventInstance && eventInstance <= offsetLocalEndTime) ? true : false;
+            var result = offseLocalStartTime <= eventInstance && eventInstance <= offsetLocalEndTime;
+            if (result)
+            {
+                logger.LogDebug("Determined the event to be within the daily schedule");
+            }
+            logger.LogDebug("Determined the event to NOT be within the daily schedule");
+
+            return result;
         }
 
         private Offset OffsetFromUTCForEventDay(DateTime dateTime)

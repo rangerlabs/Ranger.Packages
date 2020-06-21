@@ -2,6 +2,8 @@ using System;
 using NodaTime;
 using Xunit;
 using Shouldly;
+using Moq;
+using Microsoft.Extensions.Logging;
 
 namespace Ranger.Common.Tests
 {
@@ -36,7 +38,7 @@ namespace Ranger.Common.Tests
         public void IsWithinSchedule_Returns_True_When_Time_Is_In_FullSchedule()
         {
             var aUtcEventOnSundayAfternoon = new DateTime(2020, 3, 8, 12, 0, 0, DateTimeKind.Utc);
-            var fullScheduleResult = fixture.FullSchedule.IsWithinSchedule(aUtcEventOnSundayAfternoon);
+            var fullScheduleResult = fixture.FullSchedule.IsWithinSchedule(aUtcEventOnSundayAfternoon, Mock.Of<ILogger<ScheduleTests>>());
             fullScheduleResult.ShouldBeTrue();
         }
 
@@ -46,7 +48,7 @@ namespace Ranger.Common.Tests
         {
             var aUtcEventOnSundayAfternoon = new DateTime(2020, 3, 8, 12, 0, 0, DateTimeKind.Utc);
 
-            var halfScheduleResult = fixture.HalfSunday.IsWithinSchedule(aUtcEventOnSundayAfternoon);
+            var halfScheduleResult = fixture.HalfSunday.IsWithinSchedule(aUtcEventOnSundayAfternoon, Mock.Of<ILogger<ScheduleTests>>());
             halfScheduleResult.ShouldBeTrue();
         }
 
@@ -56,7 +58,7 @@ namespace Ranger.Common.Tests
         {
             var aUtcEventOnSundayAfternoonNearTheBoundry = new DateTime(2020, 3, 8, 20, 0, 0, DateTimeKind.Utc);
 
-            var halfScheduleResult = fixture.HalfSunday.IsWithinSchedule(aUtcEventOnSundayAfternoonNearTheBoundry);
+            var halfScheduleResult = fixture.HalfSunday.IsWithinSchedule(aUtcEventOnSundayAfternoonNearTheBoundry, Mock.Of<ILogger<ScheduleTests>>());
             halfScheduleResult.ShouldBeFalse();
         }
 
@@ -65,12 +67,12 @@ namespace Ranger.Common.Tests
         {
             // March 8, 2020 10:00PM UTC -> 5:00PM or 6:00PM America/New_York depending on Daylight Savings
             var aUtcEventOnSundayAfternoon = new DateTime(2020, 3, 8, 20, 0, 0, DateTimeKind.Utc);
-            var noSundayResult1 = fixture.NoSunday.IsWithinSchedule(aUtcEventOnSundayAfternoon);
+            var noSundayResult1 = fixture.NoSunday.IsWithinSchedule(aUtcEventOnSundayAfternoon, Mock.Of<ILogger<ScheduleTests>>());
             noSundayResult1.ShouldBeFalse();
 
             // March 9, 2020 1:00AM UTC -> March 8, 2020 8:00PM or 9:00PM America/New_York depending on Daylight Savings
             var aUtcEventOnMondayMorningNearTheBoundry = new DateTime(2020, 3, 9, 1, 0, 0, DateTimeKind.Utc);
-            var noSundayResult2 = fixture.NoSunday.IsWithinSchedule(aUtcEventOnMondayMorningNearTheBoundry);
+            var noSundayResult2 = fixture.NoSunday.IsWithinSchedule(aUtcEventOnMondayMorningNearTheBoundry, Mock.Of<ILogger<ScheduleTests>>());
             noSundayResult2.ShouldBeFalse();
         }
 
