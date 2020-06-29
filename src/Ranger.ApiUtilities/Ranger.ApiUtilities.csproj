@@ -10,7 +10,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.1.1" />
     <PackageReference Include="AutoWrapper.Core" Version="4.1.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="5.0.0" />
-    <PackageReference Include="Ranger.Common" Version="2.6.9" />
+    <PackageReference Include="Ranger.Common" Version="2.7.0" />
     <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="5.3.1" />
   </ItemGroup>
 </Project>

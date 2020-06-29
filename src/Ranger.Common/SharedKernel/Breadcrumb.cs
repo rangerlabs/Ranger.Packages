@@ -5,7 +5,7 @@ namespace Ranger.Common
 {
     public class Breadcrumb
     {
-        public Breadcrumb(string deviceId, string externalUserId, LngLat position, DateTime recordedAt, IEnumerable<KeyValuePair<string, string>> metadata, double accuracy = 0)
+        public Breadcrumb(string deviceId, string externalUserId, LngLat position, DateTime recordedAt, DateTime acceptedAt, IEnumerable<KeyValuePair<string, string>> metadata, double accuracy = 0)
         {
             if (string.IsNullOrWhiteSpace(deviceId))
             {
@@ -24,6 +24,7 @@ namespace Ranger.Common
             this.ExternalUserId = externalUserId;
             this.Position = position ?? throw new ArgumentNullException(nameof(position));
             this.RecordedAt = recordedAt;
+            this.AcceptedAt = acceptedAt;
             this.Accuracy = accuracy;
             this.Metadata = metadata;
         }
@@ -33,6 +34,7 @@ namespace Ranger.Common
         public LngLat Position { get; }
         public double Accuracy { get; }
         public DateTime RecordedAt { get; }
+        public DateTime AcceptedAt { get; }
         public IEnumerable<KeyValuePair<string, string>> Metadata { get; }
     }
 }
