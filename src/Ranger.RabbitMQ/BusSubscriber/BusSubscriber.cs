@@ -139,7 +139,6 @@ namespace Ranger.RabbitMQ
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, ex.Message);
                     if (ex is RangerException rangerException && !(onError is null))
                     {
                         var rejectedEvent = onError(message, rangerException);
