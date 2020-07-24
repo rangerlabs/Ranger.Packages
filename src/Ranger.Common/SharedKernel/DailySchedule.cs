@@ -10,10 +10,6 @@ namespace Ranger.Common
         {
             StartTime = TimeAdjusters.TruncateToSecond(startTime);
             EndTime = TimeAdjusters.TruncateToSecond(endTime);
-            if (StartTime > EndTime)
-            {
-                throw new ArgumentException($"{nameof(startTime)} must be before or equal to ${nameof(endTime)}");
-            }
         }
 
         public LocalTime StartTime { get; }
