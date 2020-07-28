@@ -20,6 +20,9 @@
       <dependency id="Swashbuckle.AspNetCore" version="5.0.0" />
       <dependency id="Swashbuckle.AspNetCore.Swagger" version="5.3.1" />
       <dependency id="AutoWrapper.Core" version="4.1.0" />
+      <dependency id="FluentValidation" version="9.0.1" />
+      <dependency id="Microsoft.AspNetCore.MVC.Versioning" version="4.1.1" />
+      <dependency id="FluentValidation.AspNetCore" version="9.0.1" />
       <dependency id="Ranger.Common" version="2.5.2" />
     </dependencies>
   </metadata>

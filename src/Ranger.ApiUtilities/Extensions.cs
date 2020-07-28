@@ -7,17 +7,45 @@ using Microsoft.Extensions.Hosting;
 using System.Reflection;
 using System.IO;
 using Microsoft.OpenApi.Models;
-using System.Collections.Generic;
+using AutoWrapper.Wrappers;
+using AutoWrapper.Extensions;
+using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Mvc.Versioning;
 
 namespace Ranger.ApiUtilities
 {
     public static class Extensions
     {
-        public static IServiceCollection AddAutoWrapper(this IServiceCollection services)
+        public static IMvcBuilder AddRangerFluentValidation<T>(this IMvcBuilder mvcBuilder)
+        {
+            mvcBuilder.AddFluentValidation(options =>
+                {
+                    options.ConfigureClientsideValidation(enabled: false);
+                    options.RunDefaultMvcValidationAfterFluentValidationExecutes = false;
+                    options.RegisterValidatorsFromAssemblyContaining<T>();
+                });
+            return mvcBuilder;
+        }
+
+        public static IServiceCollection AddRangerApiVersioning(this IServiceCollection services)
+        {
+            services.AddApiVersioning(o =>
+            {
+                o.ReportApiVersions = true;
+                o.ApiVersionReader = new HeaderApiVersionReader("api-version");
+                o.ErrorResponses = new ApiVersionResponseProvider();
+            });
+            return services;
+        }
+
+        public static IServiceCollection ConfigureAutoWrapperModelStateResponseFactory(this IServiceCollection services)
         {
             services.Configure<ApiBehaviorOptions>(options =>
             {
-                options.SuppressModelStateInvalidFilter = true;
+                options.InvalidModelStateResponseFactory = context =>
+                {
+                    throw new ApiException(context.ModelState.AllErrors());
+                };
             });
             return services;
         }
