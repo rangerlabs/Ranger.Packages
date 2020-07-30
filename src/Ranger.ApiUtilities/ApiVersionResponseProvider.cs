@@ -6,7 +6,6 @@ namespace Ranger.ApiUtilities
 {
     class ApiVersionResponseProvider : DefaultErrorResponseProvider
     {
-        // note: in Web API the response type is HttpResponseMessage
         public override IActionResult CreateResponse(ErrorResponseContext context)
         {
             switch (context.ErrorCode)
