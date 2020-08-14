@@ -3,7 +3,7 @@ using Ranger.Common;
 
 namespace Ranger.RabbitMQ
 {
-    public interface IBusSubscriber : IDisposable
+    public interface IBusSubscriber
     {
         IBusSubscriber SubscribeCommand<TCommand>(Func<TCommand, RangerException, IRejectedEvent> onError = null)
         where TCommand : ICommand;

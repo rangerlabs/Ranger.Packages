@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using NodaTime;
@@ -22,7 +23,7 @@ namespace Ranger.RabbitMQ
     {
         private const int ConnectionRetryDuration = 10000;
         private const int ConnectionMaxRetrys = 9;
-        public static IBusSubscriber UseRabbitMQ(this IApplicationBuilder app) => new BusSubscriber(app);
+        public static IBusSubscriber UseRabbitMQ(this IApplicationBuilder app, IHostApplicationLifetime hostApplicationLifetime) => new BusSubscriber(app, hostApplicationLifetime);
 
         public static void AddRabbitMq(this ContainerBuilder builder)
         {

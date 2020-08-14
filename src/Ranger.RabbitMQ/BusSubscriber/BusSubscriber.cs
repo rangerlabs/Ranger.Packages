@@ -1,9 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
@@ -20,9 +19,9 @@ namespace Ranger.RabbitMQ
         private readonly TimeSpan retryInterval;
         private readonly IServiceProvider serviceProvider;
         private readonly IModel channel;
-        private readonly CancellationTokenSource cancellationTokenSource;
+        private readonly IHostApplicationLifetime applicationLifetime;
 
-        public BusSubscriber(IApplicationBuilder app)
+        public BusSubscriber(IApplicationBuilder app, IHostApplicationLifetime applicationLifetime)
         {
             serviceProvider = app.ApplicationServices;
             logger = serviceProvider.GetRequiredService<ILogger<BusSubscriber>>();
@@ -31,7 +30,6 @@ namespace Ranger.RabbitMQ
             retryInterval = new TimeSpan(0, 0, options.RetryInterval > 0 ? options.RetryInterval : 2);
             var connection = serviceProvider.GetRequiredService<IConnection>();
             channel = connection.CreateModel();
-            cancellationTokenSource = new CancellationTokenSource();
         }
 
         public IBusSubscriber SubscribeCommand<TCommand>(Func<TCommand, RangerException, IRejectedEvent> onError = null) where TCommand : ICommand
@@ -85,14 +83,7 @@ namespace Ranger.RabbitMQ
             };
             eventingConsumer.Received += async (ch, ea) =>
             {
-                if (cancellationTokenSource.IsCancellationRequested)
-                {
-                    logger.LogInformation("Consumer cancellation requested");
-                    channel.BasicNack(ea.DeliveryTag, false, false);
-                    logger.LogInformation($"Message from queue '{queueName}' nack'd");
-                    this.Dispose();
-                }
-                else
+                while (!applicationLifetime.ApplicationStopping.IsCancellationRequested)
                 {
                     logger.LogDebug($"Received message from queue: '{queueName}'");
                     TMessage message = default(TMessage);
@@ -118,6 +109,10 @@ namespace Ranger.RabbitMQ
                     channel.BasicAck(ea.DeliveryTag, false);
                     logger.LogDebug($"Message from queue '{queueName}' ack'd");
                 }
+                logger.LogInformation("Consumer cancellation requested");
+                channel.BasicNack(ea.DeliveryTag, false, false);
+                logger.LogInformation($"Message from queue '{queueName}' nack'd");
+                Shutdown();
             };
             return eventingConsumer;
         }
@@ -186,7 +181,7 @@ namespace Ranger.RabbitMQ
             }
         }
 
-        public void Dispose()
+        private void Shutdown()
         {
             logger.LogDebug("BusSubscriber.Dispose() called");
             Dispose(true);
