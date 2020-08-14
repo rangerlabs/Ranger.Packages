@@ -20,6 +20,7 @@ namespace Ranger.RabbitMQ
         private readonly TimeSpan retryInterval;
         private readonly IServiceProvider serviceProvider;
         private readonly IModel channel;
+        private readonly CancellationTokenSource cancellationTokenSource;
 
         public BusSubscriber(IApplicationBuilder app)
         {
@@ -30,6 +31,7 @@ namespace Ranger.RabbitMQ
             retryInterval = new TimeSpan(0, 0, options.RetryInterval > 0 ? options.RetryInterval : 2);
             var connection = serviceProvider.GetRequiredService<IConnection>();
             channel = connection.CreateModel();
+            cancellationTokenSource = new CancellationTokenSource();
         }
 
         public IBusSubscriber SubscribeCommand<TCommand>(Func<TCommand, RangerException, IRejectedEvent> onError = null) where TCommand : ICommand
@@ -72,8 +74,6 @@ namespace Ranger.RabbitMQ
 
         private AsyncEventingBasicConsumer RegisterConsumerEvents<TMessage>(string queueName, Func<TMessage, RangerException, IRejectedEvent> onError = null) where TMessage : IMessage
         {
-            var cancellationTokenSource = new CancellationTokenSource();
-            var cancellationToken = cancellationTokenSource.Token;
             var eventingConsumer = new AsyncEventingBasicConsumer(channel);
             eventingConsumer.ConsumerCancelled += async (ch, ea) =>
             {
