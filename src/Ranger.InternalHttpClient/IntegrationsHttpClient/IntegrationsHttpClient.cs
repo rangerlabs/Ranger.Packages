@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
@@ -13,7 +14,7 @@ namespace Ranger.InternalHttpClient
         ///<summary>
         /// Produces 200
         ///</summary>
-        public async Task<RangerApiResponse<T>> GetAllIntegrationsByProjectId<T>(string tenantId, Guid projectId)
+        public async Task<RangerApiResponse<T>> GetAllIntegrationsByProjectId<T>(string tenantId, Guid projectId, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(tenantId))
             {
@@ -24,19 +25,19 @@ namespace Ranger.InternalHttpClient
             {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/integrations/{tenantId}/{projectId}")
-            });
+            }, cancellationToken);
         }
 
         ///<summary>
         /// Produces 200
         ///</summary>
-        public async Task<RangerApiResponse<int>> GetAllActiveIntegrationsCount(string tenantId)
+        public async Task<RangerApiResponse<int>> GetAllActiveIntegrationsCount(string tenantId, CancellationToken cancellationToken = default(CancellationToken))
         {
             return await SendAsync<int>(new HttpRequestMessage()
             {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/integrations/{tenantId}/count")
-            });
+            }, cancellationToken);
         }
     }
 }

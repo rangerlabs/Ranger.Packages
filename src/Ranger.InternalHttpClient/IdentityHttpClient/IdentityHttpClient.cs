@@ -1,6 +1,7 @@
 using System;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -15,7 +16,7 @@ namespace Ranger.InternalHttpClient
         ///<summary>
         /// Produces 200, 400, 404
         ///</summary>
-        public async Task<RangerApiResponse> DeleteAccountAsync(string tenantId, string email, string jsonContent)
+        public async Task<RangerApiResponse> DeleteAccountAsync(string tenantId, string email, string jsonContent, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -35,13 +36,13 @@ namespace Ranger.InternalHttpClient
                 Method = HttpMethod.Delete,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/users/{tenantId}/{email}/account"),
                 Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
-            });
+            }, cancellationToken);
         }
 
         ///<summary>
         /// Produces 200, 403, 404
         ///</summary>
-        public async Task<RangerApiResponse> DeleteUserAsync(string tenantId, string email, string jsonContent)
+        public async Task<RangerApiResponse> DeleteUserAsync(string tenantId, string email, string jsonContent, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -61,13 +62,13 @@ namespace Ranger.InternalHttpClient
                 Method = HttpMethod.Delete,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/users/{tenantId}/{email}"),
                 Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
-            });
+            }, cancellationToken);
         }
 
         ///<summary>
         /// Produces 200, 400, 404
         ///</summary>
-        public async Task<RangerApiResponse> UpdateUserOrAccountAsync(string tenantId, string email, string jsonContent)
+        public async Task<RangerApiResponse> UpdateUserOrAccountAsync(string tenantId, string email, string jsonContent, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -87,13 +88,13 @@ namespace Ranger.InternalHttpClient
                 Method = HttpMethod.Put,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/users/{tenantId}/{email}"),
                 Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
-            });
+            }, cancellationToken);
         }
 
         ///<summary>
         /// Produces 200, 404
         ///</summary>
-        public async Task<RangerApiResponse<T>> GetUserAsync<T>(string tenantId, string email)
+        public async Task<RangerApiResponse<T>> GetUserAsync<T>(string tenantId, string email, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -109,13 +110,13 @@ namespace Ranger.InternalHttpClient
             {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/users/{tenantId}/{email}"),
-            });
+            }, cancellationToken);
         }
 
         ///<summary>
         /// Produces 200
         ///</summary>
-        public async Task<RangerApiResponse<T>> GetAllUsersAsync<T>(string tenantId)
+        public async Task<RangerApiResponse<T>> GetAllUsersAsync<T>(string tenantId, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -126,13 +127,13 @@ namespace Ranger.InternalHttpClient
             {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/users/{tenantId}"),
-            });
+            }, cancellationToken);
         }
 
         ///<summary>
         /// Produces 200, 404
         ///</summary>
-        public async Task<RangerApiResponse<string>> GetUserRoleAsync(string tenantId, string email)
+        public async Task<RangerApiResponse<string>> GetUserRoleAsync(string tenantId, string email, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(tenantId))
             {
@@ -147,13 +148,13 @@ namespace Ranger.InternalHttpClient
             {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/users/{tenantId}/{email}/role"),
-            });
+            }, cancellationToken);
         }
 
         ///<summary>
         /// Produces 200, 404
         ///</summary>
-        public async Task<RangerApiResponse> RequestPasswordReset(string tenantId, string email, string jsonContent)
+        public async Task<RangerApiResponse> RequestPasswordReset(string tenantId, string email, string jsonContent, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(tenantId))
             {
@@ -173,13 +174,13 @@ namespace Ranger.InternalHttpClient
                 Method = HttpMethod.Put,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/users/{tenantId}/{email}/password-reset"),
                 Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
-            });
+            }, cancellationToken);
         }
 
         ///<summary>
         /// Produces 200, 403, 404, 409
         ///</summary>
-        public async Task<RangerApiResponse> RequestEmailChange(string tenantId, string email, string jsonContent)
+        public async Task<RangerApiResponse> RequestEmailChange(string tenantId, string email, string jsonContent, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(tenantId))
             {
@@ -200,13 +201,13 @@ namespace Ranger.InternalHttpClient
                 Method = HttpMethod.Put,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/users/{tenantId}/{email}/email-change"),
                 Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
-            });
+            }, cancellationToken);
         }
 
         ///<summary>
         /// Produces 200, 400, 404
         ///</summary>
-        public async Task<RangerApiResponse> ConfirmUserAsync(string tenantId, string email, string jsonContent)
+        public async Task<RangerApiResponse> ConfirmUserAsync(string tenantId, string email, string jsonContent, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(tenantId))
             {
@@ -228,13 +229,13 @@ namespace Ranger.InternalHttpClient
                 Method = HttpMethod.Put,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/users/{tenantId}/{email}/confirm"),
                 Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
-            });
+            }, cancellationToken);
         }
 
         ///<summary>
         /// Produces 200, 400, 404
         ///</summary>
-        public async Task<RangerApiResponse> UserConfirmPasswordResetAsync(string tenantId, string email, string jsonContent)
+        public async Task<RangerApiResponse> UserConfirmPasswordResetAsync(string tenantId, string email, string jsonContent, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(tenantId))
             {
@@ -254,13 +255,13 @@ namespace Ranger.InternalHttpClient
                 Method = HttpMethod.Post,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/users/{tenantId}/{email}/password-reset"),
                 Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
-            });
+            }, cancellationToken);
         }
 
         ///<summary>
         /// Produces 200, 404
         ///</summary>
-        public async Task<RangerApiResponse> UserConfirmEmailChangeAsync(string tenantId, string jsonContent)
+        public async Task<RangerApiResponse> UserConfirmEmailChangeAsync(string tenantId, string jsonContent, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(tenantId))
             {
@@ -276,7 +277,7 @@ namespace Ranger.InternalHttpClient
                 Method = HttpMethod.Post,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/users/{tenantId}/email-change"),
                 Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
-            });
+            }, cancellationToken);
         }
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
@@ -11,7 +12,7 @@ namespace Ranger.InternalHttpClient
         public OperationsClient(HttpClient httpClient, HttpClientOptions<OperationsClient> clientOptions, ILogger<OperationsClient> logger) : base(httpClient, clientOptions, logger)
         { }
 
-        public async Task<RangerApiResponse<T>> GetOperationStateById<T>(string domain, Guid id)
+        public async Task<RangerApiResponse<T>> GetOperationStateById<T>(string domain, Guid id, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(domain))
             {
@@ -22,7 +23,7 @@ namespace Ranger.InternalHttpClient
             {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/{domain}/operations/{id}")
-            });
+            }, cancellationToken);
         }
     }
 }

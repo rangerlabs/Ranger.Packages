@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -17,7 +18,7 @@ namespace Ranger.InternalHttpClient
         ///<summary>
         /// Produces 200, 404
         ///</summary>
-        public async Task<RangerApiResponse<T>> GenerateCheckoutExistingUrl<T>(string tenantId, string planId)
+        public async Task<RangerApiResponse<T>> GenerateCheckoutExistingUrl<T>(string tenantId, string planId, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -31,13 +32,13 @@ namespace Ranger.InternalHttpClient
             {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/subscriptions/{tenantId}/{planId}/checkout-existing-hosted-page-url")
-            });
+            }, cancellationToken);
         }
 
         ///<summary>
         /// Produces 200, 404
         ///</summary>
-        public async Task<RangerApiResponse<T>> GetPortalSession<T>(string tenantId)
+        public async Task<RangerApiResponse<T>> GetPortalSession<T>(string tenantId, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -47,13 +48,13 @@ namespace Ranger.InternalHttpClient
             {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/subscriptions/{tenantId}/portal-session")
-            });
+            }, cancellationToken);
         }
 
         ///<summary>
         /// Produces 200, 404
         ///</summary>
-        public async Task<RangerApiResponse<T>> GetSubscription<T>(string tenantId)
+        public async Task<RangerApiResponse<T>> GetSubscription<T>(string tenantId, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -63,13 +64,13 @@ namespace Ranger.InternalHttpClient
             {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/subscriptions/{tenantId}")
-            });
+            }, cancellationToken);
         }
 
         ///<summary>
         /// Produces 200, 404
         ///</summary>
-        public async Task<RangerApiResponse<string>> GetSubscriptionPlanId(string tenantId)
+        public async Task<RangerApiResponse<string>> GetSubscriptionPlanId(string tenantId, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -79,13 +80,13 @@ namespace Ranger.InternalHttpClient
             {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/subscriptions/{tenantId}/plan-id")
-            });
+            }, cancellationToken);
         }
 
         ///<summary>
         /// Produces 200, 404
         ///</summary>
-        public async Task<RangerApiResponse<string>> GetTenantIdForSubscriptionId(string subscriptionId)
+        public async Task<RangerApiResponse<string>> GetTenantIdForSubscriptionId(string subscriptionId, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (String.IsNullOrWhiteSpace(subscriptionId))
             {
@@ -95,13 +96,13 @@ namespace Ranger.InternalHttpClient
             {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/subscriptions/{subscriptionId}/tenant-id")
-            });
+            }, cancellationToken);
         }
 
         ///<summary>
         /// Produces 200, 404
         ///</summary>
-        public async Task<RangerApiResponse<bool>> IsSubscriptionActive(string tenantId)
+        public async Task<RangerApiResponse<bool>> IsSubscriptionActive(string tenantId, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -111,7 +112,7 @@ namespace Ranger.InternalHttpClient
             {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/subscriptions/{tenantId}/active")
-            });
+            }, cancellationToken);
         }
 
     }

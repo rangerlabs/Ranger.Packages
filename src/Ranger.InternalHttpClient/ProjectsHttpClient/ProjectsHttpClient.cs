@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -17,7 +18,7 @@ namespace Ranger.InternalHttpClient
         ///<summary>
         /// Produces 200, 400, 404
         ///</summary>
-        public async Task<RangerApiResponse<string>> GetTenantIdByApiKeyAsync(string apiKey)
+        public async Task<RangerApiResponse<string>> GetTenantIdByApiKeyAsync(string apiKey, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(apiKey))
             {
@@ -28,13 +29,13 @@ namespace Ranger.InternalHttpClient
             {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/projects/{apiKey}/tenant-id"),
-            });
+            }, cancellationToken);
         }
 
         ///<summary>
         /// Produces 200, 400, 404
         ///</summary>
-        public async Task<RangerApiResponse<T>> GetAllProjects<T>(string tenantId)
+        public async Task<RangerApiResponse<T>> GetAllProjects<T>(string tenantId, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(tenantId))
             {
@@ -45,13 +46,13 @@ namespace Ranger.InternalHttpClient
             {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/projects/{tenantId}"),
-            });
+            }, cancellationToken);
         }
 
         ///<summary>
         /// Produces 200, 400, 404
         ///</summary>
-        public async Task<RangerApiResponse<T>> GetProjectByNameAsync<T>(string tenantId, string projectName)
+        public async Task<RangerApiResponse<T>> GetProjectByNameAsync<T>(string tenantId, string projectName, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(tenantId))
             {
@@ -67,13 +68,13 @@ namespace Ranger.InternalHttpClient
             {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/projects/{tenantId}?projectName={projectName}"),
-            });
+            }, cancellationToken);
         }
 
         ///<summary>
         /// Produces 200, 400, 404
         ///</summary>
-        public async Task<RangerApiResponse<T>> GetProjectByApiKeyAsync<T>(string tenantId, string apiKey)
+        public async Task<RangerApiResponse<T>> GetProjectByApiKeyAsync<T>(string tenantId, string apiKey, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(tenantId))
             {
@@ -89,13 +90,13 @@ namespace Ranger.InternalHttpClient
             {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/projects/{tenantId}?apiKey={apiKey}"),
-            });
+            }, cancellationToken);
         }
 
         ///<summary>
         /// Produces 200, 400, 404
         ///</summary>
-        public async Task<RangerApiResponse<T>> GetAllProjectsForUserAsync<T>(string tenantId, string email)
+        public async Task<RangerApiResponse<T>> GetAllProjectsForUserAsync<T>(string tenantId, string email, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -110,13 +111,13 @@ namespace Ranger.InternalHttpClient
             {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/projects/{tenantId}?email={email}"),
-            });
+            }, cancellationToken);
         }
 
         ///<summary>
         /// Produces 200, 400, 409
         ///</summary>
-        public async Task<RangerApiResponse<T>> PutProjectAsync<T>(string tenantId, Guid projectId, string jsonContent)
+        public async Task<RangerApiResponse<T>> PutProjectAsync<T>(string tenantId, Guid projectId, string jsonContent, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -131,13 +132,13 @@ namespace Ranger.InternalHttpClient
                 Method = HttpMethod.Put,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/projects/{tenantId}/{projectId}"),
                 Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
-            });
+            }, cancellationToken);
         }
 
         ///<summary>
         /// Produces 200, 400, 409
         ///</summary>
-        public async Task<RangerApiResponse<T>> ApiKeyResetAsync<T>(string tenantId, Guid projectId, ApiKeyPurposeEnum purpose, string jsonContent)
+        public async Task<RangerApiResponse<T>> ApiKeyResetAsync<T>(string tenantId, Guid projectId, ApiKeyPurposeEnum purpose, string jsonContent, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -152,13 +153,13 @@ namespace Ranger.InternalHttpClient
                 Method = HttpMethod.Put,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/projects/{tenantId}/{projectId}/{purpose}/reset"),
                 Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
-            });
+            }, cancellationToken);
         }
 
         ///<summary>
         /// Produces 200, 400, 409
         ///</summary>
-        public async Task<RangerApiResponse> SoftDeleteProjectAsync(string tenantId, Guid projectId, string userEmail)
+        public async Task<RangerApiResponse> SoftDeleteProjectAsync(string tenantId, Guid projectId, string userEmail, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -170,13 +171,13 @@ namespace Ranger.InternalHttpClient
                 Method = HttpMethod.Delete,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/projects/{tenantId}/{projectId}"),
                 Content = new StringContent(JsonConvert.SerializeObject(new { UserEmail = userEmail }), Encoding.UTF8, "application/json")
-            });
+            }, cancellationToken);
         }
 
         ///<summary>
         /// Produces 201
         ///</summary>
-        public async Task<RangerApiResponse<T>> PostProjectAsync<T>(string tenantId, string jsonContent)
+        public async Task<RangerApiResponse<T>> PostProjectAsync<T>(string tenantId, string jsonContent, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -192,7 +193,7 @@ namespace Ranger.InternalHttpClient
                 Method = HttpMethod.Post,
                 RequestUri = new Uri(HttpClient.BaseAddress, $"/projects/{tenantId}"),
                 Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
-            });
+            }, cancellationToken);
         }
     }
 }

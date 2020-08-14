@@ -2,6 +2,7 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using AutoWrapper.Wrappers;
 using IdentityModel.Client;
@@ -66,7 +67,7 @@ namespace Ranger.InternalHttpClient
         /// Makes an HTTP request with no expected result
         /// Throws an ApiException on 5XX responses
         ///</summary>
-        protected async Task<RangerApiResponse> SendAsync(HttpRequestMessage httpRequestMessage)
+        protected async Task<RangerApiResponse> SendAsync(HttpRequestMessage httpRequestMessage, CancellationToken cancellationToken)
         {
             await InitializeHttpRequest(httpRequestMessage);
             HttpResponseMessage response = null;
@@ -81,7 +82,7 @@ namespace Ranger.InternalHttpClient
 
             try
             {
-                response = await HttpClient.SendAsync(httpRequestMessage);
+                response = await HttpClient.SendAsync(httpRequestMessage, cancellationToken);
             }
             catch (HttpRequestException ex)
             {
@@ -120,13 +121,13 @@ namespace Ranger.InternalHttpClient
         /// Makes an HTTP request and deserializes the result to the specified type
         /// Throws an ApiException on 5XX responses
         ///</summary>
-        protected async Task<RangerApiResponse<TResponseObject>> SendAsync<TResponseObject>(HttpRequestMessage httpRequestMessage)
+        protected async Task<RangerApiResponse<TResponseObject>> SendAsync<TResponseObject>(HttpRequestMessage httpRequestMessage, CancellationToken cancellationToken)
         {
             await InitializeHttpRequest(httpRequestMessage);
             HttpResponseMessage response = null;
             try
             {
-                response = await HttpClient.SendAsync(httpRequestMessage);
+                response = await HttpClient.SendAsync(httpRequestMessage, cancellationToken);
             }
             catch (HttpRequestException ex)
             {

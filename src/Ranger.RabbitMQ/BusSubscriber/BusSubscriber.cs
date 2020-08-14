@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -71,6 +72,8 @@ namespace Ranger.RabbitMQ
 
         private AsyncEventingBasicConsumer RegisterConsumerEvents<TMessage>(string queueName, Func<TMessage, RangerException, IRejectedEvent> onError = null) where TMessage : IMessage
         {
+            var cancellationTokenSource = new CancellationTokenSource();
+            var cancellationToken = cancellationTokenSource.Token;
             var eventingConsumer = new AsyncEventingBasicConsumer(channel);
             eventingConsumer.ConsumerCancelled += async (ch, ea) =>
             {
@@ -82,29 +85,39 @@ namespace Ranger.RabbitMQ
             };
             eventingConsumer.Received += async (ch, ea) =>
             {
-                logger.LogDebug($"Received message from queue: '{queueName}'");
-                TMessage message = default(TMessage);
-                CorrelationContext context = default(CorrelationContext);
-                try
+                if (cancellationTokenSource.IsCancellationRequested)
                 {
-                    message = JsonConvert.DeserializeObject<TMessage>(System.Text.Encoding.Default.GetString(ea.Body.Span));
-                    context = CorrelationContext.FromBasicDeliverEventArgs(ea);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, $"Failed to deserialize message of type: '{message.GetType()}' with rabbitmq message id: '{ea.BasicProperties.MessageId}'. Sending to dead letter exchange");
+                    logger.LogInformation("Consumer cancellation requested");
                     channel.BasicNack(ea.DeliveryTag, false, false);
-                    logger.LogDebug($"Message from queue '{queueName}' nack'd");
-                    return;
+                    logger.LogInformation($"Message from queue '{queueName}' nack'd");
+                    this.Dispose();
                 }
-                var messageState = await TryHandleAsync(message, context, onError);
-                if (messageState is MessageState.Failed)
+                else
                 {
-                    logger.LogError($"Sending message: '{message.GetType().Name}' with correlation id: '{context.CorrelationContextId}' to the error queue");
-                    publisher.Error<TMessage>(message, ea);
+                    logger.LogDebug($"Received message from queue: '{queueName}'");
+                    TMessage message = default(TMessage);
+                    CorrelationContext context = default(CorrelationContext);
+                    try
+                    {
+                        message = JsonConvert.DeserializeObject<TMessage>(System.Text.Encoding.Default.GetString(ea.Body.Span));
+                        context = CorrelationContext.FromBasicDeliverEventArgs(ea);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, $"Failed to deserialize message of type: '{message.GetType()}' with rabbitmq message id: '{ea.BasicProperties.MessageId}'. Sending to dead letter exchange");
+                        channel.BasicNack(ea.DeliveryTag, false, false);
+                        logger.LogDebug($"Message from queue '{queueName}' nack'd");
+                        return;
+                    }
+                    var messageState = await TryHandleAsync(message, context, onError);
+                    if (messageState is MessageState.Failed)
+                    {
+                        logger.LogError($"Sending message: '{message.GetType().Name}' with correlation id: '{context.CorrelationContextId}' to the error queue");
+                        publisher.Error<TMessage>(message, ea);
+                    }
+                    channel.BasicAck(ea.DeliveryTag, false);
+                    logger.LogDebug($"Message from queue '{queueName}' ack'd");
                 }
-                channel.BasicAck(ea.DeliveryTag, false);
-                logger.LogDebug($"Message from queue '{queueName}' ack'd");
             };
             return eventingConsumer;
         }
