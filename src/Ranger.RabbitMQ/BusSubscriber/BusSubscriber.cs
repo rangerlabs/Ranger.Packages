@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +21,8 @@ namespace Ranger.RabbitMQ
         private readonly IServiceProvider serviceProvider;
         private readonly IModel channel;
         private readonly IHostApplicationLifetime applicationLifetime;
+        private ConcurrentBag<int> executingConsumerCount = new ConcurrentBag<int>();
+        private string[] consumerTags;
 
         public BusSubscriber(IApplicationBuilder app, IHostApplicationLifetime applicationLifetime)
         {
@@ -30,6 +33,8 @@ namespace Ranger.RabbitMQ
             retryInterval = new TimeSpan(0, 0, options.RetryInterval > 0 ? options.RetryInterval : 2);
             var connection = serviceProvider.GetRequiredService<IConnection>();
             channel = connection.CreateModel();
+            this.applicationLifetime = applicationLifetime;
+            this.applicationLifetime.ApplicationStopping.Register(async () => await Shutdown());
         }
 
         public IBusSubscriber SubscribeCommand<TCommand>(Func<TCommand, RangerException, IRejectedEvent> onError = null) where TCommand : ICommand
@@ -81,9 +86,13 @@ namespace Ranger.RabbitMQ
                         logger.LogInformation("Consumer cancelled, closure reason: {ClosureReason}", closureReason);
                     });
             };
+
+            eventingConsumer.Registered += (ch, ea) => Task.Run(() => consumerTags = ea.ConsumerTags);
+
             eventingConsumer.Received += async (ch, ea) =>
             {
-                while (!applicationLifetime.ApplicationStopping.IsCancellationRequested)
+                executingConsumerCount.Add(1);
+                try
                 {
                     logger.LogDebug($"Received message from queue: '{queueName}'");
                     TMessage message = default(TMessage);
@@ -109,11 +118,12 @@ namespace Ranger.RabbitMQ
                     channel.BasicAck(ea.DeliveryTag, false);
                     logger.LogDebug($"Message from queue '{queueName}' ack'd");
                 }
-                logger.LogInformation("Consumer cancellation requested");
-                channel.BasicNack(ea.DeliveryTag, false, false);
-                logger.LogInformation($"Message from queue '{queueName}' nack'd");
-                Shutdown();
+                finally
+                {
+                    executingConsumerCount.TryTake(out _);
+                }
             };
+
             return eventingConsumer;
         }
 
@@ -166,25 +176,24 @@ namespace Ranger.RabbitMQ
             return messageState;
         }
 
-        private bool disposedValue = false;
-        protected virtual void Dispose(bool disposing)
+        private async Task Shutdown()
         {
-            if (!disposedValue)
+            logger.LogDebug("BusSubscriber.Shutdown() called");
+            foreach (var consumerTag in consumerTags)
             {
-                if (disposing)
-                {
-                    channel.Close();
-                    channel.Dispose();
-                }
-
-                disposedValue = true;
+                channel.BasicCancel(consumerTag);
             }
-        }
 
-        private void Shutdown()
-        {
-            logger.LogDebug("BusSubscriber.Dispose() called");
-            Dispose(true);
+            var msDelay = 100;
+            while (!executingConsumerCount.IsEmpty)
+            {
+                logger.LogInformation("Waiting for consumers to finish. Checking again {Delay}ms", msDelay);
+                await Task.Delay(msDelay);
+            }
+
+            channel.Close();
+            channel.Dispose();
+            logger.LogInformation("BusSubscriber.Shutdown() complete");
         }
     }
 }
