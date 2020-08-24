@@ -16,58 +16,6 @@ namespace Ranger.InternalHttpClient
         ///<summary>
         /// Produces 200, 400, 404
         ///</summary>
-        public async Task<RangerApiResponse> DeleteAccountAsync(string tenantId, string email, string jsonContent, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            if (String.IsNullOrWhiteSpace(tenantId))
-            {
-                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace");
-            }
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                throw new ArgumentException($"{nameof(email)} cannot be null or whitespace");
-            }
-            if (string.IsNullOrWhiteSpace(jsonContent))
-            {
-                throw new ArgumentException($"{nameof(jsonContent)} cannot be null or whitespace");
-            }
-
-            return await SendAsync(new HttpRequestMessage()
-            {
-                Method = HttpMethod.Delete,
-                RequestUri = new Uri(HttpClient.BaseAddress, $"/users/{tenantId}/{email}/account"),
-                Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
-            }, cancellationToken);
-        }
-
-        ///<summary>
-        /// Produces 200, 403, 404
-        ///</summary>
-        public async Task<RangerApiResponse> DeleteUserAsync(string tenantId, string email, string jsonContent, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            if (String.IsNullOrWhiteSpace(tenantId))
-            {
-                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace");
-            }
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                throw new ArgumentException($"{nameof(email)} cannot be null or whitespace");
-            }
-            if (string.IsNullOrWhiteSpace(jsonContent))
-            {
-                throw new ArgumentException($"{nameof(jsonContent)} cannot be null or whitespace");
-            }
-
-            return await SendAsync(new HttpRequestMessage()
-            {
-                Method = HttpMethod.Delete,
-                RequestUri = new Uri(HttpClient.BaseAddress, $"/users/{tenantId}/{email}"),
-                Content = new StringContent(jsonContent, Encoding.UTF8, "application/json"),
-            }, cancellationToken);
-        }
-
-        ///<summary>
-        /// Produces 200, 400, 404
-        ///</summary>
         public async Task<RangerApiResponse> UpdateUserOrAccountAsync(string tenantId, string email, string jsonContent, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (String.IsNullOrWhiteSpace(tenantId))
