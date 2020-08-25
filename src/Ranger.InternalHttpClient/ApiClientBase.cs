@@ -108,7 +108,7 @@ namespace Ranger.InternalHttpClient
                 }
                 return rangerApiResponse;
             }
-            catch (JsonSerializationException ex)
+            catch (JsonException ex)
             {
                 logger.LogCritical(ex, "The http client failed to deserialize an APIs response. The response body contained the following: {ResponseBody}", content);
                 throw new ApiException(Constants.ExceptionMessage, statusCode: StatusCodes.Status500InternalServerError);
@@ -152,7 +152,7 @@ namespace Ranger.InternalHttpClient
                 }
                 return rangerApiResponse;
             }
-            catch (JsonSerializationException ex)
+            catch (JsonException ex)
             {
                 logger.LogCritical(ex, "The http client failed to deserialize an APIs response. The response body contained the following: {ResponseBody}", content);
                 throw new ApiException(Constants.ExceptionMessage, statusCode: StatusCodes.Status500InternalServerError);

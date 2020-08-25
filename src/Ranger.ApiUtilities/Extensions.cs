@@ -11,6 +11,7 @@ using AutoWrapper.Wrappers;
 using AutoWrapper.Extensions;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Mvc.Versioning;
+using Microsoft.Extensions.Logging;
 
 namespace Ranger.ApiUtilities
 {
@@ -71,6 +72,12 @@ namespace Ranger.ApiUtilities
             autoWrapperOptions.WrapWhenApiPathStartsWith = wrapWhenApiPathStartsWith;
 
             app.UseApiResponseAndExceptionWrapper<MapResponseObject>(autoWrapperOptions);
+            return app;
+        }
+
+        public static IApplicationBuilder UseUnhandedExceptionLogger(this IApplicationBuilder app)
+        {
+            app.UseMiddleware<UnhandledExceptionLogger>();
             return app;
         }
 
