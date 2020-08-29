@@ -17,8 +17,8 @@
     </packageTypes>
     <dependencies>
       <dependency id="AspNetCore.HealthChecks.RabbitMQ" version="3.1.1" />
-      <dependency id="Autofac" version="4.9.4" />
-      <dependency id="Autofac.Extensions.DependencyInjection" version="5.0.1" />
+      <dependency id="Autofac" version="5.2.0" />
+      <dependency id="Autofac.Extensions.DependencyInjection" version="6.0.0" />
       <dependency id="Newtonsoft.Json" version="12.0.3" />
       <dependency id="RabbitMQ.Client" version="6.0.0" />
       <dependency id="Ranger.Common" version="2.7.1" />

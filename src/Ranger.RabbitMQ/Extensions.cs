@@ -23,7 +23,7 @@ namespace Ranger.RabbitMQ
     {
         private const int ConnectionRetryDuration = 10000;
         private const int ConnectionMaxRetrys = 9;
-        public static IBusSubscriber UseRabbitMQ(this IApplicationBuilder app, IHostApplicationLifetime hostApplicationLifetime) => new BusSubscriber(app, hostApplicationLifetime);
+        public static IBusSubscriber UseRabbitMQ(this IApplicationBuilder app) => app.ApplicationServices.GetRequiredService<IBusSubscriber>();
 
         public static void AddRabbitMq(this ContainerBuilder builder)
         {
@@ -39,6 +39,8 @@ namespace Ranger.RabbitMQ
                 .AsClosedTypesOf(typeof(IMessageHandler<>))
                 .InstancePerDependency();
             builder.RegisterType<BusPublisher>().As<IBusPublisher>()
+                .SingleInstance();
+            builder.RegisterType<BusSubscriber>().As<IBusSubscriber>()
                 .SingleInstance();
 
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings

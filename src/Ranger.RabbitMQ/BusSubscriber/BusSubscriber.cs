@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
+using Autofac;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
@@ -14,87 +14,131 @@ namespace Ranger.RabbitMQ
 {
     public class BusSubscriber : IBusSubscriber
     {
-        private readonly ILogger<BusSubscriber> logger;
-        private readonly IBusPublisher publisher;
-        private readonly RabbitMQOptions options;
+        private const int consumerCancelDelayMs = 100;
+
+        private readonly ILogger<BusSubscriber> _logger;
+        private readonly IComponentContext _componentContext;
+        private IConnection _connection;
+        private readonly IBusPublisher _publisher;
+        private readonly RabbitMQOptions _options;
         private readonly TimeSpan retryInterval;
-        private readonly IServiceProvider serviceProvider;
-        private readonly IModel channel;
-        private readonly IHostApplicationLifetime applicationLifetime;
+        private IModel _channel;
+
         private ConcurrentBag<int> executingConsumerCount = new ConcurrentBag<int>();
-        private string[] consumerTags;
+        private readonly ConsumerTagManager consumerTagManager = new ConsumerTagManager();
 
-        public BusSubscriber(IApplicationBuilder app, IHostApplicationLifetime applicationLifetime)
+        public BusSubscriber(IComponentContext componentContext, IConnection rabbitMqConnection, IBusPublisher busPublisher, RabbitMQOptions options, ILogger<BusSubscriber> logger)
         {
-            serviceProvider = app.ApplicationServices;
-            logger = serviceProvider.GetRequiredService<ILogger<BusSubscriber>>();
-            publisher = serviceProvider.GetRequiredService<IBusPublisher>();
-            options = serviceProvider.GetRequiredService<RabbitMQOptions>();
+            _componentContext = componentContext;
+            _connection = rabbitMqConnection;
+            _publisher = busPublisher;
+            _options = options;
+            _logger = logger;
+            _channel = _connection.CreateModel();
             retryInterval = new TimeSpan(0, 0, options.RetryInterval > 0 ? options.RetryInterval : 2);
-            var connection = serviceProvider.GetRequiredService<IConnection>();
-            channel = connection.CreateModel();
-            this.applicationLifetime = applicationLifetime;
-            this.applicationLifetime.ApplicationStopping.Register(async () => await Shutdown());
         }
 
-        public IBusSubscriber SubscribeCommand<TCommand>(Func<TCommand, RangerException, IRejectedEvent> onError = null) where TCommand : ICommand
+        public IBusSubscriber SubscribeCommand<TCommand>(Func<TCommand, ICorrelationContext, Task> onReceived, Func<TCommand, RangerException, IRejectedEvent> onError = null)
+            where TCommand : ICommand
         {
-            var exchangeName = NamingConventions.ExchangeNamingConvention(typeof(TCommand), options.Namespace);
-            var queueName = NamingConventions.QueueNamingConvention(typeof(TCommand), options.Namespace);
-            var routingKey = NamingConventions.RoutingKeyConvention(typeof(TCommand), options.Namespace);
-            channel.Bind<TCommand>(exchangeName, queueName, routingKey, options);
+            var (queueName, exchangeName) = subscribeMessage<TCommand>(onReceived, onError);
+            _logger.LogInformation($"Subscribed to command queue: '{queueName}' on exchange: '{exchangeName}'");
+            return this;
+        }
 
-            var eventingConsumer = RegisterConsumerEvents(queueName, onError);
+        public IBusSubscriber SubscribeCommand<TCommand>(Func<TCommand, RangerException, IRejectedEvent> onError = null)
+            where TCommand : ICommand
+        {
+            var (queueName, exchangeName) = subscribeMessage<TCommand>(onError: onError);
+            _logger.LogInformation($"Subscribed to command queue: '{queueName}' on exchange: '{exchangeName}'");
+            return this;
+        }
 
-            channel.BasicConsume(
+        public IBusSubscriber SubscribeEvent<TEvent>(Func<TEvent, ICorrelationContext, Task> onReceived, Func<TEvent, RangerException, IRejectedEvent> onError = null)
+            where TEvent : IEvent
+        {
+            var (queueName, exchangeName) = subscribeMessage<TEvent>(onReceived, onError);
+            _logger.LogInformation($"Subscribed to event queue: '{queueName}' on exchange: '{exchangeName}'");
+            return this;
+        }
+
+        public IBusSubscriber SubscribeEvent<TEvent>(Func<TEvent, RangerException, IRejectedEvent> onError = null)
+            where TEvent : IEvent
+        {
+            var (queueName, exchangeName) = subscribeMessage<TEvent>(onError: onError);
+            _logger.LogInformation($"Subscribed to event queue: '{queueName}' on exchange: '{exchangeName}'");
+            return this;
+        }
+
+        public void UnSubscribeCommand<TCommand>() where TCommand : ICommand
+        {
+            var (queueName, exchangeName) = UnSubscribeMessage<TCommand>();
+            _logger.LogInformation($"Unsubscribed from comand queue: '{queueName}' on exchange: '{exchangeName}'");
+        }
+
+        public void UnSubscribeEvent<TEvent>() where TEvent : IEvent
+        {
+            var (queueName, exchangeName) = UnSubscribeMessage<TEvent>();
+            _logger.LogInformation($"Unsubscribed from event queue: '{queueName}' on exchange: '{exchangeName}'");
+        }
+
+        private (string QueueName, string ExchangeName) UnSubscribeMessage<TMessage>()
+            where TMessage : IMessage
+        {
+            string consumerTag;
+            consumerTagManager.TryGetValue(typeof(TMessage), out consumerTag);
+            if (String.IsNullOrWhiteSpace(consumerTag))
+            {
+                throw new ArgumentException("No consumer tag was found for the requested type");
+            }
+            _channel.BasicCancel(consumerTag);
+            var exchangeName = NamingConventions.ExchangeNamingConvention(typeof(TMessage), _options.Namespace);
+            var queueName = NamingConventions.QueueNamingConvention(typeof(TMessage), _options.Namespace);
+            return (queueName, exchangeName);
+        }
+
+        private (string QueueName, string ExchangeName) subscribeMessage<TMessage>(Func<TMessage, ICorrelationContext, Task> onReceived = null, Func<TMessage, RangerException, IRejectedEvent> onError = null) where TMessage : IMessage
+        {
+            consumerTagManager.Add(typeof(TMessage), "");
+            var exchangeName = NamingConventions.ExchangeNamingConvention(typeof(TMessage), _options.Namespace);
+            var queueName = NamingConventions.QueueNamingConvention(typeof(TMessage), _options.Namespace);
+            var routingKey = NamingConventions.RoutingKeyConvention(typeof(TMessage), _options.Namespace);
+            _channel.Bind<TMessage>(exchangeName, queueName, routingKey, _options);
+
+            var eventingConsumer = RegisterConsumerEvents(queueName, onReceived, onError);
+
+            _channel.BasicConsume(
                 queueName,
                 false,
                 eventingConsumer
             );
-
-            logger.LogInformation($"Subscribed to command queue: '{queueName}' on exchange: '{exchangeName}'");
-            return this;
+            return (queueName, exchangeName);
         }
 
-        public IBusSubscriber SubscribeEvent<TEvent>(Func<TEvent, RangerException, IRejectedEvent> onError = null) where TEvent : IEvent
+        private AsyncEventingBasicConsumer RegisterConsumerEvents<TMessage>(string queueName, Func<TMessage, ICorrelationContext, Task> onReceived = null, Func<TMessage, RangerException, IRejectedEvent> onError = null) where TMessage : IMessage
         {
-            var exchangeName = NamingConventions.ExchangeNamingConvention(typeof(TEvent), options.Namespace);
-            var queueName = NamingConventions.QueueNamingConvention(typeof(TEvent), options.Namespace);
-            var routingKey = NamingConventions.RoutingKeyConvention(typeof(TEvent), options.Namespace);
-            channel.Bind<TEvent>(exchangeName, queueName, routingKey, options);
-
-            AsyncEventingBasicConsumer eventingConsumer = RegisterConsumerEvents(queueName, onError);
-
-            channel.BasicConsume(
-                queueName,
-                false,
-                eventingConsumer
-            );
-
-            logger.LogInformation($"Subscribed to event queue: '{queueName}' on exchange: '{exchangeName}'");
-            return this;
-        }
-
-        private AsyncEventingBasicConsumer RegisterConsumerEvents<TMessage>(string queueName, Func<TMessage, RangerException, IRejectedEvent> onError = null) where TMessage : IMessage
-        {
-            var eventingConsumer = new AsyncEventingBasicConsumer(channel);
+            var eventingConsumer = new AsyncEventingBasicConsumer(_channel);
             eventingConsumer.ConsumerCancelled += async (ch, ea) =>
             {
                 await Task.Run(() =>
                     {
                         var closureReason = ((EventingBasicConsumer)ch).Model.CloseReason;
-                        logger.LogInformation("Consumer cancelled, closure reason: {ClosureReason}", closureReason);
+                        _logger.LogInformation("Consumer cancelled, closure reason: {ClosureReason}", closureReason);
                     });
             };
 
-            eventingConsumer.Registered += (ch, ea) => Task.Run(() => consumerTags = ea.ConsumerTags);
+            eventingConsumer.Registered += (ch, ea) => Task.Run(() =>
+            {
+                _logger.LogDebug("Stashing eventing consumer tags: {ConsumerTags}", String.Join(',', ea.ConsumerTags));
+                ea.ConsumerTags.ToList().ForEach(ct => consumerTagManager.Update(typeof(TMessage), ct));
+            });
 
             eventingConsumer.Received += async (ch, ea) =>
             {
                 executingConsumerCount.Add(1);
                 try
                 {
-                    logger.LogDebug($"Received message from queue: '{queueName}'");
+                    _logger.LogDebug($"Received message from queue: '{queueName}'");
                     TMessage message = default(TMessage);
                     CorrelationContext context = default(CorrelationContext);
                     try
@@ -104,19 +148,19 @@ namespace Ranger.RabbitMQ
                     }
                     catch (Exception ex)
                     {
-                        logger.LogError(ex, $"Failed to deserialize message of type: '{message.GetType()}' with rabbitmq message id: '{ea.BasicProperties.MessageId}'. Sending to dead letter exchange");
-                        channel.BasicNack(ea.DeliveryTag, false, false);
-                        logger.LogDebug($"Message from queue '{queueName}' nack'd");
+                        _logger.LogError(ex, $"Failed to deserialize message of type: '{message.GetType()}' with rabbitmq message id: '{ea.BasicProperties.MessageId}'. Sending to dead letter exchange");
+                        _channel.BasicNack(ea.DeliveryTag, false, false);
+                        _logger.LogDebug($"Message from queue '{queueName}' nack'd");
                         return;
                     }
-                    var messageState = await TryHandleAsync(message, context, onError);
+                    var messageState = await TryHandleAsync(message, context, onReceived, onError);
                     if (messageState is MessageState.Failed)
                     {
-                        logger.LogError($"Sending message: '{message.GetType().Name}' with correlation id: '{context.CorrelationContextId}' to the error queue");
-                        publisher.Error<TMessage>(message, ea);
+                        _logger.LogError($"Sending message: '{message.GetType().Name}' with correlation id: '{context.CorrelationContextId}' to the error queue");
+                        _publisher.Error<TMessage>(message, ea);
                     }
-                    channel.BasicAck(ea.DeliveryTag, false);
-                    logger.LogDebug($"Message from queue '{queueName}' ack'd");
+                    _channel.BasicAck(ea.DeliveryTag, false);
+                    _logger.LogDebug($"Message from queue '{queueName}' ack'd");
                 }
                 finally
                 {
@@ -127,7 +171,7 @@ namespace Ranger.RabbitMQ
             return eventingConsumer;
         }
 
-        private async Task<MessageState> TryHandleAsync<TMessage>(TMessage message, CorrelationContext context, Func<TMessage, RangerException, IRejectedEvent> onError = null)
+        private async Task<MessageState> TryHandleAsync<TMessage>(TMessage message, CorrelationContext context, Func<TMessage, ICorrelationContext, Task> onReceived = null, Func<TMessage, RangerException, IRejectedEvent> onError = null)
         where TMessage : IMessage
         {
             var currentRetry = 0;
@@ -135,38 +179,46 @@ namespace Ranger.RabbitMQ
             var messageState = MessageState.Failed;
 
             //TODO: Add Polly retry policy
-            while (currentRetry <= options.Retries && messageState is MessageState.Failed)
+            while (currentRetry <= _options.Retries && messageState is MessageState.Failed)
             {
                 try
                 {
                     var retryMessage = currentRetry == 0 ?
                         string.Empty :
                         $"Retry: {currentRetry}'.";
-                    logger.LogInformation($"Handling message: '{messageName}' with correlation id: '{context.CorrelationContextId}'. {retryMessage}");
+                    _logger.LogInformation("Handling message: {MessageName}' with correlation id: '{CorrelationId}'. {RetryCount}", messageName, context.CorrelationContextId, retryMessage);
 
-                    var messageHandler = serviceProvider.GetRequiredService<IMessageHandler<TMessage>>();
-                    //TODO: This would be better handled if on startup we could determine a misconfiguration
-                    if (messageHandler is null)
+                    if (onReceived is null)
                     {
-                        throw new NullReferenceException($"Unable to locate message handler in service collection for message: '{messageName}'");
+                        _logger.LogDebug("Resolving message handler from ServiceProvider");
+                        var messageHandler = _componentContext.Resolve<IMessageHandler<TMessage>>();
+                        if (messageHandler is null)
+                        {
+                            throw new NullReferenceException($"Unable to locate message handler in service collection for message: '{messageName}'");
+                        }
+                        await messageHandler.HandleAsync(message, context);
                     }
-                    await messageHandler.HandleAsync(message, context);
+                    else
+                    {
+                        _logger.LogDebug("Using delegate message handler");
+                        await onReceived(message, context);
+                    }
 
                     messageState = MessageState.Succeeded;
-                    logger.LogInformation($"Handled message: '{messageName}' with correlation id: '{context.CorrelationContextId}'. {retryMessage}");
+                    _logger.LogInformation("Handled message: {MessageName}' with correlation id: '{CorrelationId}'. {RetryCount}", messageName, context.CorrelationContextId, retryMessage);
                 }
                 catch (Exception ex)
                 {
                     if (ex is RangerException rangerException && !(onError is null))
                     {
                         var rejectedEvent = onError(message, rangerException);
-                        publisher.Publish(rejectedEvent, context);
-                        logger.LogWarning($"Published a rejected event: '{rejectedEvent.GetType().Name}' for the message: '{messageName}' with correlation id: '{context.CorrelationContextId}'");
+                        _publisher.Publish(rejectedEvent, context);
+                        _logger.LogWarning($"Published a rejected event: '{rejectedEvent.GetType().Name}' for the message: '{messageName}' with correlation id: '{context.CorrelationContextId}'");
                         messageState = MessageState.Rejected;
                         break;
                     }
 
-                    logger.LogError(ex, $"Unable to handle message: '{messageName}' with correlation id: '{context.CorrelationContextId}', retry {currentRetry}/{options.Retries}");
+                    _logger.LogError(ex, "Unable to handle message: {MessageName}' with correlation id: '{CorrelationId}'. {RetryCount}/{RetryMaxAttempts}", messageName, context.CorrelationContextId, currentRetry, _options.Retries);
 
                     currentRetry++;
                     context.IncrementRetries();
@@ -176,24 +228,28 @@ namespace Ranger.RabbitMQ
             return messageState;
         }
 
-        private async Task Shutdown()
+        public async ValueTask DisposeAsync()
         {
-            logger.LogDebug("BusSubscriber.Shutdown() called");
-            foreach (var consumerTag in consumerTags)
+            _logger.LogDebug("DisposeAsync() called");
+            await DisposeAsyncCore();
+            _logger.LogInformation("DisposeAsync() complete");
+        }
+
+        protected virtual async ValueTask DisposeAsyncCore()
+        {
+            foreach (var consumerTag in consumerTagManager.ConsumerTags)
             {
-                channel.BasicCancel(consumerTag);
+                _channel.BasicCancel(consumerTag);
             }
 
-            var msDelay = 100;
             while (!executingConsumerCount.IsEmpty)
             {
-                logger.LogInformation("Waiting for consumers to finish. Checking again {Delay}ms", msDelay);
-                await Task.Delay(msDelay);
+                _logger.LogInformation("Waiting for consumers to finish. Checking again {Delay}", consumerCancelDelayMs);
+                await Task.Delay(consumerCancelDelayMs);
             }
 
-            channel.Close();
-            channel.Dispose();
-            logger.LogInformation("BusSubscriber.Shutdown() complete");
+            _channel.Close();
+            _channel.Dispose();
         }
     }
 }
