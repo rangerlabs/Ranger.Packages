@@ -38,7 +38,7 @@ namespace Ranger.RabbitMQ
             retryInterval = new TimeSpan(0, 0, options.RetryInterval > 0 ? options.RetryInterval : 2);
         }
 
-        public IBusSubscriber SubscribeCommand<TCommand>(Func<TCommand, ICorrelationContext, Task> onReceived, Func<TCommand, RangerException, IRejectedEvent> onError = null)
+        public IBusSubscriber SubscribeCommandWithCallback<TCommand>(Func<TCommand, ICorrelationContext, Task> onReceived, Func<TCommand, RangerException, IRejectedEvent> onError = null)
             where TCommand : ICommand
         {
             var (queueName, exchangeName) = subscribeMessage<TCommand>(onReceived, onError);
@@ -46,7 +46,7 @@ namespace Ranger.RabbitMQ
             return this;
         }
 
-        public IBusSubscriber SubscribeCommand<TCommand>(Func<TCommand, RangerException, IRejectedEvent> onError = null)
+        public IBusSubscriber SubscribeCommandWithHandler<TCommand>(Func<TCommand, RangerException, IRejectedEvent> onError = null)
             where TCommand : ICommand
         {
             var (queueName, exchangeName) = subscribeMessage<TCommand>(onError: onError);
@@ -54,7 +54,7 @@ namespace Ranger.RabbitMQ
             return this;
         }
 
-        public IBusSubscriber SubscribeEvent<TEvent>(Func<TEvent, ICorrelationContext, Task> onReceived, Func<TEvent, RangerException, IRejectedEvent> onError = null)
+        public IBusSubscriber SubscribeEventWithCallback<TEvent>(Func<TEvent, ICorrelationContext, Task> onReceived, Func<TEvent, RangerException, IRejectedEvent> onError = null)
             where TEvent : IEvent
         {
             var (queueName, exchangeName) = subscribeMessage<TEvent>(onReceived, onError);
@@ -62,7 +62,7 @@ namespace Ranger.RabbitMQ
             return this;
         }
 
-        public IBusSubscriber SubscribeEvent<TEvent>(Func<TEvent, RangerException, IRejectedEvent> onError = null)
+        public IBusSubscriber SubscribeEventWithHandler<TEvent>(Func<TEvent, RangerException, IRejectedEvent> onError = null)
             where TEvent : IEvent
         {
             var (queueName, exchangeName) = subscribeMessage<TEvent>(onError: onError);
@@ -230,9 +230,9 @@ namespace Ranger.RabbitMQ
 
         public async ValueTask DisposeAsync()
         {
-            _logger.LogDebug("DisposeAsync() called");
+            _logger.LogDebug("BusSubscriber.DisposeAsync() called");
             await DisposeAsyncCore();
-            _logger.LogInformation("DisposeAsync() complete");
+            _logger.LogInformation("BusSubscriber.DisposeAsync() complete");
         }
 
         protected virtual async ValueTask DisposeAsyncCore()

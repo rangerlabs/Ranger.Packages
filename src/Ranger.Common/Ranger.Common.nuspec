@@ -16,8 +16,18 @@
       <packageType name="Dependency" />
     </packageTypes>
     <dependencies>
-      <dependency id="NodaTime" version="2.4.7" />
-      <dependency id="NodaTime.Serialization.JsonNet" version="2.2.0" />
+      <dependency id="AutoMapper.Extensions.Microsoft.DependencyInjection" version="7.0.0" />
+      <dependency id="Microsoft.AspNetCore.Http" version="2.2.2" />
+      <dependency id="Microsoft.Extensions.Configuration" version="3.1.7" />
+      <dependency id="Microsoft.Extensions.Configuration.FileExtensions" version="3.1.7" />
+      <dependency id="Microsoft.Extensions.Configuration.Json" version="3.1.7" />
+      <dependency id="Newtonsoft.Json" version="12.0.3" />
+      <dependency id="Npgsql.EntityFrameworkCore.PostgreSQL" version="3.1.4" />
+      <dependency id="Microsoft.AspNetCore.Identity" version="2.2.0" />
+      <dependency id="Microsoft.AspNetCore.Identity.EntityFrameworkCore" version="3.1.7" />
+      <dependency id="System.Data.SqlClient" version="4.8.2" />
+      <dependency id="NodaTime" version="3.0.0" />
+      <dependency id="NodaTime.Serialization.JsonNet" version="3.0.0" />
     </dependencies>
   </metadata>
   <files>
