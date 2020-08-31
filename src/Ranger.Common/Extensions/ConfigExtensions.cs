@@ -19,5 +19,11 @@ namespace Ranger.Common
 
             return model;
         }
+
+        public static bool IsIntegrationTesting(this IConfiguration configuration)
+        {
+            var integrationTestingValue = configuration["INTEGRATION_TESTING"];
+            return (!(integrationTestingValue is null) && Boolean.Parse(integrationTestingValue.ToLowerInvariant())) ? true : false;
+        }
     }
 }
