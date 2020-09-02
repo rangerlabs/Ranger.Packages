@@ -6,7 +6,8 @@ using Microsoft.Extensions.Logging;
 
 namespace Ranger.InternalHttpClient
 {
-    public class GeofencesHttpClient : ApiClientBase
+
+    public class GeofencesHttpClient : ApiClientBase, IGeofencesHttpClient
     {
         public GeofencesHttpClient(HttpClient httpClient, HttpClientOptions<GeofencesHttpClient> clientOptions, ILogger<GeofencesHttpClient> logger) : base(httpClient, clientOptions, logger)
         { }
@@ -15,6 +16,7 @@ namespace Ranger.InternalHttpClient
         /// Produces 200
         ///</summary>
         public async Task<RangerApiResponse<T>> GetAllGeofencesByProjectId<T>(string tenantId, Guid projectId, CancellationToken cancellationToken = default(CancellationToken))
+            where T : class
         {
             if (string.IsNullOrWhiteSpace(tenantId))
             {

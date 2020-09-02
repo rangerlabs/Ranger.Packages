@@ -7,7 +7,8 @@ using Microsoft.Extensions.Logging;
 
 namespace Ranger.InternalHttpClient
 {
-    public class TenantsHttpClient : ApiClientBase
+
+    public class TenantsHttpClient : ApiClientBase, ITenantsHttpClient
     {
         public TenantsHttpClient(HttpClient httpClient, HttpClientOptions<TenantsHttpClient> clientOptions, ILogger<TenantsHttpClient> logger) : base(httpClient, clientOptions, logger)
         { }
@@ -48,6 +49,7 @@ namespace Ranger.InternalHttpClient
         /// Produces 200, 404
         /// </summary>
         public async Task<RangerApiResponse<T>> GetPrimaryOwnerTransferByDomain<T>(string domain, CancellationToken cancellationToken = default(CancellationToken))
+            where T : class
         {
             if (String.IsNullOrWhiteSpace(domain))
             {
@@ -64,6 +66,7 @@ namespace Ranger.InternalHttpClient
         /// Produces 200, 404
         /// </summary>
         public async Task<RangerApiResponse<T>> GetAllTenantsAsync<T>(CancellationToken cancellationToken = default(CancellationToken))
+            where T : class
         {
             return await SendAsync<T>(new HttpRequestMessage
             {
@@ -76,6 +79,7 @@ namespace Ranger.InternalHttpClient
         /// Produces 200, 404
         /// </summary>
         public async Task<RangerApiResponse<T>> GetTenantByIdAsync<T>(string tenantId, CancellationToken cancellationToken = default(CancellationToken))
+            where T : class
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -92,6 +96,7 @@ namespace Ranger.InternalHttpClient
         /// Produces 200, 404
         /// </summary>
         public async Task<RangerApiResponse<T>> GetTenantByDomainAsync<T>(string domain, CancellationToken cancellationToken = default(CancellationToken))
+            where T : class
         {
             if (String.IsNullOrWhiteSpace(domain))
             {

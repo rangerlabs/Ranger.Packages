@@ -16,6 +16,8 @@ using NodaTime.Serialization.JsonNet;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
 using Ranger.Common;
+using Ranger.RabbitMQ.BusPublisher;
+using Ranger.RabbitMQ.BusSubscriber;
 
 namespace Ranger.RabbitMQ
 {
@@ -37,10 +39,10 @@ namespace Ranger.RabbitMQ
             var assembly = Assembly.GetCallingAssembly();
             builder.RegisterAssemblyTypes(assembly)
                 .AsClosedTypesOf(typeof(IMessageHandler<>))
-                .InstancePerDependency();
-            builder.RegisterType<BusPublisher>().As<IBusPublisher>()
+                .InstancePerLifetimeScope();
+            builder.RegisterType<BusPublisher.BusPublisher>().As<IBusPublisher>()
                 .SingleInstance();
-            builder.RegisterType<BusSubscriber>().As<IBusSubscriber>()
+            builder.RegisterType<BusSubscriber.BusSubscriber>().As<IBusSubscriber>()
                 .SingleInstance();
 
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings

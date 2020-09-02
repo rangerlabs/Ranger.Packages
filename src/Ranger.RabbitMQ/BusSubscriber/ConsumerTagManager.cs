@@ -2,9 +2,9 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
-namespace Ranger.RabbitMQ
+namespace Ranger.RabbitMQ.BusSubscriber
 {
-    internal class ConsumerTagManager
+    public class ConsumerTagManager
     {
         private readonly IDictionary<Type, string> tagDictionary;
         private object dictionaryLock = new object();

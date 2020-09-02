@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using RabbitMQ.Client.Events;
 
-namespace Ranger.RabbitMQ
+namespace Ranger.RabbitMQ.BusPublisher
 {
     public interface IBusPublisher : IDisposable
     {

@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
-namespace Ranger.RabbitMQ
+namespace Ranger.RabbitMQ.BusPublisher
 {
     public class BusPublisher : IBusPublisher
     {

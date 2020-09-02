@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Ranger.Common;
 
-namespace Ranger.RabbitMQ
+namespace Ranger.RabbitMQ.BusSubscriber
 {
     public interface IBusSubscriber : IAsyncDisposable
     {
@@ -14,9 +14,9 @@ namespace Ranger.RabbitMQ
             where TEvent : IEvent;
         IBusSubscriber SubscribeEventWithHandler<TEvent>(Func<TEvent, RangerException, IRejectedEvent> onError = null)
             where TEvent : IEvent;
-        void UnSubscribeCommand<TCommand>()
+        void UnsubscribeCommand<TCommand>()
             where TCommand : ICommand;
-        void UnSubscribeEvent<TEvent>()
+        void UnsubscribeEvent<TEvent>()
             where TEvent : IEvent;
     }
 }

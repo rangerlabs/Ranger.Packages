@@ -10,7 +10,8 @@ using Ranger.Common;
 
 namespace Ranger.InternalHttpClient
 {
-    public class ProjectsHttpClient : ApiClientBase
+
+    public class ProjectsHttpClient : ApiClientBase, IProjectsHttpClient
     {
         public ProjectsHttpClient(HttpClient httpClient, HttpClientOptions<ProjectsHttpClient> clientOptions, ILogger<ProjectsHttpClient> logger) : base(httpClient, clientOptions, logger)
         { }
@@ -36,6 +37,7 @@ namespace Ranger.InternalHttpClient
         /// Produces 200, 400, 404
         ///</summary>
         public async Task<RangerApiResponse<T>> GetAllProjects<T>(string tenantId, CancellationToken cancellationToken = default(CancellationToken))
+            where T : class
         {
             if (string.IsNullOrWhiteSpace(tenantId))
             {
@@ -53,6 +55,7 @@ namespace Ranger.InternalHttpClient
         /// Produces 200, 400, 404
         ///</summary>
         public async Task<RangerApiResponse<T>> GetProjectByNameAsync<T>(string tenantId, string projectName, CancellationToken cancellationToken = default(CancellationToken))
+            where T : class
         {
             if (string.IsNullOrWhiteSpace(tenantId))
             {
@@ -75,6 +78,7 @@ namespace Ranger.InternalHttpClient
         /// Produces 200, 400, 404
         ///</summary>
         public async Task<RangerApiResponse<T>> GetProjectByApiKeyAsync<T>(string tenantId, string apiKey, CancellationToken cancellationToken = default(CancellationToken))
+            where T : class
         {
             if (string.IsNullOrWhiteSpace(tenantId))
             {
@@ -97,6 +101,7 @@ namespace Ranger.InternalHttpClient
         /// Produces 200, 400, 404
         ///</summary>
         public async Task<RangerApiResponse<T>> GetAllProjectsForUserAsync<T>(string tenantId, string email, CancellationToken cancellationToken = default(CancellationToken))
+            where T : class
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -118,6 +123,7 @@ namespace Ranger.InternalHttpClient
         /// Produces 200, 400, 409
         ///</summary>
         public async Task<RangerApiResponse<T>> PutProjectAsync<T>(string tenantId, Guid projectId, string jsonContent, CancellationToken cancellationToken = default(CancellationToken))
+            where T : class
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -139,6 +145,7 @@ namespace Ranger.InternalHttpClient
         /// Produces 200, 400, 409
         ///</summary>
         public async Task<RangerApiResponse<T>> ApiKeyResetAsync<T>(string tenantId, Guid projectId, ApiKeyPurposeEnum purpose, string jsonContent, CancellationToken cancellationToken = default(CancellationToken))
+            where T : class
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -178,6 +185,7 @@ namespace Ranger.InternalHttpClient
         /// Produces 201
         ///</summary>
         public async Task<RangerApiResponse<T>> PostProjectAsync<T>(string tenantId, string jsonContent, CancellationToken cancellationToken = default(CancellationToken))
+            where T : class
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {

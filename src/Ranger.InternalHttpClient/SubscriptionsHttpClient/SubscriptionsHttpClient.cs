@@ -10,7 +10,8 @@ using Ranger.Common;
 
 namespace Ranger.InternalHttpClient
 {
-    public class SubscriptionsHttpClient : ApiClientBase
+
+    public class SubscriptionsHttpClient : ApiClientBase, ISubscriptionsHttpClient
     {
         public SubscriptionsHttpClient(HttpClient httpClient, HttpClientOptions<SubscriptionsHttpClient> clientOptions, ILogger<SubscriptionsHttpClient> logger) : base(httpClient, clientOptions, logger)
         { }
@@ -19,6 +20,7 @@ namespace Ranger.InternalHttpClient
         /// Produces 200, 404
         ///</summary>
         public async Task<RangerApiResponse<T>> GenerateCheckoutExistingUrl<T>(string tenantId, string planId, CancellationToken cancellationToken = default(CancellationToken))
+            where T : class
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -39,6 +41,7 @@ namespace Ranger.InternalHttpClient
         /// Produces 200, 404
         ///</summary>
         public async Task<RangerApiResponse<T>> GetPortalSession<T>(string tenantId, CancellationToken cancellationToken = default(CancellationToken))
+            where T : class
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -55,6 +58,7 @@ namespace Ranger.InternalHttpClient
         /// Produces 200, 404
         ///</summary>
         public async Task<RangerApiResponse<T>> GetSubscription<T>(string tenantId, CancellationToken cancellationToken = default(CancellationToken))
+            where T : class
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {

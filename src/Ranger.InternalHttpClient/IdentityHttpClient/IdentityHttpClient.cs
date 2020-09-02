@@ -8,7 +8,8 @@ using Microsoft.Extensions.Logging;
 
 namespace Ranger.InternalHttpClient
 {
-    public class IdentityHttpClient : ApiClientBase
+
+    public class IdentityHttpClient : ApiClientBase, IIdentityHttpClient
     {
         public IdentityHttpClient(HttpClient httpClient, HttpClientOptions<IdentityHttpClient> clientOptions, ILogger<IdentityHttpClient> logger) : base(httpClient, clientOptions, logger)
         { }
@@ -43,6 +44,7 @@ namespace Ranger.InternalHttpClient
         /// Produces 200, 404
         ///</summary>
         public async Task<RangerApiResponse<T>> GetUserAsync<T>(string tenantId, string email, CancellationToken cancellationToken = default(CancellationToken))
+            where T : class
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
@@ -65,6 +67,7 @@ namespace Ranger.InternalHttpClient
         /// Produces 200
         ///</summary>
         public async Task<RangerApiResponse<T>> GetAllUsersAsync<T>(string tenantId, CancellationToken cancellationToken = default(CancellationToken))
+            where T : class
         {
             if (String.IsNullOrWhiteSpace(tenantId))
             {
