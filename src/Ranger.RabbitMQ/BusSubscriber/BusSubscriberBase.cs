@@ -1,8 +1,9 @@
 using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
@@ -12,32 +13,52 @@ using Ranger.RabbitMQ.BusPublisher;
 
 namespace Ranger.RabbitMQ.BusSubscriber
 {
-    public class BusSubscriberBase
+    public class BusSubscriberBase : IDisposable
     {
-
-        protected readonly ConsumerTagManager ConsumerTagManager = new ConsumerTagManager();
-        protected readonly RabbitMQOptions Options;
-        protected IModel Channel;
-
-        private IConnection _connection;
-        private const int consumerCancelDelayMs = 100;
-        private ConcurrentBag<int> executingConsumerCount = new ConcurrentBag<int>();
+        private readonly ChannelManager ChannelManager = new ChannelManager();
+        private readonly IConnection _connection;
         private readonly ILifetimeScope _lifetimeScope;
         private readonly IBusPublisher _busPublisher;
-        private readonly ILogger _logger;
+        private readonly ILoggerFactory _loggerFactory;
+        private readonly RabbitMQOptions _options;
         private readonly TimeSpan _retryInterval;
+        private readonly ILogger _logger;
+        private bool _disposedValue;
 
-        public BusSubscriberBase(ILifetimeScope lifetimeScope, IConnection connection, IBusPublisher busPublisher, RabbitMQOptions options, ILogger<BusSubscriber> logger)
+        public BusSubscriberBase(ILifetimeScope lifetimeScope, IConnection connection, IBusPublisher busPublisher, RabbitMQOptions options, IHostApplicationLifetime hostApplicationLifetime, ILoggerFactory loggerFactory)
         {
             _retryInterval = new TimeSpan(0, 0, options.RetryInterval > 0 ? options.RetryInterval : 2);
             _lifetimeScope = lifetimeScope;
             _connection = connection;
             _busPublisher = busPublisher;
-            _logger = logger;
-            Channel = connection.CreateModel();
-            Options = options;
-
+            _loggerFactory = loggerFactory;
+            _logger = loggerFactory.CreateLogger<BusSubscriberBase>();
+            _options = options;
         }
+
+        protected IModel Subscribe<TMessage>(Func<TMessage, ICorrelationContext, Task> onReceived = null, Func<TMessage, RangerException, IRejectedEvent> onError = null)
+            where TMessage : IMessage
+        {
+            var channel = _connection.CreateModel();
+            channel.BasicQos(0, 50, true);
+            channel.Bind<TMessage>(ExchangeName(typeof(TMessage)), QueueName(typeof(TMessage)), RoutingKey(typeof(TMessage)), _options);
+
+            var consumer = new AsyncEventingBasicConsumer(channel);
+            consumer.ConsumerCancelled += ConsumerCancelled;
+            consumer.Received += (sender, eventArgs) => MessageReceived<TMessage>(sender, eventArgs, onReceived, onError);
+
+            var managedChannel = new ManagedChannel(channel, consumer, _loggerFactory.CreateLogger<ManagedChannel>());
+            ChannelManager.Add(typeof(TMessage), managedChannel);
+
+            channel.BasicConsume(
+                QueueName(typeof(TMessage)),
+                false,
+                consumer
+            );
+            return channel;
+        }
+
+
 
         protected Task ConsumerCancelled(object sender, ConsumerEventArgs ea)
         {
@@ -46,22 +67,15 @@ namespace Ranger.RabbitMQ.BusSubscriber
             return Task.CompletedTask;
         }
 
-        protected Task ConsumerRegistered<TMessage>(object sender, ConsumerEventArgs ea)
-            where TMessage : IMessage
-        {
-            _logger.LogDebug("Stashing eventing consumer tags: {ConsumerTags}", String.Join(',', ea.ConsumerTags));
-            ea.ConsumerTags.ToList().ForEach(ct => ConsumerTagManager.Update(typeof(TMessage), ct));
-            return Task.CompletedTask;
-        }
-
         protected async Task MessageReceived<TMessage>(object sender, BasicDeliverEventArgs ea, Func<TMessage, ICorrelationContext, Task> onReceived = null, Func<TMessage, RangerException, IRejectedEvent> onError = null)
             where TMessage : IMessage
         {
-            executingConsumerCount.Add(1);
+            _logger.LogDebug($"Received message from queue: '{QueueName(typeof(TMessage))}'");
+            ManagedChannel managedChannel = default;
+            ChannelManager.TryGetValue(typeof(TMessage), out managedChannel);
             try
             {
-
-                _logger.LogDebug($"Received message from queue: '{QueueName<TMessage>()}'");
+                managedChannel.Lock();
                 TMessage message = default(TMessage);
                 CorrelationContext context = default(CorrelationContext);
                 try
@@ -72,30 +86,29 @@ namespace Ranger.RabbitMQ.BusSubscriber
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, $"Failed to deserialize message of type: '{message.GetType()}' with rabbitmq message id: '{ea.BasicProperties.MessageId}'. Sending to dead letter exchange");
-                    Channel.BasicNack(ea.DeliveryTag, false, false);
-                    _logger.LogDebug($"Message from queue '{QueueName<TMessage>()}' nack'd");
+                    managedChannel.Nack(ea.DeliveryTag, false);
+                    _logger.LogDebug($"Message from queue '{QueueName(typeof(TMessage))}' nack'd");
                     return;
                 }
                 var messageState = await TryHandleAsync(message, context, onReceived, onError);
+
                 if (messageState is MessageState.Cancelled)
                 {
                     _logger.LogWarning($"Nacking and requeueing message: '{message.GetType().Name}' with correlation id: '{context.CorrelationContextId}'");
-                    Channel.BasicNack(ea.DeliveryTag, false, true);
+                    managedChannel.Nack(ea.DeliveryTag, true);
+                    return;
                 }
-                else if (messageState is MessageState.Failed)
+                if (messageState is MessageState.Failed)
                 {
                     _logger.LogError($"Sending message: '{message.GetType().Name}' with correlation id: '{context.CorrelationContextId}' to the error queue");
                     _busPublisher.Error<TMessage>(message, ea);
                 }
-                else
-                {
-                    Channel.BasicAck(ea.DeliveryTag, false);
-                    _logger.LogDebug($"Message from queue '{QueueName<TMessage>()}' ack'd");
-                }
+                managedChannel.Ack(ea.DeliveryTag);
+                _logger.LogDebug($"Message from queue '{QueueName(typeof(TMessage))}' ack'd");
             }
             finally
             {
-                executingConsumerCount.TryTake(out _);
+                managedChannel.Release();
             }
         }
 
@@ -107,7 +120,7 @@ namespace Ranger.RabbitMQ.BusSubscriber
             var messageState = MessageState.Failed;
 
             //TODO: Add Polly retry policy
-            while (currentRetry <= Options.Retries && messageState is MessageState.Failed && !(messageState is MessageState.Cancelled))
+            while (currentRetry <= _options.Retries && messageState is MessageState.Failed)
             {
                 try
                 {
@@ -157,7 +170,7 @@ namespace Ranger.RabbitMQ.BusSubscriber
                         break;
                     }
 
-                    _logger.LogError(ex, "Unable to handle message: {MessageName}' with correlation id: '{CorrelationId}'. {RetryCount}/{RetryMaxAttempts}", messageName, context.CorrelationContextId, currentRetry, Options.Retries);
+                    _logger.LogError(ex, "Unable to handle message: {MessageName}' with correlation id: '{CorrelationId}'. {RetryCount}/{RetryMaxAttempts}", messageName, context.CorrelationContextId, currentRetry, _options.Retries);
 
                     currentRetry++;
                     context.IncrementRetries();
@@ -167,25 +180,55 @@ namespace Ranger.RabbitMQ.BusSubscriber
             return messageState;
         }
 
-        protected virtual async ValueTask DisposeAsyncCore()
+        protected async Task Unsubscribe<TMessage>() where TMessage : IMessage
         {
-            foreach (var consumerTag in ConsumerTagManager.ConsumerTags)
+            ManagedChannel channel = default;
+            if (ChannelManager.TryGetValue(typeof(TMessage), out channel))
             {
-                Channel.BasicCancel(consumerTag);
+                await channel.DisposeAsync();
+                ChannelManager.Remove(typeof(TMessage));
             }
-
-            while (!executingConsumerCount.IsEmpty)
+            else
             {
-                _logger.LogInformation("Waiting for consumers to finish. Checking again {Delay}", consumerCancelDelayMs);
-                await Task.Delay(consumerCancelDelayMs);
+                throw new ArgumentException("No ManagedChannel was found for the requested type");
             }
-
-            Channel.Close();
-            Channel.Dispose();
         }
 
-        protected string ExchangeName<TMessage>() => NamingConventions.ExchangeNamingConvention(typeof(TMessage), Options.Namespace);
-        protected string QueueName<TMessage>() => NamingConventions.QueueNamingConvention(typeof(TMessage), Options.Namespace);
-        protected string RoutingKey<TMessage>() => NamingConventions.RoutingKeyConvention(typeof(TMessage), Options.Namespace);
+        protected string ExchangeName(Type messageType) => NamingConventions.ExchangeNamingConvention(messageType, _options.Namespace);
+        protected string QueueName(Type messageType) => NamingConventions.QueueNamingConvention(messageType, _options.Namespace);
+        protected string RoutingKey(Type messageType) => NamingConventions.RoutingKeyConvention(messageType, _options.Namespace);
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                _disposedValue = true;
+                if (disposing)
+                {
+                    var types = ChannelManager.Keys.ToArray();
+                    var consumerCancellationTasks = new List<Task>();
+                    foreach (var type in types)
+                    {
+                        ManagedChannel managedChannel = default;
+                        ChannelManager.TryGetValue(type, out managedChannel);
+                        _logger.LogDebug("Adding cancellation task for message: {MessageName}", type.Name);
+                        consumerCancellationTasks.Add(managedChannel.DisposeAsync());
+                    }
+                    Task.WaitAll(consumerCancellationTasks.ToArray());
+                    foreach (var type in types)
+                    {
+                        ChannelManager.Remove(type);
+                    }
+                    _connection.Close();
+                    _connection.Dispose();
+                }
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
     }
 }

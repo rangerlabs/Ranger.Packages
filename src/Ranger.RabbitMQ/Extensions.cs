@@ -1,5 +1,4 @@
-﻿using System;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Threading;
 using Autofac;
 using HealthChecks.UI.Client;
@@ -8,7 +7,6 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using NodaTime;
@@ -92,11 +90,7 @@ namespace Ranger.RabbitMQ
                 }
                 logger.LogInformation("RabbitMQ connection established");
                 return connection;
-            }).SingleInstance().OnRelease(c =>
-            {
-                c.Close();
-                c.Dispose();
-            });
+            }).SingleInstance();
         }
 
         public static IServiceCollection AddRabbitMQHealthCheck(this IServiceCollection services)
