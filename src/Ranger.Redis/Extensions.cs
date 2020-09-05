@@ -6,10 +6,10 @@ namespace Ranger.Redis
 {
     public static class Extensions
     {
-        public static IServiceCollection AddRedis(this IServiceCollection services, string connectionString)
+        public static IServiceCollection AddRedis(this IServiceCollection services, string connectionString, out IConnectionMultiplexer connectionMultiplexer)
         {
-            var multiplexer = ConnectionMultiplexer.Connect(connectionString);
-            services.AddSingleton<IConnectionMultiplexer>(multiplexer);
+            connectionMultiplexer = ConnectionMultiplexer.Connect(connectionString);
+            services.AddSingleton<IConnectionMultiplexer>(connectionMultiplexer);
             return services;
         }
     }

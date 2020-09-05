@@ -25,7 +25,8 @@ namespace Ranger.RabbitMQ
         private const int ConnectionMaxRetrys = 9;
         public static IBusSubscriber UseRabbitMQ(this IApplicationBuilder app) => app.ApplicationServices.GetRequiredService<IBusSubscriber>();
 
-        public static void AddRabbitMq(this ContainerBuilder builder)
+        public static void AddRabbitMq<TStartup>(this ContainerBuilder builder)
+            where TStartup : class
         {
             builder.Register(context =>
             {
@@ -38,7 +39,7 @@ namespace Ranger.RabbitMQ
             builder.RegisterAssemblyTypes(assembly)
                 .AsClosedTypesOf(typeof(IMessageHandler<>))
                 .InstancePerLifetimeScope();
-            builder.RegisterType<BusPublisher.BusPublisher>().As<IBusPublisher>()
+            builder.RegisterType<BusPublisher.BusPublisher<TStartup>>().As<IBusPublisher>()
                 .SingleInstance();
             builder.RegisterType<BusSubscriber.BusSubscriber>().As<IBusSubscriber>()
                 .SingleInstance();

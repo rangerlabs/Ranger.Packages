@@ -10,7 +10,6 @@ namespace Ranger.InternalHttpClient
             this.Scope = scope;
             this.ClientId = clientId;
             this.ClientSecret = clientSecret;
-
         }
 
         public string BaseUrl { get; }

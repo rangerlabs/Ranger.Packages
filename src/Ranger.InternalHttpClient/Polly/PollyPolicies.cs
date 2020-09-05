@@ -22,7 +22,7 @@ namespace Ranger.InternalHttpClient
                 var requestMessage = context.GetHttpRequestMessage();
                 var logger = context.GetLogger();
                 var options = context.GetHttpClientOptions();
-
+                logger.LogInformation("Recieved Status Code {StatusCode}, requesting new token", HttpStatusCode.Unauthorized);
                 await requestMessage.SetNewClientToken(httpClient, options, logger);
             });
 

@@ -33,7 +33,6 @@ namespace Ranger.InternalHttpClient
                 throw new ApiException(Constants.ExceptionMessage, StatusCodes.Status500InternalServerError);
             }
             logger.LogDebug("Retrieved discovery document from Identity Server");
-
             var tokenResponse = await httpClient.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
             {
                 Address = disco.TokenEndpoint,

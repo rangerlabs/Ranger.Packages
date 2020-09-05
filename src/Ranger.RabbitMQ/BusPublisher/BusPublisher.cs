@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
@@ -7,20 +8,39 @@ using RabbitMQ.Client.Events;
 
 namespace Ranger.RabbitMQ.BusPublisher
 {
-    public class BusPublisher : IBusPublisher
+    public class BusPublisher<TStartup> : IBusPublisher
+        where TStartup : class
     {
-        private readonly ILogger<BusPublisher> logger;
+        private readonly ILogger<BusPublisher<TStartup>> logger;
         private readonly IModel channel;
         private readonly RabbitMQOptions options;
         private readonly Dictionary<Type, TopologyNames> topologyDictionary = new Dictionary<Type, TopologyNames>();
 
-        public BusPublisher(ILogger<BusPublisher> logger, IConnection connection, RabbitMQOptions options)
+        public BusPublisher(ILogger<BusPublisher<TStartup>> logger, IConnection connection, RabbitMQOptions options)
         {
             this.logger = logger;
             this.options = options;
             channel = connection.CreateModel();
             channel.ConfirmSelect();
             logger.LogInformation("Publisher connected");
+            InitializeTopology();
+        }
+
+        private void InitializeTopology()
+        {
+            var MessagesAssembly = typeof(TStartup).Assembly;
+            var messageTypes = MessagesAssembly.GetTypes().Where(t => t.IsClass && typeof(IMessage).IsAssignableFrom(t)).ToList();
+
+            foreach (var messageType in messageTypes)
+            {
+                TopologyNames topologyNames = TopologyForMessageType(messageType.GetType());
+                topologyDictionary.Add(messageType, topologyNames);
+                this.channel.ExchangeDeclare(
+                    topologyNames.Exchange,
+                    ExchangeType.Topic,
+                    true);
+            }
+            logger.LogInformation("Topology initialized");
         }
 
         public void Publish<TEvent>(TEvent @event, ICorrelationContext context = null) where TEvent : IEvent
@@ -40,7 +60,8 @@ namespace Ranger.RabbitMQ.BusPublisher
 
         private void ErrorPublish<TMessage>(TMessage message, BasicDeliverEventArgs ea) where TMessage : IMessage
         {
-            TopologyNames topologyNames = TopologyForMessageType(message.GetType());
+            TopologyNames topologyNames;
+            topologyDictionary.TryGetValue(message.GetType(), out topologyNames);
             channel.Bind<TMessage>(topologyNames.ErrorExchange, topologyNames.ErrorQueue, topologyNames.ErrorRoutingKey, options);
 
             try
@@ -57,12 +78,8 @@ namespace Ranger.RabbitMQ.BusPublisher
 
         private void ChannelPublish<TMessage>(TMessage message, ICorrelationContext context = null) where TMessage : IMessage
         {
-            TopologyNames topologyNames = TopologyForMessageType(message.GetType());
-
-            this.channel.ExchangeDeclare(
-                topologyNames.Exchange,
-                ExchangeType.Topic,
-                true);
+            TopologyNames topologyNames;
+            topologyDictionary.TryGetValue(message.GetType(), out topologyNames);
 
             var messageContent = String.Empty;
             try
@@ -77,9 +94,9 @@ namespace Ranger.RabbitMQ.BusPublisher
             try
             {
                 IBasicProperties messageProperties = CreateMessageHeaders(this.channel, context);
-                logger.LogDebug($"Publishing message to exchange '{topologyNames.Exchange}' with routingkey '{topologyNames.RoutingKey.Replace("#.", "")}'");
                 this.channel.BasicPublish(topologyNames.Exchange, topologyNames.RoutingKey.Replace("#.", ""), basicProperties: messageProperties, body: new ReadOnlyMemory<byte>(System.Text.Encoding.Default.GetBytes(messageContent)));
                 this.channel.WaitForConfirmsOrDie();
+                logger.LogDebug($"Published message to exchange '{topologyNames.Exchange}' with routingkey '{topologyNames.RoutingKey.Replace("#.", "")}'");
             }
             catch (Exception ex)
             {
@@ -117,14 +134,6 @@ namespace Ranger.RabbitMQ.BusPublisher
                 ErrorQueue = NamingConventions.ErrorQueueNamingConvention(type, options.Namespace),
                 ErrorRoutingKey = NamingConventions.ErrorRoutingKeyConvention(type, options.Namespace),
             };
-            try
-            {
-                topologyDictionary.Add(type, topologyNames);
-            }
-            catch (ArgumentException)
-            {
-                logger.LogDebug("The type {Type} is already entered into the topology dictionary", type.FullName);
-            }
             return topologyNames;
         }
 
