@@ -33,7 +33,7 @@ namespace Ranger.RabbitMQ.BusPublisher
 
             foreach (var messageType in messageTypes)
             {
-                TopologyNames topologyNames = TopologyForMessageType(messageType.GetType());
+                TopologyNames topologyNames = TopologyForMessageType(messageType);
                 topologyDictionary.Add(messageType, topologyNames);
                 this.channel.ExchangeDeclare(
                     topologyNames.Exchange,
