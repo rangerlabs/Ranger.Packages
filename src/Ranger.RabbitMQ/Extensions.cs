@@ -5,6 +5,7 @@ using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -25,31 +26,47 @@ namespace Ranger.RabbitMQ
         private const int ConnectionMaxRetrys = 9;
         public static IBusSubscriber UseRabbitMQ(this IApplicationBuilder app) => app.ApplicationServices.GetRequiredService<IBusSubscriber>();
 
+
         public static void AddRabbitMq<TStartup>(this ContainerBuilder builder)
             where TStartup : class
         {
-            builder.Register(context =>
-            {
-                var configuration = context.Resolve<IConfiguration>();
-                var options = configuration.GetOptions<RabbitMQOptions>("rabbitMQ");
-                return options;
-            }).SingleInstance();
+            builder.RegisterType<BusPublisher.BusPublisher<TStartup>>().As<IBusPublisher>()
+                .SingleInstance();
+            builder.AddCommonServices<TStartup>();
+        }
 
-            var assembly = Assembly.GetCallingAssembly();
+        public static void AddRabbitMqWithOutbox<TStartup, TDbContext>(this ContainerBuilder builder)
+            where TStartup : class
+            where TDbContext : DbContext, IOutboxStore
+        {
+            builder.RegisterType<BusPublisher.BusPublisherWithOutbox<TStartup, TDbContext>>().As<IBusPublisher>()
+                .SingleInstance();
+            builder.AddCommonServices<TStartup>();
+        }
+
+        private static ContainerBuilder AddCommonServices<TStartup>(this ContainerBuilder builder)
+            where TStartup : class
+        {
+            builder.Register(context =>
+                        {
+                            var configuration = context.Resolve<IConfiguration>();
+                            var options = configuration.GetOptions<RabbitMQOptions>("rabbitMQ");
+                            return options;
+                        }).SingleInstance();
+
+            var assembly = Assembly.GetAssembly(typeof(TStartup));
             builder.RegisterAssemblyTypes(assembly)
                 .AsClosedTypesOf(typeof(IMessageHandler<>))
                 .InstancePerLifetimeScope();
-            builder.RegisterType<BusPublisher.BusPublisher<TStartup>>().As<IBusPublisher>()
-                .SingleInstance();
             builder.RegisterType<BusSubscriber.BusSubscriber>().As<IBusSubscriber>()
                 .SingleInstance();
-
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings
             {
                 ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
             }.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
 
             RegisterConnection(builder);
+            return builder;
         }
 
         private static void RegisterConnection(ContainerBuilder builder)

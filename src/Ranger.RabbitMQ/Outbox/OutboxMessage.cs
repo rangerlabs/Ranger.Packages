@@ -1,0 +1,17 @@
+using System;
+using System.ComponentModel.DataAnnotations;
+
+namespace Ranger.RabbitMQ
+{
+    public class OutboxMessage
+    {
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        public RangerRabbitMessage Message { get; set; }
+        [Required]
+        public DateTime InsertedAt { get; set; }
+        [Required]
+        public bool Nacked { get; set; }
+    }
+}

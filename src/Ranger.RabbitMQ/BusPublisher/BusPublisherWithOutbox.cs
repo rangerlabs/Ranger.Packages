@@ -12,15 +12,19 @@ using RabbitMQ.Client.Events;
 
 namespace Ranger.RabbitMQ.BusPublisher
 {
-    public class BusPublisher<TStartup> : BusPublisherBase<TStartup>, IBusPublisher
+    public class BusPublisherWithOutbox<TStartup, TDbContext> : BusPublisherWithOutboxBase<TStartup, TDbContext>, IBusPublisher
         where TStartup : class
+        where TDbContext : DbContext, IOutboxStore
     {
         private bool _disposedValue;
 
-        public BusPublisher(IConnection connection, RabbitMQOptions options, ILoggerFactory loggerFactory)
-            : base(connection, options, loggerFactory)
+        public BusPublisherWithOutbox(IConnection connection,
+                                      RabbitMQOptions options,
+                                      IDataProtectionProvider dataProtectionProvider,
+                                      IConfiguration configuration,
+                                      ILoggerFactory loggerFactory)
+            : base(connection, options, dataProtectionProvider, configuration, loggerFactory)
         { }
-
 
         public void Publish<TEvent>(TEvent @event, ICorrelationContext context = null) where TEvent : IEvent
         {

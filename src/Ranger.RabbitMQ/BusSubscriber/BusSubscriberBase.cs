@@ -225,6 +225,8 @@ namespace Ranger.RabbitMQ.BusSubscriber
             }
         }
 
+
+
         public void Dispose()
         {
             Dispose(disposing: true);

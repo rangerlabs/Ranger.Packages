@@ -12,7 +12,7 @@ namespace Ranger.RabbitMQ
         {
             if (String.IsNullOrWhiteSpace(@namespace))
             {
-                throw new RangerException("Message namesapce cannot be null or whitespace");
+                throw new RangerException("Message namespace cannot be null or whitespace");
             }
             Namespace = @namespace.ToLowerInvariant();
         }
