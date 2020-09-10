@@ -166,9 +166,10 @@ namespace Ranger.RabbitMQ.BusPublisher
                 Body = messageContent
             };
 
+            var needsAcked = NeedsAcked(message);
             try
             {
-                if (!message.GetType().CustomAttributes.Select(a => a.AttributeType).Contains(typeof(NonAckedAttribute)))
+                if (needsAcked)
                 {
                     OutstandingConfirms.TryAdd(Channel.NextPublishSeqNo, rangerRabbitMessage);
                 }
@@ -179,9 +180,15 @@ namespace Ranger.RabbitMQ.BusPublisher
             {
                 _logger.LogError(ex, $"Failed to publish message: '{message.GetType()}'with correlation id: '{context.CorrelationContextId}'");
                 var exception = new RangerPublishException("", ex);
+                exception.Data["NeedsAcked"] = needsAcked;
                 exception.Data["RangerRabbitMessage"] = rangerRabbitMessage;
                 throw exception;
             }
+        }
+
+        protected bool NeedsAcked<TMessage>(TMessage message) where TMessage : IMessage
+        {
+            return !message.GetType().CustomAttributes.Select(a => a.AttributeType).Contains(typeof(NonAckedAttribute));
         }
 
         private bool disposedValue = false;

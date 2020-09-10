@@ -68,7 +68,12 @@ namespace Ranger.RabbitMQ.BusPublisher
             }
             catch (RangerPublishException ex)
             {
-                persistFailedPublishToOutbox(ex.Data["RangerRabbitMessage"] as RangerRabbitMessage);
+                if ((bool)ex.Data["NeedsAcked"])
+                {
+                    _logger.LogWarning("Failed message required acking. Persisting to outbox");
+                    persistFailedPublishToOutbox(ex.Data["RangerRabbitMessage"] as RangerRabbitMessage);
+                }
+                _logger.LogWarning("Failed message does not require acking. Dropping the message");
             }
         }
 
