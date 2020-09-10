@@ -56,7 +56,7 @@ namespace Ranger.RabbitMQ.BusPublisher
             }
             catch (RangerPublishException ex)
             {
-                persistFailedPublishToOutbox(ex.Data["RangerPublishExceptionData"] as RangerPublishExceptionData);
+                persistFailedPublishToOutbox(ex.Data["RangerRabbitMessage"] as RangerRabbitMessage);
             }
         }
 
@@ -68,23 +68,18 @@ namespace Ranger.RabbitMQ.BusPublisher
             }
             catch (RangerPublishException ex)
             {
-                persistFailedPublishToOutbox(ex.Data["RangerPublishExceptionData"] as RangerPublishExceptionData);
+                persistFailedPublishToOutbox(ex.Data["RangerRabbitMessage"] as RangerRabbitMessage);
             }
         }
 
-        private void persistFailedPublishToOutbox(RangerPublishExceptionData data)
+        private void persistFailedPublishToOutbox(RangerRabbitMessage plainMsg)
         {
-            var plainMsg = new RangerRabbitMessage()
-            {
-                Headers = JsonConvert.SerializeObject(data.BasicProperties),
-                Body = data.Body
-            };
-            RangerRabbitMessage message = GetEncryptedRangerRabbitMessage(plainMsg);
+            RangerRabbitMessage encryptedMessage = GetEncryptedRangerRabbitMessage(plainMsg);
             using (var dbContext = GetDbContext())
             {
                 dbContext.Outbox.Add(new OutboxMessage
                 {
-                    Message = message,
+                    Message = encryptedMessage,
                     InsertedAt = DateTime.UtcNow,
                     Nacked = false
                 });

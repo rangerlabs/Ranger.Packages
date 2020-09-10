@@ -118,15 +118,17 @@ namespace Ranger.RabbitMQ.BusPublisher
             TopologyDictionary.TryGetValue(message.GetType(), out topologyNames);
             Channel.Bind<TMessage>(topologyNames.ErrorExchange, topologyNames.ErrorQueue, topologyNames.ErrorRoutingKey, Options);
 
+            var rangerRabbitMessage = new RangerRabbitMessage
+            {
+                Type = message.GetType().ToString(),
+                MessageVersion = 0,
+                Headers = JsonConvert.SerializeObject(ea.BasicProperties),
+                Body = JsonConvert.SerializeObject(ea.Body)
+            };
+
             try
             {
-                OutstandingConfirms.TryAdd(Channel.NextPublishSeqNo, new RangerRabbitMessage
-                {
-                    Type = message.GetType().ToString(),
-                    MessageVersion = 0,
-                    Headers = JsonConvert.SerializeObject(ea.BasicProperties),
-                    Body = JsonConvert.SerializeObject(ea.Body)
-                });
+                OutstandingConfirms.TryAdd(Channel.NextPublishSeqNo, rangerRabbitMessage);
                 this.Channel.BasicPublish(topologyNames.ErrorExchange, topologyNames.ErrorRoutingKey.Replace("#.", ""), true, ea.BasicProperties, ea.Body);
                 _logger.LogDebug($"Published message to exchange '{topologyNames.Exchange}' with routingkey '{topologyNames.RoutingKey.Replace("#.", "")}'");
             }
@@ -134,7 +136,7 @@ namespace Ranger.RabbitMQ.BusPublisher
             {
                 _logger.LogError(ex, $"Failed to publish message: '{message.GetType()}'with correlation id: '{CorrelationContext.IdFromBasicDeliverEventArgsHeader(ea).ToString()}'");
                 var exception = new RangerPublishException("", ex);
-                exception.Data["RangerPublishExceptionData"] = new RangerPublishExceptionData(message.GetType(), ea.BasicProperties, JsonConvert.SerializeObject(ea.Body));
+                exception.Data["RangerRabbitMessage"] = rangerRabbitMessage;
                 throw exception;
             }
         }
@@ -155,17 +157,20 @@ namespace Ranger.RabbitMQ.BusPublisher
                 _logger.LogError(ex, $"Failed to serialize object of type: '{message.GetType()}'");
                 throw;
             }
+
+            var rangerRabbitMessage = new RangerRabbitMessage
+            {
+                Type = message.GetType().ToString(),
+                MessageVersion = 0,
+                Headers = JsonConvert.SerializeObject(messageProperties),
+                Body = messageContent
+            };
+
             try
             {
                 if (!message.GetType().CustomAttributes.Select(a => a.AttributeType).Contains(typeof(NonAckedAttribute)))
                 {
-                    OutstandingConfirms.TryAdd(Channel.NextPublishSeqNo, new RangerRabbitMessage
-                    {
-                        Type = message.GetType().ToString(),
-                        MessageVersion = 0,
-                        Headers = JsonConvert.SerializeObject(messageProperties),
-                        Body = messageContent
-                    });
+                    OutstandingConfirms.TryAdd(Channel.NextPublishSeqNo, rangerRabbitMessage);
                 }
                 this.Channel.BasicPublish(topologyNames.Exchange, topologyNames.RoutingKey.Replace("#.", ""), basicProperties: messageProperties, body: new ReadOnlyMemory<byte>(System.Text.Encoding.Default.GetBytes(messageContent)));
                 _logger.LogDebug($"Published message to exchange '{topologyNames.Exchange}' with routingkey '{topologyNames.RoutingKey.Replace("#.", "")}'");
@@ -174,7 +179,7 @@ namespace Ranger.RabbitMQ.BusPublisher
             {
                 _logger.LogError(ex, $"Failed to publish message: '{message.GetType()}'with correlation id: '{context.CorrelationContextId}'");
                 var exception = new RangerPublishException("", ex);
-                exception.Data["RangerPublishExceptionData"] = new RangerPublishExceptionData(message.GetType(), messageProperties, messageContent);
+                exception.Data["RangerRabbitMessage"] = rangerRabbitMessage;
                 throw exception;
             }
         }
