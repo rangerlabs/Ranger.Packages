@@ -1,12 +1,5 @@
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using Autofac;
-using Microsoft.AspNetCore.DataProtection;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
@@ -16,11 +9,23 @@ namespace Ranger.RabbitMQ.BusPublisher
         where TStartup : class
     {
         private bool _disposedValue;
+        private readonly ILogger<BusPublisher<TStartup>> _logger;
 
         public BusPublisher(IConnection connection, RabbitMQOptions options, ILoggerFactory loggerFactory)
             : base(connection, options, loggerFactory)
-        { }
+        {
+            _logger = loggerFactory.CreateLogger<BusPublisher<TStartup>>();
+            ConfigureChannel();
+            InitializeTopology();
+        }
 
+        protected override void ConfigureChannel()
+        {
+            Channel.ConfirmSelect();
+            Channel.BasicAcks += (sender, ea) => cleanOutstandingConfirms(ea.DeliveryTag, ea.Multiple);
+            Channel.BasicNacks += (sender, ea) => logNacks(ea.DeliveryTag, ea.Multiple);
+            _logger.LogInformation("Publisher connected");
+        }
 
         public void Publish<TEvent>(TEvent @event, ICorrelationContext context = null) where TEvent : IEvent
         {

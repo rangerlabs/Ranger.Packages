@@ -36,19 +36,66 @@ namespace Ranger.RabbitMQ.BusPublisher
             _dataProtectionProvider = dataProtectionProvider;
             _configuration = configuration;
             _protector = dataProtectionProvider.CreateProtector(typeof(BusPublisherWithOutbox<TStartup, TDbContext>).Name);
-            _logger.LogInformation("Nack'd messages will be written to outbox");
+            ConfigureChannel();
+            InitializeTopology();
         }
 
         protected override void ConfigureChannel()
         {
+            _logger.LogInformation("Nack'd messages will be written to outbox");
             Channel.ConfirmSelect();
             Channel.BasicAcks += (sender, ea) => cleanOutstandingConfirms(ea.DeliveryTag, ea.Multiple);
             Channel.BasicNacks += (sender, ea) => persistToOutbox(ea.DeliveryTag, ea.Multiple, true);
+            _logger.LogInformation("Publisher connected");
+        }
+        protected override void ErrorPublish<TMessage>(TMessage message, BasicDeliverEventArgs ea)
+        {
+            try
+            {
+                base.ErrorPublish<TMessage>(message, ea);
+            }
+            catch (RangerPublishException ex)
+            {
+                persistFailedPublishToOutbox(ex.Data["RangerPublishExceptionData"] as RangerPublishExceptionData);
+            }
+        }
+
+        protected override void ChannelPublish<TMessage>(TMessage message, ICorrelationContext context = null)
+        {
+            try
+            {
+                base.ChannelPublish<TMessage>(message, context);
+            }
+            catch (RangerPublishException ex)
+            {
+                persistFailedPublishToOutbox(ex.Data["RangerPublishExceptionData"] as RangerPublishExceptionData);
+            }
+        }
+
+        private void persistFailedPublishToOutbox(RangerPublishExceptionData data)
+        {
+            var plainMsg = new RangerRabbitMessage()
+            {
+                Headers = JsonConvert.SerializeObject(data.BasicProperties),
+                Body = data.Body
+            };
+            RangerRabbitMessage message = GetEncryptedRangerRabbitMessage(plainMsg);
+            using (var dbContext = GetDbContext())
+            {
+                dbContext.Outbox.Add(new OutboxMessage
+                {
+                    Message = message,
+                    InsertedAt = DateTime.UtcNow,
+                    Nacked = false
+                });
+                dbContext.SaveChanges();
+            }
+            _logger.LogWarning("Failed message successfully saved to outbox");
         }
 
         private void persistToOutbox(ulong deliveryTag, bool multiple, bool nacked)
         {
-            using (var dbContext = (TDbContext)Activator.CreateInstance(typeof(TDbContext), DbContextOptionsFactory.GetDbContextOptions<TDbContext>(_configuration, _loggerFactory), _dataProtectionProvider))
+            using (var dbContext = GetDbContext())
             {
                 if (multiple)
                 {
@@ -56,10 +103,11 @@ namespace Ranger.RabbitMQ.BusPublisher
                     var nackedConfirms = OutstandingConfirms.Where(k => k.Key <= deliveryTag);
                     foreach (var entry in nackedConfirms)
                     {
-                        RangerRabbitMessage message = GetEncryptedRangerRabbitMessage(deliveryTag);
+                        OutstandingConfirms.TryGetValue(deliveryTag, out RangerRabbitMessage plainMsg);
+                        RangerRabbitMessage encryptedMsg = GetEncryptedRangerRabbitMessage(plainMsg);
                         dbContext.Outbox.Add(new OutboxMessage
                         {
-                            Message = message,
+                            Message = encryptedMsg,
                             InsertedAt = DateTime.UtcNow,
                             Nacked = nacked
                         });
@@ -68,10 +116,11 @@ namespace Ranger.RabbitMQ.BusPublisher
                 else
                 {
                     _logger.LogWarning("Single message nacked from the RabbitMq server, DeliveryTag: {DeliverTag}", deliveryTag);
-                    RangerRabbitMessage message = GetEncryptedRangerRabbitMessage(deliveryTag);
+                    OutstandingConfirms.TryGetValue(deliveryTag, out RangerRabbitMessage plainMsg);
+                    RangerRabbitMessage encryptedMsg = GetEncryptedRangerRabbitMessage(plainMsg);
                     dbContext.Outbox.Add(new OutboxMessage
                     {
-                        Message = message,
+                        Message = encryptedMsg,
                         InsertedAt = DateTime.UtcNow,
                         Nacked = true
                     });
@@ -79,17 +128,21 @@ namespace Ranger.RabbitMQ.BusPublisher
                 dbContext.SaveChanges();
                 _logger.LogWarning("Nacked messages nacked successfully saved to outbox");
                 cleanOutstandingConfirms(deliveryTag, multiple);
-
-                RangerRabbitMessage GetEncryptedRangerRabbitMessage(ulong deliveryTag)
-                {
-                    OutstandingConfirms.TryGetValue(deliveryTag, out RangerRabbitMessage message);
-                    var encryptedBody = _protector.Protect(message.Body);
-                    var encryptedHeaders = _protector.Protect(message.Headers);
-                    message.Body = encryptedBody;
-                    message.Headers = encryptedHeaders;
-                    return message;
-                }
             }
+        }
+
+        private RangerRabbitMessage GetEncryptedRangerRabbitMessage(RangerRabbitMessage message)
+        {
+            var encryptedBody = _protector.Protect(message.Body);
+            var encryptedHeaders = _protector.Protect(message.Headers);
+            message.Body = encryptedBody;
+            message.Headers = encryptedHeaders;
+            return message;
+        }
+
+        private TDbContext GetDbContext()
+        {
+            return (TDbContext)Activator.CreateInstance(typeof(TDbContext), DbContextOptionsFactory.GetDbContextOptions<TDbContext>(_configuration, _loggerFactory), _dataProtectionProvider);
         }
 
         private bool disposedValue = false;

@@ -32,18 +32,9 @@ namespace Ranger.RabbitMQ.BusPublisher
             _logger = loggerFactory.CreateLogger<BusPublisherBase<TStartup>>();
             Options = options;
             Channel = connection.CreateModel();
-            ConfigureChannel();
-            _logger.LogInformation("Publisher connected");
-            initializeTopology();
         }
 
-
-        protected virtual void ConfigureChannel()
-        {
-            Channel.ConfirmSelect();
-            Channel.BasicAcks += (sender, ea) => cleanOutstandingConfirms(ea.DeliveryTag, ea.Multiple);
-            Channel.BasicNacks += (sender, ea) => logNacks(ea.DeliveryTag, ea.Multiple);
-        }
+        protected abstract void ConfigureChannel();
 
         protected void logNacks(ulong sequenceNumber, bool multiple)
         {
@@ -73,7 +64,7 @@ namespace Ranger.RabbitMQ.BusPublisher
             OutstandingConfirms.TryRemove(sequenceNumber, out _);
         }
 
-        protected void initializeTopology()
+        protected void InitializeTopology()
         {
             var MessagesAssembly = typeof(TStartup).Assembly;
             var messageTypes = MessagesAssembly.GetTypes().Where(t => t.IsClass && typeof(IMessage).IsAssignableFrom(t)).ToList();
@@ -121,7 +112,7 @@ namespace Ranger.RabbitMQ.BusPublisher
             return topologyNames;
         }
 
-        protected void ErrorPublish<TMessage>(TMessage message, BasicDeliverEventArgs ea) where TMessage : IMessage
+        protected virtual void ErrorPublish<TMessage>(TMessage message, BasicDeliverEventArgs ea) where TMessage : IMessage
         {
             TopologyNames topologyNames;
             TopologyDictionary.TryGetValue(message.GetType(), out topologyNames);
@@ -129,21 +120,30 @@ namespace Ranger.RabbitMQ.BusPublisher
 
             try
             {
-                OutstandingConfirms.TryAdd(Channel.NextPublishSeqNo, new RangerRabbitMessage { Headers = JsonConvert.SerializeObject(ea.BasicProperties), Body = JsonConvert.SerializeObject(ea.Body) });
+                OutstandingConfirms.TryAdd(Channel.NextPublishSeqNo, new RangerRabbitMessage
+                {
+                    Type = message.GetType().ToString(),
+                    MessageVersion = 0,
+                    Headers = JsonConvert.SerializeObject(ea.BasicProperties),
+                    Body = JsonConvert.SerializeObject(ea.Body)
+                });
                 this.Channel.BasicPublish(topologyNames.ErrorExchange, topologyNames.ErrorRoutingKey.Replace("#.", ""), true, ea.BasicProperties, ea.Body);
                 _logger.LogDebug($"Published message to exchange '{topologyNames.Exchange}' with routingkey '{topologyNames.RoutingKey.Replace("#.", "")}'");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Failed to publish message: '{message.GetType()}'with correlation id: '{CorrelationContext.IdFromBasicDeliverEventArgsHeader(ea).ToString()}'");
-                throw;
+                var exception = new RangerPublishException("", ex);
+                exception.Data["RangerPublishExceptionData"] = new RangerPublishExceptionData(message.GetType(), ea.BasicProperties, JsonConvert.SerializeObject(ea.Body));
+                throw exception;
             }
         }
 
-        protected void ChannelPublish<TMessage>(TMessage message, ICorrelationContext context = null) where TMessage : IMessage
+        protected virtual void ChannelPublish<TMessage>(TMessage message, ICorrelationContext context = null) where TMessage : IMessage
         {
             TopologyNames topologyNames;
             TopologyDictionary.TryGetValue(message.GetType(), out topologyNames);
+            IBasicProperties messageProperties = CreateMessageHeaders(this.Channel, context);
 
             var messageContent = String.Empty;
             try
@@ -157,10 +157,15 @@ namespace Ranger.RabbitMQ.BusPublisher
             }
             try
             {
-                IBasicProperties messageProperties = CreateMessageHeaders(this.Channel, context);
                 if (!message.GetType().CustomAttributes.Select(a => a.AttributeType).Contains(typeof(NonAckedAttribute)))
                 {
-                    OutstandingConfirms.TryAdd(Channel.NextPublishSeqNo, new RangerRabbitMessage { Headers = JsonConvert.SerializeObject(messageProperties), Body = messageContent });
+                    OutstandingConfirms.TryAdd(Channel.NextPublishSeqNo, new RangerRabbitMessage
+                    {
+                        Type = message.GetType().ToString(),
+                        MessageVersion = 0,
+                        Headers = JsonConvert.SerializeObject(messageProperties),
+                        Body = messageContent
+                    });
                 }
                 this.Channel.BasicPublish(topologyNames.Exchange, topologyNames.RoutingKey.Replace("#.", ""), basicProperties: messageProperties, body: new ReadOnlyMemory<byte>(System.Text.Encoding.Default.GetBytes(messageContent)));
                 _logger.LogDebug($"Published message to exchange '{topologyNames.Exchange}' with routingkey '{topologyNames.RoutingKey.Replace("#.", "")}'");
@@ -168,7 +173,9 @@ namespace Ranger.RabbitMQ.BusPublisher
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Failed to publish message: '{message.GetType()}'with correlation id: '{context.CorrelationContextId}'");
-                throw;
+                var exception = new RangerPublishException("", ex);
+                exception.Data["RangerPublishExceptionData"] = new RangerPublishExceptionData(message.GetType(), messageProperties, messageContent);
+                throw exception;
             }
         }
 
@@ -191,8 +198,8 @@ namespace Ranger.RabbitMQ.BusPublisher
                     {
                         _logger.LogDebug("Publisher ack timeout exceeded while waiting for acks");
                     }
-                    Channel.Dispose();
                     Channel.Close();
+                    Channel.Dispose();
                 }
             }
         }
