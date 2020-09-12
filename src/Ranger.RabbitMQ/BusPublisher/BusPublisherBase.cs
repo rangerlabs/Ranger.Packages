@@ -50,7 +50,7 @@ namespace Ranger.RabbitMQ.BusPublisher
             OutstandingConfirms.TryRemove(sequenceNumber, out _);
         }
 
-        protected void cleanOutstandingConfirms(ulong sequenceNumber, bool multiple)
+        protected void CleanOutstandingConfirms(ulong sequenceNumber, bool multiple)
         {
             if (multiple)
             {

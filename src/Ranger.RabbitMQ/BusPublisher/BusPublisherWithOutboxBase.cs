@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Autofac;
@@ -8,7 +6,6 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
@@ -44,7 +41,7 @@ namespace Ranger.RabbitMQ.BusPublisher
         {
             _logger.LogInformation("Nack'd messages will be written to outbox");
             Channel.ConfirmSelect();
-            Channel.BasicAcks += (sender, ea) => cleanOutstandingConfirms(ea.DeliveryTag, ea.Multiple);
+            Channel.BasicAcks += (sender, ea) => CleanOutstandingConfirms(ea.DeliveryTag, ea.Multiple);
             Channel.BasicNacks += (sender, ea) => persistToOutbox(ea.DeliveryTag, ea.Multiple, true);
             _logger.LogInformation("Publisher connected");
         }
@@ -82,17 +79,18 @@ namespace Ranger.RabbitMQ.BusPublisher
 
         private void persistFailedPublishToOutbox(RangerRabbitMessage plainMsg)
         {
-            RangerRabbitMessage encryptedMessage = GetEncryptedRangerRabbitMessage(plainMsg);
+            RangerRabbitMessage encryptedMsg = GetEncryptedRangerRabbitMessage(plainMsg);
             using (var dbContext = GetDbContext())
             {
                 var outboxMsg = new OutboxMessage
                 {
-                    Message = encryptedMessage,
+                    Message = encryptedMsg,
                     InsertedAt = DateTime.UtcNow,
                     Nacked = false
                 };
-                encryptedMessage.OutboxMessage = outboxMsg;
-                dbContext.Outbox.Add(outboxMsg);
+                encryptedMsg.OutboxMessage = outboxMsg;
+                dbContext.OutboxMessages.Add(outboxMsg);
+                dbContext.RangerRabbitMessages.Add(encryptedMsg);
                 dbContext.SaveChanges();
             }
             _logger.LogWarning("Failed message successfully saved to outbox");
@@ -104,26 +102,33 @@ namespace Ranger.RabbitMQ.BusPublisher
             {
                 if (multiple)
                 {
-                    _logger.LogWarning("Multiple messages were not ack'd from the RabbitMq server, DeliveryTag: {DeliverTag}", deliveryTag);
                     var nackedConfirms = OutstandingConfirms.Where(k => k.Key <= deliveryTag);
-                    foreach (var entry in nackedConfirms)
+                    if (nackedConfirms.Any())
                     {
-                        OutstandingConfirms.TryGetValue(deliveryTag, out RangerRabbitMessage plainMsg);
-                        RangerRabbitMessage encryptedMsg = GetEncryptedRangerRabbitMessage(plainMsg);
-                        var outboxMsg = new OutboxMessage
+                        _logger.LogWarning("Multiple messages were not ack'd from the RabbitMq server, DeliveryTag: {DeliverTag}, Nacked: {Nacked}", deliveryTag, nacked);
+                        foreach (var entry in nackedConfirms)
                         {
-                            Message = encryptedMsg,
-                            InsertedAt = DateTime.UtcNow,
-                            Nacked = nacked
-                        };
-
-                        encryptedMsg.OutboxMessage = outboxMsg;
-                        dbContext.Outbox.Add(outboxMsg);
+                            OutstandingConfirms.TryGetValue(entry.Key, out RangerRabbitMessage plainMsg);
+                            RangerRabbitMessage encryptedMsg = GetEncryptedRangerRabbitMessage(plainMsg);
+                            var outboxMsg = new OutboxMessage
+                            {
+                                Message = encryptedMsg,
+                                InsertedAt = DateTime.UtcNow,
+                                Nacked = nacked
+                            };
+                            encryptedMsg.OutboxMessage = outboxMsg;
+                            dbContext.OutboxMessages.Add(outboxMsg);
+                            dbContext.RangerRabbitMessages.Add(encryptedMsg);
+                            _logger.LogDebug("Added message with sequence number {SequenceNumber} to pending outbox", entry.Key);
+                        }
+                        dbContext.SaveChanges();
+                        CleanOutstandingConfirms(deliveryTag, multiple);
+                        _logger.LogWarning("Not acked message(s) successfully saved to outbox");
                     }
                 }
                 else
                 {
-                    _logger.LogWarning("Single message was not ack'd from the RabbitMq server, DeliveryTag: {DeliverTag}", deliveryTag);
+                    _logger.LogWarning("Single message was not ack'd from the RabbitMq server, DeliveryTag: {DeliverTag}, Nacked: {Nacked}", deliveryTag, nacked);
                     OutstandingConfirms.TryGetValue(deliveryTag, out RangerRabbitMessage plainMsg);
                     RangerRabbitMessage encryptedMsg = GetEncryptedRangerRabbitMessage(plainMsg);
                     var outboxMsg = new OutboxMessage
@@ -133,11 +138,12 @@ namespace Ranger.RabbitMQ.BusPublisher
                         Nacked = nacked
                     };
                     encryptedMsg.OutboxMessage = outboxMsg;
-                    dbContext.Outbox.Add(outboxMsg);
+                    dbContext.OutboxMessages.Add(outboxMsg);
+                    dbContext.RangerRabbitMessages.Add(encryptedMsg);
+                    dbContext.SaveChanges();
+                    CleanOutstandingConfirms(deliveryTag, multiple);
+                    _logger.LogWarning("Not acked message(s) successfully saved to outbox");
                 }
-                dbContext.SaveChanges();
-                _logger.LogWarning("Not acked messages successfully saved to outbox");
-                cleanOutstandingConfirms(deliveryTag, multiple);
             }
         }
 

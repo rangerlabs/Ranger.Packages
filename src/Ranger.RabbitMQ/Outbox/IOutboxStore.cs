@@ -4,6 +4,7 @@ namespace Ranger.RabbitMQ
 {
     public interface IOutboxStore
     {
-        DbSet<OutboxMessage> Outbox { get; set; }
+        DbSet<OutboxMessage> OutboxMessages { get; set; }
+        DbSet<RangerRabbitMessage> RangerRabbitMessages { get; set; }
     }
 }

@@ -22,7 +22,7 @@ namespace Ranger.RabbitMQ.BusPublisher
         protected override void ConfigureChannel()
         {
             Channel.ConfirmSelect();
-            Channel.BasicAcks += (sender, ea) => cleanOutstandingConfirms(ea.DeliveryTag, ea.Multiple);
+            Channel.BasicAcks += (sender, ea) => CleanOutstandingConfirms(ea.DeliveryTag, ea.Multiple);
             Channel.BasicNacks += (sender, ea) => logNacks(ea.DeliveryTag, ea.Multiple);
             _logger.LogInformation("Publisher connected");
         }
