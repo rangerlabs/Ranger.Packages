@@ -14,5 +14,7 @@ namespace Ranger.RabbitMQ
         public string Headers { get; set; }
         [Required]
         public string Body { get; set; }
+        [Required]
+        public OutboxMessage OutboxMessage { get; set; }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Ranger.RabbitMQ
 {
@@ -7,6 +8,7 @@ namespace Ranger.RabbitMQ
     {
         [Required]
         public int Id { get; set; }
+        public int MessageId { get; set; }
         [Required]
         public RangerRabbitMessage Message { get; set; }
         [Required]
