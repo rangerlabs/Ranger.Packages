@@ -46,7 +46,7 @@ namespace Ranger.RabbitMQ.BusPublisher
                     OutstandingConfirms.TryRemove(entry.Key, out _);
             }
             else
-                _logger.LogTrace("Cleaning single nack confirmation SequenceNumber: {SequenceNumber}", sequenceNumber);
+                _logger.LogDebug("Cleaning single nack confirmation SequenceNumber: {SequenceNumber}", sequenceNumber);
             OutstandingConfirms.TryRemove(sequenceNumber, out _);
         }
 
@@ -54,13 +54,13 @@ namespace Ranger.RabbitMQ.BusPublisher
         {
             if (multiple)
             {
-                _logger.LogTrace("Cleaning multiple outstanding confirmations SequenceNumber: {SequenceNumber}", sequenceNumber);
+                _logger.LogDebug("Cleaning multiple outstanding confirmations SequenceNumber: {SequenceNumber}", sequenceNumber);
                 var confirmed = OutstandingConfirms.Where(k => k.Key <= sequenceNumber);
                 foreach (var entry in confirmed)
                     OutstandingConfirms.TryRemove(entry.Key, out _);
             }
             else
-                _logger.LogTrace("Cleaning single confirmation SequenceNumber: {SequenceNumber}", sequenceNumber);
+                _logger.LogDebug("Cleaning single confirmation SequenceNumber: {SequenceNumber}", sequenceNumber);
             OutstandingConfirms.TryRemove(sequenceNumber, out _);
         }
 

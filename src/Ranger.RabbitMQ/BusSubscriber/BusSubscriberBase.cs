@@ -127,7 +127,7 @@ namespace Ranger.RabbitMQ.BusSubscriber
                     var retryMessage = currentRetry == 0 ?
                         string.Empty :
                         $"Retry: {currentRetry}'.";
-                    _logger.LogInformation("Handling message: {MessageName}' with correlation id: '{CorrelationId}'. {RetryCount}", messageName, context.CorrelationContextId, retryMessage);
+                    _logger.LogDebug("Handling message: {MessageName}' with correlation id: '{CorrelationId}'. {RetryCount}", messageName, context.CorrelationContextId, retryMessage);
 
                     try
                     {
@@ -149,7 +149,7 @@ namespace Ranger.RabbitMQ.BusSubscriber
                                 await onReceived(message, context);
                             }
 
-                            _logger.LogInformation("Handled message: {MessageName}' with correlation id: '{CorrelationId}'. {RetryCount}", messageName, context.CorrelationContextId, retryMessage);
+                            _logger.LogDebug("Handled message: {MessageName}' with correlation id: '{CorrelationId}'. {RetryCount}", messageName, context.CorrelationContextId, retryMessage);
                             messageState = MessageState.Succeeded;
                         }
                     }
@@ -211,7 +211,7 @@ namespace Ranger.RabbitMQ.BusSubscriber
                     {
                         ManagedChannel managedChannel = default;
                         ChannelManager.TryGetValue(type, out managedChannel);
-                        _logger.LogDebug("Adding cancellation task for message: {MessageName}", type.Name);
+                        _logger.LogInformation("Adding cancellation task for message: {MessageName}", type.Name);
                         consumerCancellationTasks.Add(managedChannel.DisposeAsync());
                     }
                     Task.WaitAll(consumerCancellationTasks.ToArray());

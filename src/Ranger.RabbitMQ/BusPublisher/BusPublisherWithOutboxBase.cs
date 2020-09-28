@@ -67,7 +67,7 @@ namespace Ranger.RabbitMQ.BusPublisher
             {
                 if ((bool)ex.Data["NeedsAcked"])
                 {
-                    _logger.LogWarning("Failed message required acking. Persisting to outbox");
+                    _logger.LogWarning("Failed message requires acking. Persisting to outbox");
                     persistFailedPublishToOutbox(ex.Data["RangerRabbitMessage"] as RangerRabbitMessage);
                 }
                 else
@@ -93,7 +93,7 @@ namespace Ranger.RabbitMQ.BusPublisher
                 dbContext.RangerRabbitMessages.Add(encryptedMsg);
                 dbContext.SaveChanges();
             }
-            _logger.LogWarning("Failed message successfully saved to outbox");
+            _logger.LogInformation("Failed message successfully saved to outbox");
         }
 
         private void persistToOutbox(ulong deliveryTag, bool multiple, bool nacked)
@@ -105,7 +105,7 @@ namespace Ranger.RabbitMQ.BusPublisher
                     var nackedConfirms = OutstandingConfirms.Where(k => k.Key <= deliveryTag);
                     if (nackedConfirms.Any())
                     {
-                        _logger.LogWarning("Multiple messages were not ack'd from the RabbitMq server, DeliveryTag: {DeliverTag}, Nacked: {Nacked}", deliveryTag, nacked);
+                        _logger.LogWarning("Multiple messages were not ack'd from the RabbitMQ server, DeliveryTag: {DeliverTag}, Nacked: {Nacked}", deliveryTag, nacked);
                         foreach (var entry in nackedConfirms)
                         {
                             OutstandingConfirms.TryGetValue(entry.Key, out RangerRabbitMessage plainMsg);
@@ -123,7 +123,7 @@ namespace Ranger.RabbitMQ.BusPublisher
                         }
                         dbContext.SaveChanges();
                         CleanOutstandingConfirms(deliveryTag, multiple);
-                        _logger.LogWarning("Not acked message(s) successfully saved to outbox");
+                        _logger.LogInformation("Not acked message(s) successfully saved to outbox");
                     }
                 }
                 else
@@ -142,7 +142,7 @@ namespace Ranger.RabbitMQ.BusPublisher
                     dbContext.RangerRabbitMessages.Add(encryptedMsg);
                     dbContext.SaveChanges();
                     CleanOutstandingConfirms(deliveryTag, multiple);
-                    _logger.LogWarning("Not acked message(s) successfully saved to outbox");
+                    _logger.LogInformation("Not acked message(s) successfully saved to outbox");
                 }
             }
         }
@@ -172,14 +172,14 @@ namespace Ranger.RabbitMQ.BusPublisher
                     int waited = 0;
                     while (!OutstandingConfirms.IsEmpty && waited < SECONDS_TO_TIMEOUT * 1000)
                     {
-                        _logger.LogDebug("Publisher waiting for ack's from RabbitMq server. Delaying {CancelDelay}ms", PUBLISHER_CANCEL_DELAY_MS);
+                        _logger.LogInformation("Publisher waiting for ack's from RabbitMq server. Delaying {CancelDelay}ms", PUBLISHER_CANCEL_DELAY_MS);
                         Thread.Sleep(PUBLISHER_CANCEL_DELAY_MS);
                         waited += PUBLISHER_CANCEL_DELAY_MS;
                     }
                     if (!OutstandingConfirms.IsEmpty)
                     {
                         persistToOutbox(ulong.MaxValue, true, false);
-                        _logger.LogDebug("All un-ack'd messages successfully flushed to disk");
+                        _logger.LogInformation("All un-ack'd messages successfully flushed to disk");
                     }
                     base.Dispose();
                 }
