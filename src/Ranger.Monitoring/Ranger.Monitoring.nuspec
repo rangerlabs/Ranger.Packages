@@ -31,7 +31,7 @@
       <dependency id="Serilog.Sinks.ColoredConsole" version="3.0.1" />
       <dependency id="Serilog.Sinks.Datadog.Logs" version="0.3.2" />
       <dependency id="Serilog.Sinks.Seq" version="4.0.0" />
-      <dependency id="Ranger.Common" version="3.1.0" />
+      <dependency id="Ranger.Common" version="3.1.1" />
 
     </dependencies>
   </metadata>
