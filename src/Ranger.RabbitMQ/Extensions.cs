@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 using System.Threading;
 using Autofac;
 using HealthChecks.UI.Client;
@@ -82,6 +83,7 @@ namespace Ranger.RabbitMQ
                 connectionFactory.Port = options.Port;
                 connectionFactory.VirtualHost = options.VirtualHost;
                 connectionFactory.AutomaticRecoveryEnabled = true;
+                connectionFactory.TopologyRecoveryEnabled = true;
                 IConnection connection = default;
 
                 bool connected = false;

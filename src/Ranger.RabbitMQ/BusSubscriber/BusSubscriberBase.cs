@@ -44,6 +44,7 @@ namespace Ranger.RabbitMQ.BusSubscriber
             channel.Bind<TMessage>(ExchangeName(typeof(TMessage)), QueueName(typeof(TMessage)), RoutingKey(typeof(TMessage)), _options);
 
             var consumer = new AsyncEventingBasicConsumer(channel);
+            consumer.Shutdown += Shutdown;
             consumer.ConsumerCancelled += ConsumerCancelled;
             consumer.Received += (sender, eventArgs) => MessageReceived<TMessage>(sender, eventArgs, onReceived, onError);
 
@@ -58,7 +59,12 @@ namespace Ranger.RabbitMQ.BusSubscriber
             return channel;
         }
 
-
+        private Task Shutdown(object sender, ShutdownEventArgs ea)
+        {
+            var initiator = ea.Initiator;
+            _logger.LogInformation("Consumer shutdown, initiator: {Initiator}", initiator);
+            return Task.CompletedTask;
+        }
 
         protected Task ConsumerCancelled(object sender, ConsumerEventArgs ea)
         {
