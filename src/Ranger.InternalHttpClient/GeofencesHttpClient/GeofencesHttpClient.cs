@@ -1,8 +1,12 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Ranger.Common;
 
 namespace Ranger.InternalHttpClient
 {
@@ -11,6 +15,27 @@ namespace Ranger.InternalHttpClient
     {
         public GeofencesHttpClient(HttpClient httpClient, HttpClientOptions<GeofencesHttpClient> clientOptions, ILogger<GeofencesHttpClient> logger) : base(httpClient, clientOptions, logger)
         { }
+
+        ///<summary>
+        /// Produces 200
+        ///</summary>
+        public async Task<RangerApiResponse<T>> GetGeofencesByBounds<T>(string tenantId, Guid projectId, string orderBy, string sortOrder, IEnumerable<LngLat> bounds, CancellationToken cancellationToken = default(CancellationToken))
+            where T : class
+        {
+            if (string.IsNullOrWhiteSpace(tenantId))
+            {
+                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace");
+            }
+
+            var serializedBounds = bounds.Select(f => JsonConvert.SerializeObject(f));
+            var boundsQuery = String.Join(';', serializedBounds);
+
+            return await SendAsync<T>(new HttpRequestMessage()
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/geofences/{tenantId}/{projectId}?bounds={bounds}")
+            }, cancellationToken);
+        }
 
         ///<summary>
         /// Produces 200
