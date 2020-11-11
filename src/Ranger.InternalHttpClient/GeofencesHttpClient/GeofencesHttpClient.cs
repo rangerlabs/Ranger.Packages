@@ -19,6 +19,29 @@ namespace Ranger.InternalHttpClient
         ///<summary>
         /// Produces 200
         ///</summary>
+        public async Task<RangerApiResponse<T>> GetGeofenceByExternalId<T>(string tenantId, Guid projectId, string externalId, CancellationToken cancellationToken = default(CancellationToken))
+            where T : class
+        {
+            if (string.IsNullOrWhiteSpace(tenantId))
+            {
+                throw new ArgumentException($"{nameof(tenantId)} cannot be null or whitespace");
+            }
+
+            if (string.IsNullOrWhiteSpace(externalId))
+            {
+                throw new ArgumentException($"'{nameof(externalId)}' cannot be null or whitespace", nameof(externalId));
+            }
+
+            return await SendAsync<T>(new HttpRequestMessage()
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/geofences/{tenantId}/{projectId}?externalId={externalId}")
+            }, cancellationToken);
+        }
+
+        ///<summary>
+        /// Produces 200
+        ///</summary>
         public async Task<RangerApiResponse<T>> GetGeofencesByBounds<T>(string tenantId, Guid projectId, string orderBy, string sortOrder, IEnumerable<LngLat> bounds, CancellationToken cancellationToken = default(CancellationToken))
             where T : class
         {
