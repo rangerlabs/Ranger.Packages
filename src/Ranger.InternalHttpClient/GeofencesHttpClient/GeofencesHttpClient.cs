@@ -56,7 +56,7 @@ namespace Ranger.InternalHttpClient
             return await SendAsync<T>(new HttpRequestMessage()
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri(HttpClient.BaseAddress, $"/geofences/{tenantId}/{projectId}?bounds={bounds}")
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/geofences/{tenantId}/{projectId}?orderBy={orderBy}&sortOrder={sortOrder}&bounds={boundsQuery}")
             }, cancellationToken);
         }
 
