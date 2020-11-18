@@ -63,7 +63,7 @@ namespace Ranger.InternalHttpClient
         ///<summary>
         /// Produces 200
         ///</summary>
-        public async Task<RangerApiResponse<T>> GetGeofencesByProjectId<T>(string tenantId, Guid projectId, string orderBy, string sortOrder, int page, int pageCount, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<RangerApiResponse<T>> GetGeofencesByProjectId<T>(string tenantId, Guid projectId, string orderBy, string sortOrder, int page, int pageCount, string search, CancellationToken cancellationToken = default(CancellationToken))
             where T : class
         {
             if (string.IsNullOrWhiteSpace(tenantId))
@@ -74,7 +74,19 @@ namespace Ranger.InternalHttpClient
             return await SendAsync<T>(new HttpRequestMessage()
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri(HttpClient.BaseAddress, $"/geofences/{tenantId}/{projectId}?orderBy={orderBy}&sortOrder={sortOrder}&page={page}&pageCount={pageCount}")
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/geofences/{tenantId}/{projectId}?search={search}&orderBy={orderBy}&sortOrder={sortOrder}&page={page}&pageCount={pageCount}")
+            }, cancellationToken);
+        }
+
+        ///<summary>
+        /// Produces 200
+        ///</summary>
+        public async Task<RangerApiResponse<long>> GetGeofencesCountForProject(string tenantId, Guid projectId, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return await SendAsync<long>(new HttpRequestMessage()
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(HttpClient.BaseAddress, $"/geofences/{tenantId}/{projectId}/count")
             }, cancellationToken);
         }
 

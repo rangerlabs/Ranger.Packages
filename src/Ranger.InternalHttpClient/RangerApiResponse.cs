@@ -1,7 +1,4 @@
-using System;
-using AutoWrapper.Wrappers;
-using Microsoft.AspNetCore.Http;
-using Ranger.Common;
+using System.Net.Http.Headers;
 
 namespace Ranger.InternalHttpClient
 {
@@ -13,7 +10,7 @@ namespace Ranger.InternalHttpClient
         public bool IsError { get; set; }
         public RangerApiError Error { get; set; }
         public object Result { get; set; }
-
+        public HttpResponseHeaders Headers { get; set; }
     }
 
     public class RangerApiResponse<T> : IRangerApiResponse
@@ -24,5 +21,6 @@ namespace Ranger.InternalHttpClient
         public bool IsError { get; set; }
         public RangerApiError Error { get; set; }
         public T Result { get; set; }
+        public HttpResponseHeaders Headers { get; set; }
     }
 }

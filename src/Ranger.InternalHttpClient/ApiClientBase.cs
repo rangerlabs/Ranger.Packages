@@ -94,6 +94,7 @@ namespace Ranger.InternalHttpClient
             try
             {
                 var rangerApiResponse = JsonConvert.DeserializeObject<RangerApiResponse>(content, new JsonSerializerSettings { MissingMemberHandling = MissingMemberHandling.Ignore });
+                rangerApiResponse.Headers = response.Headers;
                 if (rangerApiResponse.IsError)
                 {
                     throw new ApiException(rangerApiResponse.Error.Message, statusCode: rangerApiResponse.StatusCode) { Errors = rangerApiResponse.Error.ValidationErrors ?? default };
@@ -138,6 +139,7 @@ namespace Ranger.InternalHttpClient
             try
             {
                 var rangerApiResponse = JsonConvert.DeserializeObject<RangerApiResponse<TResponseObject>>(content, new JsonSerializerSettings { MissingMemberHandling = MissingMemberHandling.Ignore });
+                rangerApiResponse.Headers = response.Headers;
                 if (rangerApiResponse.IsError)
                 {
                     throw new ApiException(rangerApiResponse.Error.Message, statusCode: rangerApiResponse.StatusCode) { Errors = rangerApiResponse.Error.ValidationErrors ?? default };
