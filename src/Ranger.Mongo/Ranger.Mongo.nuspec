@@ -18,7 +18,7 @@
     <dependencies>
       <dependency id="MongoDB.Driver" version="2.11.1" />
       <dependency id="Microsoft.Extensions.Logging" version="3.1.7" />
-      <dependency id="Ranger.Common" version="3.1.1" />
+      <dependency id="Ranger.Common" version="3.1.2" />
       <dependency id="Ranger.Monitoring" version="3.2.3" />
       <dependency id="Autofac" version="5.2.0" />
       <dependency id="Autofac.Extensions.DependencyInjection" version="6.0.0" />

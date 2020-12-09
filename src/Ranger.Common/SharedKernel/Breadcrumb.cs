@@ -5,7 +5,7 @@ namespace Ranger.Common
 {
     public class Breadcrumb
     {
-        public Breadcrumb(string deviceId, string externalUserId, LngLat position, DateTime recordedAt, DateTime acceptedAt, IEnumerable<KeyValuePair<string, string>> metadata, double accuracy = 0)
+        public Breadcrumb(string deviceId, string externalUserId, LngLat position, DateTime recordedAt, DateTime acceptedAt, IEnumerable<KeyValuePair<string, string>> metadata, double accuracy = 0, long id = 0)
         {
             if (string.IsNullOrWhiteSpace(deviceId))
             {
@@ -19,7 +19,16 @@ namespace Ranger.Common
             {
                 throw new ArgumentException($"{nameof(recordedAt)} was not in a valid range");
             }
+            if (accuracy < 0)
+            {
+                throw new ArgumentException($"{nameof(accuracy)} must be greater than or equal to 0");
+            }
+            if (id < 0)
+            {
+                throw new ArgumentException($"{nameof(id)} must be greater than or equal to 0");
+            }
 
+            this.Id = id;
             this.DeviceId = deviceId;
             this.ExternalUserId = externalUserId;
             this.Position = position ?? throw new ArgumentNullException(nameof(position));
@@ -29,6 +38,7 @@ namespace Ranger.Common
             this.Metadata = metadata;
         }
 
+        public long Id { get; }
         public string DeviceId { get; }
         public string ExternalUserId { get; }
         public LngLat Position { get; }
